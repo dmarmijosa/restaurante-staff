@@ -13,6 +13,10 @@ export const ADMIN_ROUTES: Routes = [
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'plano' },
       {
+        path: 'resumen',
+        loadComponent: () => import('./dashboard/dashboard.component').then((m) => m.DashboardComponent),
+      },
+      {
         path: 'plano',
         loadComponent: () => import('./floor-plan/floor-plan.component').then((m) => m.FloorPlanComponent),
       },

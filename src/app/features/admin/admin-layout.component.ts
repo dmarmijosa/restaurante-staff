@@ -99,6 +99,7 @@ export class AdminLayoutComponent implements OnInit {
   protected readonly initials = computed(() => initialsOf(this.userName()));
 
   protected readonly navItems = computed(() => [
+    { path: 'resumen', label: 'Resumen', badge: 0, tour: 'Vista rápida del día: ingresos cobrados, ticket medio, ventas por método de pago y productos más vendidos.' },
     { path: 'plano', label: 'Plano del salón', badge: 0, tour: 'Diseña el salón: arrastra mesas, ajusta sillas, fusiónalas e imprime el QR de cada una.' },
     { path: 'pedidos', label: 'Pedidos', badge: this.store.activeOrders().length, tour: 'Tablero en vivo de comandas por estado: recibido → preparando → listo → entregado.' },
     { path: 'menu', label: 'Menú y productos', badge: 0, tour: 'Crea platillos, sube su foto y actívalos/desactívalos; el menú del cliente se actualiza al instante.' },

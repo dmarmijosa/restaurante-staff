@@ -33,7 +33,7 @@
 ## Ideas para nuevas funcionalidades
 
 - Propinas y división de cuenta desde el QR
-- Panel de métricas para el admin (ticket medio, platos más vendidos, tiempos de cocina)
+- [x] ~~Panel de métricas para el admin (ticket medio, platos más vendidos)~~ — hecho (sección "Resumen"); pendiente: tiempos de cocina y filtros por fecha
 - Reservas online con la mesa reservada reflejada en el plano
 - Modo "pizarra" para cocina en pantallas grandes (fuente aún mayor)
 - Integración con impresoras térmicas de comandas

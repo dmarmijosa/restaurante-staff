@@ -12,6 +12,7 @@ import type {
   Order,
   OrderItem,
   OrderStatus,
+  PaymentMethod,
   Product,
   RestaurantSettings,
   RestaurantTable,
@@ -25,6 +26,7 @@ import {
   CallsRepository,
   MenuRepository,
   OrdersRepository,
+  PaymentsRepository,
   SettingsRepository,
   StaffRepository,
   StorageRepository,
@@ -199,7 +201,9 @@ export class SupabaseOrdersRepository extends OrdersRepository {
     // store a partir de waiter_id y del listado de personal ya cargado.
     const { data, error } = await this.supabase.client
       .from('orders')
-      .select('id, table_number, waiter_id, status, created_at, order_items(product_id, product_name, unit_price, quantity)')
+      .select(
+        'id, table_number, waiter_id, status, created_at, paid, payment_method, paid_at, order_items(product_id, product_name, unit_price, quantity)',
+      )
       .order('created_at', { ascending: false });
     if (error) throw error;
     return (data ?? []).map((row) => ({
@@ -209,6 +213,9 @@ export class SupabaseOrdersRepository extends OrdersRepository {
       waiterName: '—',
       status: row.status as OrderStatus,
       createdAt: toTimeLabel(row.created_at),
+      paid: row.paid ?? false,
+      paymentMethod: row.payment_method ?? null,
+      paidAt: row.paid_at ? toTimeLabel(row.paid_at) : null,
       items: (row.order_items as unknown as Array<Record<string, unknown>>).map((it) => ({
         productId: it['product_id'] as number | null,
         productName: it['product_name'] as string,
@@ -241,12 +248,23 @@ export class SupabaseOrdersRepository extends OrdersRepository {
       waiterName: '—',
       status: 'recibido',
       createdAt: 'ahora',
+      paid: false,
+      paymentMethod: null,
+      paidAt: null,
       items,
     };
   }
 
   async setStatus(orderId: number, status: OrderStatus): Promise<void> {
     const { error } = await this.supabase.client.from('orders').update({ status }).eq('id', orderId);
+    if (error) throw error;
+  }
+
+  async chargeOrder(orderId: number, paymentMethod: string): Promise<void> {
+    const { error } = await this.supabase.client
+      .from('orders')
+      .update({ paid: true, payment_method: paymentMethod, paid_at: new Date().toISOString() })
+      .eq('id', orderId);
     if (error) throw error;
   }
 
@@ -480,5 +498,39 @@ export class SupabaseStorageRepository extends StorageRepository {
     if (error) throw error;
     const { data } = this.supabase.client.storage.from('imagenes').getPublicUrl(path);
     return data.publicUrl;
+  }
+}
+
+@Injectable()
+export class SupabasePaymentsRepository extends PaymentsRepository {
+  private supabase = inject(SupabaseClientService);
+
+  async getMethods(): Promise<PaymentMethod[]> {
+    const { data, error } = await this.supabase.client
+      .from('payment_methods')
+      .select('*')
+      .order('position');
+    if (error) throw error;
+    return data ?? [];
+  }
+
+  async addMethod(name: string): Promise<PaymentMethod> {
+    const { data, error } = await this.supabase.client
+      .from('payment_methods')
+      .insert({ name })
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  async setActive(id: number, active: boolean): Promise<void> {
+    const { error } = await this.supabase.client.from('payment_methods').update({ active }).eq('id', id);
+    if (error) throw error;
+  }
+
+  async deleteMethod(id: number): Promise<void> {
+    const { error } = await this.supabase.client.from('payment_methods').delete().eq('id', id);
+    if (error) throw error;
   }
 }

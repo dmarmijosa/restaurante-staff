@@ -87,8 +87,9 @@ src/app/
 ├── features/
 │   ├── client/                         # Home pública (menú QR)
 │   ├── auth/                           # Login del personal
-│   ├── admin/                          # Layout + plano/pedidos/menú/categorías/meseros/temporada/ajustes
+│   ├── admin/                          # Layout + plano/pedidos/menú/categorías/meseros/pagos/temporada/ajustes
 │   ├── waiter/                         # Tablet del mesero
+│   ├── cashier/                        # Caja del cajero (cobro por método de pago)
 │   └── kitchen/                        # Pantalla de cocina
 └── shared/                             # Toast, pipe de moneda, topbar, mapas UI, QR por mesa (table-qr)
 supabase/

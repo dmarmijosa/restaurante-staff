@@ -55,7 +55,7 @@ test.describe('Panel de administración', () => {
     await page.getByRole('link', { name: 'Meseros y turnos' }).click();
 
     // Alta
-    await page.getByRole('button', { name: '+ Dar de alta mesero' }).click();
+    await page.getByRole('button', { name: '+ Dar de alta' }).click();
     await page.getByLabel('Nombre completo').fill('Sofía Cabrera');
     await page.getByRole('button', { name: 'Guardar' }).click();
     const row = page.getByTestId('staff-row').filter({ hasText: 'Sofía Cabrera' });
@@ -105,5 +105,23 @@ test.describe('Cocina', () => {
     await page.getByRole('button', { name: 'Platillo listo' }).first().click();
     // Al marcar listo, la comanda sale de la cola de cocina
     await expect(page.getByRole('button', { name: /Empezar a preparar|Platillo listo/ })).toHaveCount(before - 1);
+  });
+});
+
+test.describe('Cajero', () => {
+  test('cobra un pedido con un método de pago', async ({ page }) => {
+    await page.goto('/login');
+    await page.locator('#email').fill('cajero@demo.dev');
+    await page.locator('#password').fill('cajero123');
+    await page.getByRole('button', { name: 'Iniciar sesión' }).click();
+    await expect(page).toHaveURL(/\/cajero/);
+    await expect(page.getByText('PEDIDOS POR COBRAR')).toBeVisible();
+
+    const before = await page.locator('section article').count();
+    // Cobra el primer pedido en efectivo
+    await page.locator('section').getByRole('button', { name: 'Efectivo' }).first().click();
+    await expect(page.locator('section article')).toHaveCount(before - 1);
+    // Aparece en cobros recientes con su método
+    await expect(page.getByText('COBROS RECIENTES')).toBeVisible();
   });
 });

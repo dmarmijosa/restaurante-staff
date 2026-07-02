@@ -27,8 +27,12 @@ export function roleGuard(required: StaffRole): CanActivateFn {
     }
     if (!auth.canAccess(required)) {
       // Con sesión pero sin permiso: cada quien a su área.
-      const home = auth.role() === 'mesero' ? '/mesero' : auth.role() === 'cocina' ? '/cocina' : '/';
-      return router.createUrlTree([home]);
+      const homeByRole: Record<string, string> = {
+        mesero: '/mesero',
+        cocina: '/cocina',
+        cajero: '/cajero',
+      };
+      return router.createUrlTree([homeByRole[auth.role() ?? ''] ?? '/']);
     }
     return true;
   };

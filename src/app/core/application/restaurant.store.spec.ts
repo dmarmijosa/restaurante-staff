@@ -10,6 +10,7 @@ import {
   CallsRepository,
   MenuRepository,
   OrdersRepository,
+  PaymentsRepository,
   SettingsRepository,
   StaffRepository,
   StorageRepository,
@@ -20,6 +21,7 @@ import {
   DemoCallsRepository,
   DemoMenuRepository,
   DemoOrdersRepository,
+  DemoPaymentsRepository,
   DemoSettingsRepository,
   DemoStaffRepository,
   DemoStorageRepository,
@@ -40,6 +42,7 @@ describe('RestaurantStore', () => {
         { provide: SettingsRepository, useClass: DemoSettingsRepository },
         { provide: AuthRepository, useClass: DemoAuthRepository },
         { provide: StorageRepository, useClass: DemoStorageRepository },
+        { provide: PaymentsRepository, useClass: DemoPaymentsRepository },
       ],
     });
     store = TestBed.inject(RestaurantStore);
@@ -104,6 +107,31 @@ describe('RestaurantStore', () => {
     const member = store.staff().find((s) => s.fullName === 'Carlos Mena')!;
     await store.setRole(member.id, 'cocina');
     expect(store.staff().find((s) => s.id === member.id)?.role).toBe('cocina');
+  });
+
+  it('el cajero cobra un pedido con un método de pago', async () => {
+    const pendiente = store.ordersToCharge().find((o) => o.id === 1043)!;
+    expect(pendiente.paid).toBe(false);
+    await store.chargeOrder(1043, 'Efectivo');
+    const cobrado = store.orders().find((o) => o.id === 1043)!;
+    expect(cobrado.paid).toBe(true);
+    expect(cobrado.paymentMethod).toBe('Efectivo');
+    expect(store.ordersToCharge().some((o) => o.id === 1043)).toBe(false);
+  });
+
+  it('el admin gestiona métodos de pago (alta, activar/desactivar)', async () => {
+    expect(store.activePaymentMethods().map((m) => m.name)).toContain('Efectivo');
+    await store.addPaymentMethod('Pago móvil');
+    expect(store.paymentMethods().some((m) => m.name === 'Pago móvil')).toBe(true);
+    const efectivo = store.paymentMethods().find((m) => m.name === 'Efectivo')!;
+    await store.togglePaymentMethod(efectivo.id);
+    expect(store.activePaymentMethods().some((m) => m.id === efectivo.id)).toBe(false);
+  });
+
+  it('da de alta un cajero y aparece en el equipo', async () => {
+    await store.addTeamMember('Paco Caja', 'cajero', 'noche');
+    const cajeros = store.staff().filter((s) => s.role === 'cajero');
+    expect(cajeros.some((c) => c.fullName === 'Paco Caja')).toBe(true);
   });
 
   it('cerrar el restaurante detiene la aceptación de pedidos del QR', async () => {

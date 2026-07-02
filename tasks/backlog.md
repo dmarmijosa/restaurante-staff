@@ -4,7 +4,10 @@
 
 - [x] ~~Supabase Storage para fotos de productos y logo~~ — hecho (bucket `imagenes`, subida en menú y ajustes)
 - [x] ~~Generador/impresión de códigos QR por mesa~~ — hecho (`app-table-qr`, generación local + impresión)
-- [x] ~~Registro inicial del administrador~~ — hecho (`/registro-inicial`, una sola vez)
+- [x] ~~Registro inicial del administrador~~ — hecho (`/registro-inicial`, una sola vez, con redirección automática)
+- [x] ~~Onboarding del panel con driver.js~~ — hecho (tour guiado + botón "Ver guía")
+- [x] ~~Rol Cajero + métodos de pago~~ — hecho (vista `/cajero`, cobro, admin de métodos)
+- [x] ~~Manual de instalación no técnico~~ — hecho ([manual.md](../manual.md))
 - [x] ~~Compresión/redimensionado de imágenes antes de subir~~ — hecho (`shared/image-utils.ts`, canvas)
 - [x] ~~Fechas de temporada editables con date picker~~ — hecho (persistidas en `restaurant_settings`)
 - [ ] Recorte manual (crop) de la imagen antes de subir

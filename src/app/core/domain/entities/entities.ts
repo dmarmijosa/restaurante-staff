@@ -8,7 +8,7 @@
  */
 
 /** Roles del personal. El cliente no tiene rol: nunca se autentica. */
-export type StaffRole = 'admin' | 'mesero' | 'cocina';
+export type StaffRole = 'admin' | 'mesero' | 'cocina' | 'cajero';
 
 /** Turnos de sala, tal como los maneja el diseño original. */
 export type Shift = 'manana' | 'tarde' | 'noche';
@@ -87,8 +87,20 @@ export interface Order {
   status: OrderStatus;
   createdAt: string;
   items: OrderItem[];
+  /** Cobro: si está pagado, con qué método y cuándo (lo registra el cajero). */
+  paid: boolean;
+  paymentMethod: string | null;
+  paidAt: string | null;
   /** true si el pedido fue creado por el cliente actual (vista QR). */
   mine?: boolean;
+}
+
+/** Método de pago configurable por el administrador (efectivo, tarjeta, …). */
+export interface PaymentMethod {
+  id: number;
+  name: string;
+  active: boolean;
+  position: number;
 }
 
 export interface WaiterCall {

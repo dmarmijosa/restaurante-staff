@@ -5,10 +5,14 @@
  */
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { driver } from 'driver.js';
 import { RestaurantStore } from '../../core/application/restaurant.store';
 import { AuthService } from '../../core/auth/auth.service';
 import { StaffTopbarComponent } from '../../shared/staff-topbar/staff-topbar.component';
 import { initialsOf } from '../../shared/ui-maps';
+
+/** Marca en localStorage para no repetir el tour automático cada visita. */
+const TOUR_SEEN_KEY = 'rs-admin-tour-seen';
 
 @Component({
   selector: 'app-admin-layout',
@@ -28,6 +32,7 @@ import { initialsOf } from '../../shared/ui-maps';
             @for (item of navItems(); track item.path) {
               <a
                 [routerLink]="item.path"
+                [attr.data-tour]="item.path"
                 routerLinkActive="!bg-lino !text-cacao"
                 class="flex cursor-pointer items-center gap-2 rounded-[9px] px-3 py-[9px] text-[13.5px] font-medium text-lino-tenue hover:opacity-90"
               >
@@ -40,6 +45,13 @@ import { initialsOf } from '../../shared/ui-maps';
               </a>
             }
           </nav>
+          <button
+            type="button"
+            (click)="startTour()"
+            class="mt-3 cursor-pointer rounded-[9px] border-[1.5px] border-lino/20 bg-transparent px-3 py-2 text-[12px] font-semibold text-lino-tenue hover:bg-lino/10"
+          >
+            ✦ Ver guía del panel
+          </button>
           <div class="flex-1"></div>
           <div class="flex items-center gap-2.5 border-t border-lino/10 px-2.5 py-2.5">
             <div
@@ -87,13 +99,14 @@ export class AdminLayoutComponent implements OnInit {
   protected readonly initials = computed(() => initialsOf(this.userName()));
 
   protected readonly navItems = computed(() => [
-    { path: 'plano', label: 'Plano del salón', badge: 0 },
-    { path: 'pedidos', label: 'Pedidos', badge: this.store.activeOrders().length },
-    { path: 'menu', label: 'Menú y productos', badge: 0 },
-    { path: 'categorias', label: 'Categorías', badge: 0 },
-    { path: 'meseros', label: 'Meseros y turnos', badge: 0 },
-    { path: 'temporada', label: 'Temporada y horario', badge: 0 },
-    { path: 'ajustes', label: 'Ajustes', badge: 0 },
+    { path: 'plano', label: 'Plano del salón', badge: 0, tour: 'Diseña el salón: arrastra mesas, ajusta sillas, fusiónalas e imprime el QR de cada una.' },
+    { path: 'pedidos', label: 'Pedidos', badge: this.store.activeOrders().length, tour: 'Tablero en vivo de comandas por estado: recibido → preparando → listo → entregado.' },
+    { path: 'menu', label: 'Menú y productos', badge: 0, tour: 'Crea platillos, sube su foto y actívalos/desactívalos; el menú del cliente se actualiza al instante.' },
+    { path: 'categorias', label: 'Categorías', badge: 0, tour: 'Organiza el menú en categorías (Entradas, Postres…).' },
+    { path: 'meseros', label: 'Meseros y turnos', badge: 0, tour: 'Da de alta al equipo (mesero, cocina y cajero), asigna rol y turno, o da de baja (borrado permanente).' },
+    { path: 'pagos', label: 'Métodos de pago', badge: 0, tour: 'Define cómo cobra el cajero: efectivo, tarjeta, transferencia o los que añadas.' },
+    { path: 'temporada', label: 'Temporada y horario', badge: 0, tour: 'Abre/cierra el restaurante y define la temporada; controla si el QR acepta pedidos.' },
+    { path: 'ajustes', label: 'Ajustes', badge: 0, tour: 'Nombre y logo del restaurante y cuentas de administración.' },
   ]);
 
   protected readonly openChipLabel = computed(() => {
@@ -104,6 +117,46 @@ export class AdminLayoutComponent implements OnInit {
 
   ngOnInit(): void {
     void this.store.init();
+    // Onboarding: la primera vez que un admin entra, se lanza el tour guiado.
+    if (typeof localStorage !== 'undefined' && !localStorage.getItem(TOUR_SEEN_KEY)) {
+      setTimeout(() => this.startTour(), 600);
+    }
+  }
+
+  /** Tour guiado (driver.js) que explica cada sección del panel. */
+  protected startTour(): void {
+    if (typeof document === 'undefined') return;
+    const steps = this.navItems()
+      .filter((item) => document.querySelector(`[data-tour="${item.path}"]`))
+      .map((item) => ({
+        element: `[data-tour="${item.path}"]`,
+        popover: { title: item.label, description: item.tour },
+      }));
+    if (!steps.length) return;
+    const tour = driver({
+      showProgress: true,
+      nextBtnText: 'Siguiente',
+      prevBtnText: 'Atrás',
+      doneBtnText: 'Entendido',
+      steps: [
+        {
+          popover: {
+            title: '¡Bienvenido a tu panel!',
+            description:
+              'Te muestro en 30 segundos para qué sirve cada sección. Podrás repetir esta guía cuando quieras con “Ver guía del panel”.',
+          },
+        },
+        ...steps,
+      ],
+      onDestroyed: () => {
+        try {
+          localStorage.setItem(TOUR_SEEN_KEY, '1');
+        } catch {
+          /* almacenamiento no disponible: no pasa nada */
+        }
+      },
+    });
+    tour.drive();
   }
 
   protected async signOut(): Promise<void> {

@@ -6,6 +6,7 @@
 import type {
   Category,
   Order,
+  PaymentMethod,
   Product,
   RestaurantSettings,
   RestaurantTable,
@@ -53,11 +54,20 @@ export const DEMO_STAFF: StaffMember[] = [
   { id: 'a1', fullName: 'Ana Ríos', email: 'ana@casanogal.mx', role: 'admin', shift: null, status: 'activo', isOwner: true, tables: [] },
   { id: 'a2', fullName: 'Jorge Luna', email: 'jorge@casanogal.mx', role: 'admin', shift: null, status: 'activo', isOwner: false, tables: [] },
   { id: 'k1', fullName: 'Chef Robles', email: 'chef@casanogal.mx', role: 'cocina', shift: 'tarde', status: 'activo', isOwner: false, tables: [] },
+  { id: 'c1', fullName: 'Paola Vega', email: 'paola@casanogal.mx', role: 'cajero', shift: 'tarde', status: 'activo', isOwner: false, tables: [] },
+];
+
+/** Métodos de pago de ejemplo (los que el admin configura). */
+export const DEMO_PAYMENT_METHODS: PaymentMethod[] = [
+  { id: 1, name: 'Efectivo', active: true, position: 1 },
+  { id: 2, name: 'Tarjeta', active: true, position: 2 },
+  { id: 3, name: 'Transferencia', active: true, position: 3 },
 ];
 
 export const DEMO_ORDERS: Order[] = [
   {
     id: 1043, tableNumber: 6, waiterName: 'Carlos M.', status: 'recibido', createdAt: '19:31',
+    paid: false, paymentMethod: null, paidAt: null,
     items: [
       { productId: 7, productName: 'Pesca del día a la brasa', unitPrice: 16.5, quantity: 1 },
       { productId: 2, productName: 'Sopa de tortilla', unitPrice: 7, quantity: 2 },
@@ -65,6 +75,7 @@ export const DEMO_ORDERS: Order[] = [
   },
   {
     id: 1042, tableNumber: 2, waiterName: 'Carlos M.', status: 'preparando', createdAt: '19:20',
+    paid: false, paymentMethod: null, paidAt: null,
     items: [
       { productId: 6, productName: 'Risotto de hongos', unitPrice: 13, quantity: 1 },
       { productId: 11, productName: 'Limonada de hierbabuena', unitPrice: 3.5, quantity: 1 },
@@ -72,6 +83,7 @@ export const DEMO_ORDERS: Order[] = [
   },
   {
     id: 1041, tableNumber: 3, waiterName: 'Lucía F.', status: 'listo', createdAt: '19:12',
+    paid: false, paymentMethod: null, paidAt: null,
     items: [
       { productId: 5, productName: 'Tacos de costilla', unitPrice: 11, quantity: 2 },
       { productId: 10, productName: 'Agua fresca de jamaica', unitPrice: 3, quantity: 1 },
@@ -79,6 +91,7 @@ export const DEMO_ORDERS: Order[] = [
   },
   {
     id: 1039, tableNumber: 5, waiterName: 'Diego P.', status: 'entregado', createdAt: '18:47',
+    paid: true, paymentMethod: 'Tarjeta', paidAt: '18:55',
     items: [{ productId: 4, productName: 'Pollo al carbón con mole', unitPrice: 14.5, quantity: 1 }],
   },
 ];
@@ -101,4 +114,5 @@ export const DEMO_USERS = [
   { email: 'admin@demo.dev', password: 'admin123', staffId: 'a1' },
   { email: 'mesero@demo.dev', password: 'mesero123', staffId: 'w1' },
   { email: 'cocina@demo.dev', password: 'cocina123', staffId: 'k1' },
+  { email: 'cajero@demo.dev', password: 'cajero123', staffId: 'c1' },
 ];

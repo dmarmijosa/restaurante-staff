@@ -20,8 +20,11 @@
 | QR real por mesa (generación local + impresión) | ✅ Completo |
 | Accesibilidad y microinteracciones (focus-visible, reduced-motion, validación inline) | ✅ Completo |
 | Licencia MIT + CI (GitHub Actions) | ✅ Completo |
-| Registro inicial del administrador (una sola vez) | ✅ Completo |
-| Imágenes de productos y logo (Supabase Storage) | ✅ Completo |
+| Registro inicial del administrador (una sola vez, con redirección automática) | ✅ Completo |
+| Imágenes de productos y logo (Supabase Storage, con compresión) | ✅ Completo |
+| Onboarding del panel con driver.js (guía interactiva) | ✅ Completo |
+| Rol Cajero + cobro por método de pago configurable | ✅ Completo |
+| Manual de instalación para persona natural ([manual.md](manual.md)) | ✅ Completo |
 
 Pruebas: **19 unitarias** (Vitest) y **25 E2E** (Playwright, escritorio + móvil) en verde. Build de producción sin errores. CI en cada push/PR.
 
@@ -41,6 +44,7 @@ Sin credenciales de Supabase la app usa **datos de ejemplo en memoria** (los del
 | Admin | `admin@demo.dev` | `admin123` |
 | Mesero | `mesero@demo.dev` | `mesero123` |
 | Cocina | `cocina@demo.dev` | `cocina123` |
+| Cajero | `cajero@demo.dev` | `cajero123` |
 
 > En modo demo el estado vive en memoria: al recargar, vuelve al ejemplo.
 

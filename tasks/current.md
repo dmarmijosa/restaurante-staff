@@ -43,10 +43,18 @@ MVP completo de la plataforma (v0.4): réplica del diseño original con las cuat
 - ✅ `.gitignore` corregido (una regla ignoraba las migraciones; ahora migraciones y seed se versionan).
 - ✅ 21 unit + 26 e2e verde; build limpio; advisors sin problemas reales (admin_exists es público a propósito).
 
+## Hecho en la iteración 5 (registro auto + onboarding + rol cajero)
+
+- ✅ **Login redirige** automáticamente a `/registro-inicial` cuando no hay admin; tras crear la cuenta y verificar, el login funciona normal.
+- ✅ **Onboarding con driver.js** en el panel admin: tour guiado (9 pasos) automático la primera vez + botón "Ver guía del panel".
+- ✅ **Rol Cajero**: DB (rol en profiles, tabla `payment_methods`, `orders.paid/payment_method/paid_at`), vista `/cajero` (cobro por método), sección admin "Métodos de pago", alta de cajeros en "Meseros y turnos" (con selección de rol mesero/cocina/cajero).
+- ✅ **manual.md**: guía de instalación no técnica (Supabase, claves, primer admin, día a día), que se irá actualizando.
+- ✅ 24 unit + 27 e2e verde; build limpio.
+
 ## Qué falta por terminar
 
-- **Registrar el administrador propietario** entrando a `/registro-inicial` — **acción del usuario** (el asistente no crea cuentas ni introduce contraseñas).
-- Opcional: desactivar el registro público en Supabase Auth tras el bootstrap.
+- **Registrar el administrador propietario** entrando a la app (te redirige solo a `/registro-inicial`) — **acción del usuario**.
+- Opcional: desactivar el registro público en Supabase Auth tras el bootstrap (ver manual.md §5.1).
 
 ## Próximos pasos
 
@@ -57,6 +65,18 @@ MVP completo de la plataforma (v0.4): réplica del diseño original con las cuat
 ## Bloqueadores
 
 - Ninguno.
+
+## Archivos afectados (iteración 5)
+
+- `supabase/migrations/20260702000005_cajero_role_and_payments.sql` (nuevo)
+- `src/app/core/**` (entities/repos/store: PaymentMethod, chargeOrder, cajero)
+- `src/app/features/cashier/cashier.component.ts` (nuevo)
+- `src/app/features/admin/payments/payments.component.ts` (nuevo)
+- `src/app/features/admin/admin-layout.component.ts` (nav pagos + driver.js)
+- `src/app/features/admin/staff/staff-page.component.ts` (alta con rol + cajero)
+- `src/app/features/auth/login.component.ts` (redirección a registro inicial)
+- `src/app/app.routes.ts`, `role.guard.ts`, `staff-topbar` (rol cajero)
+- `manual.md` (nuevo), `angular.json` (driver.css), specs + e2e
 
 ## Archivos afectados (iteración 3 — diseño/pendientes)
 

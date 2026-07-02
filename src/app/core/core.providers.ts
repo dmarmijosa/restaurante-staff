@@ -12,6 +12,7 @@ import {
   CallsRepository,
   MenuRepository,
   OrdersRepository,
+  PaymentsRepository,
   SettingsRepository,
   StaffRepository,
   StorageRepository,
@@ -22,6 +23,7 @@ import {
   DemoCallsRepository,
   DemoMenuRepository,
   DemoOrdersRepository,
+  DemoPaymentsRepository,
   DemoSettingsRepository,
   DemoStaffRepository,
   DemoStorageRepository,
@@ -32,6 +34,7 @@ import {
   SupabaseCallsRepository,
   SupabaseMenuRepository,
   SupabaseOrdersRepository,
+  SupabasePaymentsRepository,
   SupabaseSettingsRepository,
   SupabaseStaffRepository,
   SupabaseStorageRepository,
@@ -50,5 +53,6 @@ export function provideRepositories(): Provider[] {
     { provide: SettingsRepository, useClass: useSupabase ? SupabaseSettingsRepository : DemoSettingsRepository },
     { provide: AuthRepository, useClass: useSupabase ? SupabaseAuthRepository : DemoAuthRepository },
     { provide: StorageRepository, useClass: useSupabase ? SupabaseStorageRepository : DemoStorageRepository },
+    { provide: PaymentsRepository, useClass: useSupabase ? SupabasePaymentsRepository : DemoPaymentsRepository },
   ];
 }

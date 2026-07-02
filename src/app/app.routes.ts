@@ -46,5 +46,10 @@ export const routes: Routes = [
     canActivate: [roleGuard('cocina')],
     loadComponent: () => import('./features/kitchen/kitchen.component').then((m) => m.KitchenComponent),
   },
+  {
+    path: 'cajero',
+    canActivate: [roleGuard('cajero')],
+    loadComponent: () => import('./features/cashier/cashier.component').then((m) => m.CashierComponent),
+  },
   { path: '**', redirectTo: '' },
 ];

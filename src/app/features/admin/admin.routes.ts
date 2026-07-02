@@ -33,6 +33,10 @@ export const ADMIN_ROUTES: Routes = [
         loadComponent: () => import('./staff/staff-page.component').then((m) => m.StaffPageComponent),
       },
       {
+        path: 'pagos',
+        loadComponent: () => import('./payments/payments.component').then((m) => m.PaymentsComponent),
+      },
+      {
         path: 'temporada',
         loadComponent: () => import('./season/season.component').then((m) => m.SeasonComponent),
       },

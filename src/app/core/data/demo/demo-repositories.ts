@@ -13,6 +13,7 @@ import type {
   Order,
   OrderItem,
   OrderStatus,
+  PaymentMethod,
   Product,
   RestaurantSettings,
   RestaurantTable,
@@ -26,6 +27,7 @@ import {
   CallsRepository,
   MenuRepository,
   OrdersRepository,
+  PaymentsRepository,
   SettingsRepository,
   StaffRepository,
   StorageRepository,
@@ -36,6 +38,7 @@ import {
   DEMO_CALLS,
   DEMO_CATEGORIES,
   DEMO_ORDERS,
+  DEMO_PAYMENT_METHODS,
   DEMO_PRODUCTS,
   DEMO_SETTINGS,
   DEMO_STAFF,
@@ -155,6 +158,9 @@ export class DemoOrdersRepository extends OrdersRepository {
       waiterName: 'Carlos M.',
       status: 'recibido',
       createdAt: 'ahora',
+      paid: false,
+      paymentMethod: null,
+      paidAt: null,
       items: clone(items),
     };
     this.orders.unshift(order);
@@ -165,6 +171,16 @@ export class DemoOrdersRepository extends OrdersRepository {
   async setStatus(orderId: number, status: OrderStatus): Promise<void> {
     const o = this.orders.find((x) => x.id === orderId);
     if (o) o.status = status;
+    this.emitter.emit();
+  }
+
+  async chargeOrder(orderId: number, paymentMethod: string): Promise<void> {
+    const o = this.orders.find((x) => x.id === orderId);
+    if (o) {
+      o.paid = true;
+      o.paymentMethod = paymentMethod;
+      o.paidAt = 'ahora';
+    }
     this.emitter.emit();
   }
 
@@ -286,6 +302,35 @@ export class DemoAuthRepository extends AuthRepository {
 
   async signUpFirstAdmin(): Promise<SessionUser | null> {
     throw new Error('El registro inicial no está disponible en modo demo');
+  }
+}
+
+@Injectable()
+export class DemoPaymentsRepository extends PaymentsRepository {
+  private methods = clone(DEMO_PAYMENT_METHODS);
+
+  async getMethods(): Promise<PaymentMethod[]> {
+    return clone(this.methods);
+  }
+
+  async addMethod(name: string): Promise<PaymentMethod> {
+    const method: PaymentMethod = {
+      id: Math.max(0, ...this.methods.map((m) => m.id)) + 1,
+      name,
+      active: true,
+      position: this.methods.length + 1,
+    };
+    this.methods.push(method);
+    return clone(method);
+  }
+
+  async setActive(id: number, active: boolean): Promise<void> {
+    const m = this.methods.find((x) => x.id === id);
+    if (m) m.active = active;
+  }
+
+  async deleteMethod(id: number): Promise<void> {
+    this.methods = this.methods.filter((m) => m.id !== id);
   }
 }
 

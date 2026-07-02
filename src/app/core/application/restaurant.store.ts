@@ -13,6 +13,7 @@ import type {
   Order,
   OrderItem,
   OrderStatus,
+  PaymentMethod,
   Product,
   RestaurantSettings,
   RestaurantTable,
@@ -28,6 +29,7 @@ import {
   CallsRepository,
   MenuRepository,
   OrdersRepository,
+  PaymentsRepository,
   SettingsRepository,
   StaffRepository,
   StorageRepository,
@@ -55,6 +57,7 @@ export class RestaurantStore {
   private staffRepo = inject(StaffRepository);
   private settingsRepo = inject(SettingsRepository);
   private storageRepo = inject(StorageRepository);
+  private paymentsRepo = inject(PaymentsRepository);
   private toast = inject(ToastService);
 
   readonly settings = signal<RestaurantSettings>({
@@ -71,6 +74,7 @@ export class RestaurantStore {
   readonly orders = signal<Order[]>([]);
   readonly calls = signal<WaiterCall[]>([]);
   readonly staff = signal<StaffMember[]>([]);
+  readonly paymentMethods = signal<PaymentMethod[]>([]);
   readonly loaded = signal(false);
 
   /** El menú QR solo acepta pedidos con el restaurante abierto. */
@@ -82,6 +86,10 @@ export class RestaurantStore {
   );
   readonly waiters = computed(() => this.staff().filter((s) => s.role === 'mesero'));
   readonly admins = computed(() => this.staff().filter((s) => s.role === 'admin'));
+  /** Métodos de pago activos, los que el cajero puede usar para cobrar. */
+  readonly activePaymentMethods = computed(() => this.paymentMethods().filter((m) => m.active));
+  /** Cobro del cajero: pedidos entregados aún sin pagar. */
+  readonly ordersToCharge = computed(() => this.orders().filter((o) => !o.paid));
 
   private unsubscribers: Array<() => void> = [];
 
@@ -104,21 +112,24 @@ export class RestaurantStore {
     // Cada recurso se resuelve de forma independiente: el cliente anónimo no
     // puede leer `profiles` (protección de datos), así que ese fallo no debe
     // vaciar el menú público. `allSettled` aísla cada error.
-    const [settings, categories, products, tables, orders, calls, staff] = await Promise.allSettled([
-      this.settingsRepo.getSettings(),
-      this.menuRepo.getCategories(),
-      this.menuRepo.getProducts(),
-      this.tablesRepo.getTables(),
-      this.ordersRepo.getOrders(),
-      this.callsRepo.getPendingCalls(),
-      this.staffRepo.getStaff(),
-    ]);
+    const [settings, categories, products, tables, orders, calls, staff, methods] =
+      await Promise.allSettled([
+        this.settingsRepo.getSettings(),
+        this.menuRepo.getCategories(),
+        this.menuRepo.getProducts(),
+        this.tablesRepo.getTables(),
+        this.ordersRepo.getOrders(),
+        this.callsRepo.getPendingCalls(),
+        this.staffRepo.getStaff(),
+        this.paymentsRepo.getMethods(),
+      ]);
     if (settings.status === 'fulfilled') this.settings.set(settings.value);
     if (categories.status === 'fulfilled') this.categories.set(categories.value);
     if (products.status === 'fulfilled') this.products.set(products.value);
     if (tables.status === 'fulfilled') this.tables.set(tables.value);
     if (calls.status === 'fulfilled') this.calls.set(calls.value);
     if (staff.status === 'fulfilled') this.staff.set(staff.value);
+    if (methods.status === 'fulfilled') this.paymentMethods.set(methods.value);
     if (orders.status === 'fulfilled') this.orders.set(this.withWaiterNames(orders.value));
   }
 
@@ -244,6 +255,44 @@ export class RestaurantStore {
     this.toast.show(`Pedido #${id} → ${ORDER_LABELS[next]}`);
   }
 
+  /** Registra el cobro de un pedido (lo hace el cajero) con el método elegido. */
+  async chargeOrder(orderId: number, paymentMethod: string): Promise<void> {
+    this.orders.update((os) =>
+      os.map((o) => (o.id === orderId ? { ...o, paid: true, paymentMethod, paidAt: 'ahora' } : o)),
+    );
+    await this.ordersRepo.chargeOrder(orderId, paymentMethod);
+    this.toast.show(`Cobro registrado · ${paymentMethod}`);
+  }
+
+  // ────────────────────────── Métodos de pago (admin) ──────────────────────────
+
+  async addPaymentMethod(name: string): Promise<boolean> {
+    const clean = name.trim();
+    if (!clean) return false;
+    if (this.paymentMethods().some((m) => m.name.toLowerCase() === clean.toLowerCase())) {
+      this.toast.show('Ese método de pago ya existe');
+      return false;
+    }
+    const created = await this.paymentsRepo.addMethod(clean);
+    this.paymentMethods.update((ms) => [...ms, created]);
+    this.toast.show('Método de pago agregado');
+    return true;
+  }
+
+  async togglePaymentMethod(id: number): Promise<void> {
+    const method = this.paymentMethods().find((m) => m.id === id);
+    if (!method) return;
+    const active = !method.active;
+    this.paymentMethods.update((ms) => ms.map((m) => (m.id === id ? { ...m, active } : m)));
+    await this.paymentsRepo.setActive(id, active);
+  }
+
+  async deletePaymentMethod(id: number): Promise<void> {
+    await this.paymentsRepo.deleteMethod(id);
+    this.paymentMethods.update((ms) => ms.filter((m) => m.id !== id));
+    this.toast.show('Método de pago eliminado');
+  }
+
   /** Crea el pedido del cliente QR y lo marca como "mío" para su seguimiento. */
   async placeOrder(tableNumber: number, items: OrderItem[]): Promise<Order> {
     const order = await this.ordersRepo.placeOrder(tableNumber, items);
@@ -326,14 +375,18 @@ export class RestaurantStore {
   // ────────────────────────── Personal ──────────────────────────
 
   async addWaiter(fullName: string, shift: Shift): Promise<void> {
-    const created = await this.staffRepo.addStaff({
-      fullName,
-      email: '',
-      role: 'mesero',
-      shift,
-    });
+    await this.addTeamMember(fullName, 'mesero', shift);
+  }
+
+  /**
+   * Alta de personal operativo (mesero, cocina o cajero) con turno. Los tres se
+   * gestionan igual desde "Meseros y turnos".
+   */
+  async addTeamMember(fullName: string, role: 'mesero' | 'cocina' | 'cajero', shift: Shift): Promise<void> {
+    const created = await this.staffRepo.addStaff({ fullName, email: '', role, shift });
     this.staff.update((ss) => [...ss, created]);
-    this.toast.show('Mesero dado de alta');
+    const label = role === 'mesero' ? 'Mesero' : role === 'cocina' ? 'Personal de cocina' : 'Cajero';
+    this.toast.show(`${label} dado de alta`);
   }
 
   async addAdmin(fullName: string, email: string): Promise<void> {

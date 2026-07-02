@@ -12,6 +12,7 @@ import type {
   Order,
   OrderItem,
   OrderStatus,
+  PaymentMethod,
   Product,
   RestaurantSettings,
   RestaurantTable,
@@ -48,8 +49,18 @@ export abstract class OrdersRepository {
   abstract getOrders(): Promise<Order[]>;
   abstract placeOrder(tableNumber: number, items: OrderItem[]): Promise<Order>;
   abstract setStatus(orderId: number, status: OrderStatus): Promise<void>;
+  /** Registra el cobro de un pedido con el método elegido por el cajero. */
+  abstract chargeOrder(orderId: number, paymentMethod: string): Promise<void>;
   /** Notifica cambios externos (Realtime). El demo lo resuelve en memoria. */
   abstract onChange(listener: () => void): () => void;
+}
+
+/** Métodos de pago que el administrador configura y el cajero utiliza. */
+export abstract class PaymentsRepository {
+  abstract getMethods(): Promise<PaymentMethod[]>;
+  abstract addMethod(name: string): Promise<PaymentMethod>;
+  abstract setActive(id: number, active: boolean): Promise<void>;
+  abstract deleteMethod(id: number): Promise<void>;
 }
 
 export abstract class CallsRepository {

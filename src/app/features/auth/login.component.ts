@@ -119,13 +119,6 @@ import { isSupabaseConfigured } from '../../core/data/supabase/supabase-client.s
           {{ loading() ? 'Entrando…' : 'Iniciar sesión' }}
         </button>
 
-        @if (needsBootstrap()) {
-          <div class="mt-5 rounded-[10px] border-[1.5px] border-dashed border-terracota/50 bg-duna/40 p-3.5 text-[12px] leading-relaxed text-terracota-profundo">
-            Aún no hay ninguna cuenta. Empieza creando el
-            <a routerLink="/registro-inicial" class="font-bold underline">administrador del restaurante</a>.
-          </div>
-        }
-
         @if (demoMode) {
           <div class="mt-5 rounded-[10px] border-[1.5px] border-dashed border-borde-punteado p-3.5 text-[11.5px] leading-relaxed text-tinta-media">
             <strong>Modo demo</strong> (sin Supabase configurado). Cuentas de prueba:<br />
@@ -147,20 +140,23 @@ export class LoginComponent implements OnInit {
   private fb = inject(FormBuilder);
 
   ngOnInit(): void {
-    // Solo con Supabase: si aún no hay admin, ofrece el registro inicial.
+    // Solo con Supabase: si aún no hay ningún admin, no tiene sentido pedir
+    // login — se redirige al registro inicial para crear al propietario.
     if (this.demoMode) return;
     void this.auth
       .adminExists()
-      .then((exists) => this.needsBootstrap.set(!exists))
-      .catch(() => this.needsBootstrap.set(false));
+      .then((exists) => {
+        if (!exists) void this.router.navigateByUrl('/registro-inicial');
+      })
+      .catch(() => {
+        /* si falla la comprobación, se queda en el login */
+      });
   }
 
   protected readonly demoMode = !isSupabaseConfigured();
   protected readonly loading = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly showPassword = signal(false);
-  /** true cuando no hay ningún admin todavía: se ofrece el registro inicial. */
-  protected readonly needsBootstrap = signal(false);
 
   // Marcan cada campo como "tocado" para mostrar el error solo tras el blur
   // (inline-validation: no gritar errores mientras el usuario aún escribe).
@@ -196,8 +192,13 @@ export class LoginComponent implements OnInit {
       const { email, password } = this.form.getRawValue();
       const user = await this.auth.signIn(email, password);
       const redirect = this.route.snapshot.queryParamMap.get('redirect');
-      const fallback = user.role === 'admin' ? '/admin' : user.role === 'mesero' ? '/mesero' : '/cocina';
-      await this.router.navigateByUrl(redirect ?? fallback);
+      const homeByRole: Record<string, string> = {
+        admin: '/admin',
+        mesero: '/mesero',
+        cocina: '/cocina',
+        cajero: '/cajero',
+      };
+      await this.router.navigateByUrl(redirect ?? homeByRole[user.role] ?? '/');
     } catch {
       this.error.set('Credenciales incorrectas. Verifica tu correo y contraseña.');
     } finally {

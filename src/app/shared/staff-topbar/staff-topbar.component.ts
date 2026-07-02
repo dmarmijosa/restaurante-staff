@@ -69,6 +69,7 @@ export class StaffTopbarComponent {
     if (role === 'admin') links.push({ label: 'Administrador', device: 'Escritorio', path: '/admin' });
     if (role === 'admin' || role === 'mesero') links.push({ label: 'Mesero', device: 'Tablet', path: '/mesero' });
     if (role === 'admin' || role === 'cocina') links.push({ label: 'Cocina', device: 'Pantalla', path: '/cocina' });
+    if (role === 'admin' || role === 'cajero') links.push({ label: 'Cajero', device: 'Caja', path: '/cajero' });
     links.push({ label: 'Cliente', device: 'Móvil · QR', path: '/' });
     return links;
   });

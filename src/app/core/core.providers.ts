@@ -14,6 +14,7 @@ import {
   OrdersRepository,
   SettingsRepository,
   StaffRepository,
+  StorageRepository,
   TablesRepository,
 } from './domain/repositories/repositories';
 import {
@@ -23,6 +24,7 @@ import {
   DemoOrdersRepository,
   DemoSettingsRepository,
   DemoStaffRepository,
+  DemoStorageRepository,
   DemoTablesRepository,
 } from './data/demo/demo-repositories';
 import {
@@ -32,6 +34,7 @@ import {
   SupabaseOrdersRepository,
   SupabaseSettingsRepository,
   SupabaseStaffRepository,
+  SupabaseStorageRepository,
   SupabaseTablesRepository,
 } from './data/supabase/supabase-repositories';
 import { isSupabaseConfigured } from './data/supabase/supabase-client.service';
@@ -46,5 +49,6 @@ export function provideRepositories(): Provider[] {
     { provide: StaffRepository, useClass: useSupabase ? SupabaseStaffRepository : DemoStaffRepository },
     { provide: SettingsRepository, useClass: useSupabase ? SupabaseSettingsRepository : DemoSettingsRepository },
     { provide: AuthRepository, useClass: useSupabase ? SupabaseAuthRepository : DemoAuthRepository },
+    { provide: StorageRepository, useClass: useSupabase ? SupabaseStorageRepository : DemoStorageRepository },
   ];
 }

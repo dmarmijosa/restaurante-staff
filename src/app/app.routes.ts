@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { roleGuard } from './core/auth/role.guard';
+import { bootstrapGuard } from './core/auth/bootstrap.guard';
 
 /**
  * Mapa de rutas por rol:
@@ -22,6 +23,13 @@ export const routes: Routes = [
   {
     path: 'login',
     loadComponent: () => import('./features/auth/login.component').then((m) => m.LoginComponent),
+  },
+  {
+    // Alta del administrador propietario; el guard la cierra en cuanto existe uno.
+    path: 'registro-inicial',
+    canActivate: [bootstrapGuard],
+    loadComponent: () =>
+      import('./features/auth/register-admin.component').then((m) => m.RegisterAdminComponent),
   },
   {
     path: 'admin',

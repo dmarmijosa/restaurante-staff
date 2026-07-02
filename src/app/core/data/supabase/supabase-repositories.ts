@@ -27,6 +27,7 @@ import {
   OrdersRepository,
   SettingsRepository,
   StaffRepository,
+  StorageRepository,
   TablesRepository,
   type SessionUser,
 } from '../../domain/repositories/repositories';
@@ -115,6 +116,11 @@ export class SupabaseMenuRepository extends MenuRepository {
 
   async setProductAvailability(id: number, available: boolean): Promise<void> {
     const { error } = await this.supabase.client.from('products').update({ available }).eq('id', id);
+    if (error) throw error;
+  }
+
+  async setProductImage(id: number, imageUrl: string | null): Promise<void> {
+    const { error } = await this.supabase.client.from('products').update({ image_url: imageUrl }).eq('id', id);
     if (error) throw error;
   }
 }
@@ -384,6 +390,7 @@ export class SupabaseSettingsRepository extends SettingsRepository {
       season: data.season,
       seasonStart: data.season_start,
       seasonEnd: data.season_end,
+      logoUrl: data.logo_url ?? null,
     };
   }
 
@@ -396,6 +403,7 @@ export class SupabaseSettingsRepository extends SettingsRepository {
         season: patch.season,
         season_start: patch.seasonStart,
         season_end: patch.seasonEnd,
+        logo_url: patch.logoUrl,
       })
       .eq('id', 1);
     if (error) throw error;
@@ -434,5 +442,43 @@ export class SupabaseAuthRepository extends AuthRepository {
     const { data } = await this.supabase.client.auth.getUser();
     if (!data.user) return null;
     return this.toSessionUser(data.user.id, data.user.email ?? '');
+  }
+
+  async adminExists(): Promise<boolean> {
+    const { data, error } = await this.supabase.client.rpc('admin_exists');
+    if (error) throw error;
+    return Boolean(data);
+  }
+
+  /**
+   * Registra al primer administrador. El trigger `handle_new_user` lo marca
+   * como admin propietario por ser el primer perfil. Si el proyecto exige
+   * confirmación por correo, no habrá sesión todavía y se devuelve null.
+   */
+  async signUpFirstAdmin(input: { fullName: string; email: string; password: string }): Promise<SessionUser | null> {
+    const { data, error } = await this.supabase.client.auth.signUp({
+      email: input.email,
+      password: input.password,
+      options: { data: { full_name: input.fullName, role: 'admin' } },
+    });
+    if (error) throw error;
+    if (!data.session || !data.user) return null; // requiere confirmar correo
+    return this.toSessionUser(data.user.id, data.user.email ?? input.email);
+  }
+}
+
+@Injectable()
+export class SupabaseStorageRepository extends StorageRepository {
+  private supabase = inject(SupabaseClientService);
+
+  async uploadImage(file: File, folder: 'productos' | 'logo'): Promise<string> {
+    const ext = file.name.split('.').pop() ?? 'jpg';
+    const path = `${folder}/${crypto.randomUUID()}.${ext}`;
+    const { error } = await this.supabase.client.storage
+      .from('imagenes')
+      .upload(path, file, { upsert: false, contentType: file.type });
+    if (error) throw error;
+    const { data } = this.supabase.client.storage.from('imagenes').getPublicUrl(path);
+    return data.publicUrl;
   }
 }

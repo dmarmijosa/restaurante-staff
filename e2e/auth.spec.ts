@@ -19,6 +19,12 @@ test.describe('Autenticación por roles', () => {
     await expect(page).toHaveURL(/\/login/);
   });
 
+  test('el registro inicial se cierra si ya existe un admin', async ({ page }) => {
+    // En demo siempre hay un admin de ejemplo → el bootstrapGuard redirige.
+    await page.goto('/registro-inicial');
+    await expect(page).toHaveURL(/\/login/);
+  });
+
   test('rechaza credenciales inválidas', async ({ page }) => {
     await login(page, 'admin@demo.dev', 'incorrecta');
     await expect(page.getByRole('alert')).toContainText('Credenciales incorrectas');

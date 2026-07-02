@@ -5,7 +5,7 @@
  * Tras autenticar se redirige al área del rol (o a la URL solicitada
  * originalmente si el guard nos mandó al login).
  */
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
@@ -119,6 +119,13 @@ import { isSupabaseConfigured } from '../../core/data/supabase/supabase-client.s
           {{ loading() ? 'Entrando…' : 'Iniciar sesión' }}
         </button>
 
+        @if (needsBootstrap()) {
+          <div class="mt-5 rounded-[10px] border-[1.5px] border-dashed border-terracota/50 bg-duna/40 p-3.5 text-[12px] leading-relaxed text-terracota-profundo">
+            Aún no hay ninguna cuenta. Empieza creando el
+            <a routerLink="/registro-inicial" class="font-bold underline">administrador del restaurante</a>.
+          </div>
+        }
+
         @if (demoMode) {
           <div class="mt-5 rounded-[10px] border-[1.5px] border-dashed border-borde-punteado p-3.5 text-[11.5px] leading-relaxed text-tinta-media">
             <strong>Modo demo</strong> (sin Supabase configurado). Cuentas de prueba:<br />
@@ -133,16 +140,27 @@ import { isSupabaseConfigured } from '../../core/data/supabase/supabase-client.s
     </div>
   `,
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   private auth = inject(AuthService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private fb = inject(FormBuilder);
 
+  ngOnInit(): void {
+    // Solo con Supabase: si aún no hay admin, ofrece el registro inicial.
+    if (this.demoMode) return;
+    void this.auth
+      .adminExists()
+      .then((exists) => this.needsBootstrap.set(!exists))
+      .catch(() => this.needsBootstrap.set(false));
+  }
+
   protected readonly demoMode = !isSupabaseConfigured();
   protected readonly loading = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly showPassword = signal(false);
+  /** true cuando no hay ningún admin todavía: se ofrece el registro inicial. */
+  protected readonly needsBootstrap = signal(false);
 
   // Marcan cada campo como "tocado" para mostrar el error solo tras el blur
   // (inline-validation: no gritar errores mientras el usuario aún escribe).

@@ -15,7 +15,11 @@ Base: `https://<project>.supabase.co/rest/v1`
 | `/orders` | GET, POST, PATCH | todos / anónimo crea / staff avanza | `source='qr'` para pedidos del cliente |
 | `/order_items` | GET, POST | todos / anónimo | snapshot de nombre y precio |
 | `/waiter_calls` | GET, POST, PATCH | todos / anónimo crea / staff atiende | |
+| `/restaurant_settings.logo_url` | PATCH | admin | URL del logo en Storage |
 | `/auth/v1/token` | POST | personal | login email + password |
+| `/auth/v1/signup` | POST | público (1ª vez) | registro inicial del admin propietario |
+| `/rest/v1/rpc/admin_exists` | POST | anon | ¿ya hay admin? (gobierna el registro inicial) |
+| `storage/v1/object/imagenes/**` | POST/GET | admin sube / público lee | fotos de producto y logo |
 
 ## Autenticación
 
@@ -84,6 +88,23 @@ Authorization: Bearer <access_token>
 POST /auth/v1/token?grant_type=password
 
 { "email": "ana@casanogal.mx", "password": "···" }
+```
+
+**Registro inicial del administrador (una sola vez):**
+
+```ts
+// Solo si admin_exists() === false. El trigger handle_new_user hace admin+owner
+// al PRIMER perfil; los siguientes registros toman rol 'mesero'.
+await client.rpc('admin_exists');            // → false la primera vez
+await client.auth.signUp({ email, password, options: { data: { full_name, role: 'admin' } } });
+```
+
+**Subir una imagen a Storage:**
+
+```ts
+const path = `productos/${crypto.randomUUID()}.jpg`;
+await client.storage.from('imagenes').upload(path, file, { contentType: file.type });
+const { data } = client.storage.from('imagenes').getPublicUrl(path); // → data.publicUrl
 ```
 
 **Realtime (supabase-js):**

@@ -93,6 +93,7 @@ export const DEMO_SETTINGS: RestaurantSettings = {
   season: 'alta',
   seasonStart: '2026-03-15',
   seasonEnd: '2026-09-15',
+  logoUrl: null,
 };
 
 /** Credenciales aceptadas por el modo demo (solo para probar la app). */

@@ -20,7 +20,8 @@
 | QR real por mesa (generación local + impresión) | ✅ Completo |
 | Accesibilidad y microinteracciones (focus-visible, reduced-motion, validación inline) | ✅ Completo |
 | Licencia MIT + CI (GitHub Actions) | ✅ Completo |
-| Fotos de productos (Storage) | 🔜 [Backlog](tasks/backlog.md) |
+| Registro inicial del administrador (una sola vez) | ✅ Completo |
+| Imágenes de productos y logo (Supabase Storage) | ✅ Completo |
 
 Pruebas: **19 unitarias** (Vitest) y **25 E2E** (Playwright, escritorio + móvil) en verde. Build de producción sin errores. CI en cada push/PR.
 
@@ -57,13 +58,9 @@ cp .env.example .env
 ```
 
 4. `npm start`. El script `scripts/set-env.mjs` genera `src/environments/env.generated.ts` (gitignorado) antes de compilar.
-5. Crea tu primer usuario en Authentication → Users; su perfil se crea solo (trigger). Márcalo propietario/admin:
-
-```sql
-update public.profiles set role = 'admin', is_owner = true where email = 'tu@correo.com';
-```
-
-El QR físico de cada mesa apunta a `https://tu-dominio/mesa/<numero>`.
+5. **Registro inicial del administrador**: abre la app e ve a **`/registro-inicial`** (o pulsa el aviso que aparece en `/login` cuando aún no hay cuentas). El **primer** usuario registrado se convierte automáticamente en **administrador propietario**; a partir de ahí esa ruta se cierra sola y el resto del equipo se da de alta desde el panel.
+   - Recomendado: en Supabase → Authentication → Providers, **desactiva el registro público** tras crear al propietario, para que solo el admin dé de alta cuentas.
+6. El QR físico de cada mesa apunta a `https://tu-dominio/mesa/<numero>` (el panel del plano genera e imprime cada QR).
 
 ## Scripts
 

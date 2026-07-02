@@ -87,9 +87,17 @@ import { ToastService } from '../../../shared/toast/toast.service';
         @for (product of visibleProducts(); track product.id) {
           <article class="overflow-hidden rounded-[14px] border border-borde bg-papel">
             <div class="relative h-[110px]">
-              <div class="flex h-full w-full items-center justify-center bg-panal font-mono text-[10px] text-tinta-media">
-                foto · {{ product.name.toLowerCase() }}
-              </div>
+              @if (product.imageUrl) {
+                <img
+                  [src]="product.imageUrl"
+                  [alt]="'Foto de ' + product.name"
+                  class="h-full w-full object-cover"
+                />
+              } @else {
+                <div class="flex h-full w-full items-center justify-center bg-panal font-mono text-[10px] text-tinta-media">
+                  foto · {{ product.name.toLowerCase() }}
+                </div>
+              }
               @if (!product.available) {
                 <div class="pointer-events-none absolute inset-0 flex items-center justify-center bg-crema/70">
                   <span
@@ -99,6 +107,19 @@ import { ToastService } from '../../../shared/toast/toast.service';
                   </span>
                 </div>
               }
+              <!-- Subir/cambiar foto: label accesible que dispara un input file oculto -->
+              <label
+                class="absolute right-2 bottom-2 cursor-pointer rounded-full bg-cacao/85 px-2.5 py-1 text-[10.5px] font-bold text-lino hover:bg-cacao"
+              >
+                {{ product.imageUrl ? 'Cambiar foto' : 'Subir foto' }}
+                <input
+                  type="file"
+                  accept="image/*"
+                  class="sr-only"
+                  [attr.aria-label]="'Subir foto de ' + product.name"
+                  (change)="onProductImage(product.id, $event)"
+                />
+              </label>
             </div>
             <div class="px-3.5 pt-3 pb-3.5">
               <div class="flex items-baseline justify-between gap-2">
@@ -165,5 +186,13 @@ export class MenuProductsComponent {
     this.draftName = '';
     this.draftPrice = '';
     this.showForm.set(false);
+  }
+
+  /** Sube la foto elegida y la asocia al producto. */
+  protected onProductImage(id: number, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (file) void this.store.setProductImageFromFile(id, file);
+    input.value = ''; // permite volver a elegir el mismo archivo
   }
 }

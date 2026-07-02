@@ -30,6 +30,7 @@ import {
   OrdersRepository,
   SettingsRepository,
   StaffRepository,
+  StorageRepository,
   TablesRepository,
 } from '../domain/repositories/repositories';
 import { ToastService } from '../../shared/toast/toast.service';
@@ -52,6 +53,7 @@ export class RestaurantStore {
   private callsRepo = inject(CallsRepository);
   private staffRepo = inject(StaffRepository);
   private settingsRepo = inject(SettingsRepository);
+  private storageRepo = inject(StorageRepository);
   private toast = inject(ToastService);
 
   readonly settings = signal<RestaurantSettings>({
@@ -60,6 +62,7 @@ export class RestaurantStore {
     season: 'alta',
     seasonStart: null,
     seasonEnd: null,
+    logoUrl: null,
   });
   readonly categories = signal<Category[]>([]);
   readonly products = signal<Product[]>([]);
@@ -281,6 +284,21 @@ export class RestaurantStore {
     this.toast.show('Producto agregado al menú');
   }
 
+  /**
+   * Sube una foto a Storage y la asocia al producto. El menú del cliente la
+   * muestra al instante (actualización optimista del signal).
+   */
+  async setProductImageFromFile(id: number, file: File): Promise<void> {
+    try {
+      const url = await this.storageRepo.uploadImage(file, 'productos');
+      await this.menuRepo.setProductImage(id, url);
+      this.products.update((ps) => ps.map((p) => (p.id === id ? { ...p, imageUrl: url } : p)));
+      this.toast.show('Foto del producto actualizada');
+    } catch {
+      this.toast.show('No se pudo subir la imagen');
+    }
+  }
+
   async addCategory(name: string): Promise<boolean> {
     if (this.categories().some((c) => c.name.toLowerCase() === name.toLowerCase())) {
       this.toast.show('Esa categoría ya existe');
@@ -381,5 +399,17 @@ export class RestaurantStore {
   async setRestaurantName(name: string): Promise<void> {
     this.settings.update((s) => ({ ...s, name }));
     await this.settingsRepo.updateSettings({ name });
+  }
+
+  /** Sube el logo a Storage y lo propaga a todo el sistema. */
+  async setLogoFromFile(file: File): Promise<void> {
+    try {
+      const url = await this.storageRepo.uploadImage(file, 'logo');
+      this.settings.update((s) => ({ ...s, logoUrl: url }));
+      await this.settingsRepo.updateSettings({ logoUrl: url });
+      this.toast.show('Logo actualizado');
+    } catch {
+      this.toast.show('No se pudo subir el logo');
+    }
   }
 }

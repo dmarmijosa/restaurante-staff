@@ -22,7 +22,13 @@ La baja de personal es un **DELETE físico**, no un soft-delete: derecho de supr
 Un pedido conserva lo que el cliente pidió aunque el producto cambie de precio o se elimine después (integridad histórica de la comanda).
 
 ## ADR-8 · Variables de entorno vía `scripts/set-env.mjs`
-Angular compila las variables en el bundle; el script genera `env.generated.ts` (gitignorado) desde `.env` o del entorno del CI. Ninguna clave se versiona.
+Angular compila las variables en el bundle; el script genera `env.generated.ts` (gitignorado) desde `.env` o del entorno del CI. Ninguna clave se versiona. `RS_FORCE_DEMO=1` fuerza el modo demo (lo usan Playwright y el preview para no tocar la base real).
+
+## ADR-9 · Registro inicial del admin, garantizado "una sola vez" en la base
+El primer administrador se crea con un formulario público (`/registro-inicial`), pero el "una sola vez" no depende del front: el trigger `handle_new_user` marca **admin + propietario** solo al primer perfil (los siguientes son `mesero`), y `admin_exists()` (RPC pública que solo devuelve un booleano) cierra la ruta vía `bootstrapGuard` en cuanto existe un admin. Recomendado: desactivar el registro público en Supabase Auth tras el bootstrap.
+
+## ADR-10 · Imágenes en Supabase Storage (bucket público `imagenes`)
+Bucket público para que el menú del cliente muestre fotos sin login; escritura restringida al admin por políticas RLS sobre `storage.objects`. Las URLs públicas se guardan en `products.image_url` y `restaurant_settings.logo_url`. En modo demo, el `StorageRepository` devuelve un data URL local (previsualización sin backend).
 
 ## Patrones utilizados
 - **Repository** (puertos/adaptadores), **Facade** (`RestaurantStore`), **Factory** (`provideRepositories`, `roleGuard`), actualización **optimista** + sincronización Realtime, **standalone components** con lazy loading por feature.

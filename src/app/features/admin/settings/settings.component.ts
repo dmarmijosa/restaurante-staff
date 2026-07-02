@@ -26,11 +26,27 @@ import { AVATAR_PALETTE, initialsOf } from '../../../shared/ui-maps';
       <div class="mb-3.5 rounded-[14px] border border-borde bg-papel px-5 py-[18px]">
         <div class="mb-3 text-[13px] font-semibold">Identidad</div>
         <div class="flex items-center gap-4">
-          <div
-            class="flex h-16 w-16 flex-none items-center justify-center rounded-xl bg-panal font-mono text-[9px] text-tinta-media"
+          <label
+            class="group relative flex h-16 w-16 flex-none cursor-pointer items-center justify-center overflow-hidden rounded-xl bg-panal font-mono text-[9px] text-tinta-media"
           >
-            logo
-          </div>
+            @if (store.settings().logoUrl; as logo) {
+              <img [src]="logo" alt="Logo del restaurante" class="h-full w-full object-cover" />
+            } @else {
+              <span>logo</span>
+            }
+            <span
+              class="absolute inset-x-0 bottom-0 bg-cacao/80 py-0.5 text-center text-[8.5px] font-bold text-lino opacity-0 group-hover:opacity-100"
+            >
+              Cambiar
+            </span>
+            <input
+              type="file"
+              accept="image/*"
+              class="sr-only"
+              aria-label="Subir logo del restaurante"
+              (change)="onLogo($event)"
+            />
+          </label>
           <div class="flex-1">
             <div class="mb-[5px] text-[11px] font-semibold text-tinta-media">Nombre del restaurante</div>
             <input
@@ -127,6 +143,14 @@ export class SettingsComponent {
   protected draftName = '';
   protected draftEmail = '';
   protected readonly confirmingId = signal<string | null>(null);
+
+  /** Sube el logo elegido a Storage. */
+  protected onLogo(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (file) void this.store.setLogoFromFile(file);
+    input.value = '';
+  }
 
   protected readonly adminRows = computed(() =>
     this.store.admins().map((admin, i) => ({

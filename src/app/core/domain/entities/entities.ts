@@ -104,6 +104,8 @@ export interface RestaurantSettings {
   season: Season;
   seasonStart: string | null;
   seasonEnd: string | null;
+  /** Logo del restaurante (URL pública en Storage), o null si no hay. */
+  logoUrl: string | null;
 }
 
 /** Total de una comanda; vive en el dominio para no duplicar la regla en cada vista. */

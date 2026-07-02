@@ -42,6 +42,21 @@ export class AuthService {
     return user;
   }
 
+  /** ¿Ya hay un administrador? Gobierna la visibilidad del registro inicial. */
+  adminExists(): Promise<boolean> {
+    return this.repo.adminExists();
+  }
+
+  /**
+   * Registro del primer administrador. Si devuelve sesión, queda autenticado;
+   * si devuelve null, el proyecto exige confirmar el correo antes de entrar.
+   */
+  async signUpFirstAdmin(input: { fullName: string; email: string; password: string }): Promise<SessionUser | null> {
+    const user = await this.repo.signUpFirstAdmin(input);
+    if (user) this._user.set(user);
+    return user;
+  }
+
   async signOut(): Promise<void> {
     await this.repo.signOut();
     this._user.set(null);

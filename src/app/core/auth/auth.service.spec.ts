@@ -53,4 +53,11 @@ describe('AuthService', () => {
     expect(auth.isLoggedIn()).toBe(false);
     expect(auth.role()).toBeNull();
   });
+
+  it('en modo demo ya existe un admin (registro inicial deshabilitado)', async () => {
+    expect(await auth.adminExists()).toBe(true);
+    await expect(
+      auth.signUpFirstAdmin({ fullName: 'X', email: 'x@x.dev', password: 'password1' }),
+    ).rejects.toThrow();
+  });
 });

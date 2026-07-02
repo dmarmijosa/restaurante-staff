@@ -33,6 +33,8 @@ export abstract class MenuRepository {
     description?: string;
   }): Promise<Product>;
   abstract setProductAvailability(id: number, available: boolean): Promise<void>;
+  /** Asocia (o quita) la foto de un producto tras subirla a Storage. */
+  abstract setProductImage(id: number, imageUrl: string | null): Promise<void>;
 }
 
 export abstract class TablesRepository {
@@ -85,4 +87,28 @@ export abstract class AuthRepository {
   abstract signIn(email: string, password: string): Promise<SessionUser>;
   abstract signOut(): Promise<void>;
   abstract getCurrentUser(): Promise<SessionUser | null>;
+  /**
+   * ¿Ya existe un administrador? El registro inicial solo se muestra cuando
+   * devuelve false, garantizando que ocurre "una sola vez".
+   */
+  abstract adminExists(): Promise<boolean>;
+  /**
+   * Registro del primer administrador (propietario). Devuelve la sesión si el
+   * proyecto no exige confirmación por correo, o null si hay que confirmar.
+   */
+  abstract signUpFirstAdmin(input: {
+    fullName: string;
+    email: string;
+    password: string;
+  }): Promise<SessionUser | null>;
+}
+
+/**
+ * Almacenamiento de imágenes (fotos de productos, logo del restaurante).
+ * Contrato en el dominio para que las vistas suban archivos sin conocer
+ * Supabase Storage ni el modo demo.
+ */
+export abstract class StorageRepository {
+  /** Sube el archivo y devuelve la URL pública para guardarla en la entidad. */
+  abstract uploadImage(file: File, folder: 'productos' | 'logo'): Promise<string>;
 }

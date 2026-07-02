@@ -12,6 +12,7 @@ import {
   OrdersRepository,
   SettingsRepository,
   StaffRepository,
+  StorageRepository,
   TablesRepository,
 } from '../domain/repositories/repositories';
 import {
@@ -21,6 +22,7 @@ import {
   DemoOrdersRepository,
   DemoSettingsRepository,
   DemoStaffRepository,
+  DemoStorageRepository,
   DemoTablesRepository,
 } from '../data/demo/demo-repositories';
 
@@ -37,6 +39,7 @@ describe('RestaurantStore', () => {
         { provide: StaffRepository, useClass: DemoStaffRepository },
         { provide: SettingsRepository, useClass: DemoSettingsRepository },
         { provide: AuthRepository, useClass: DemoAuthRepository },
+        { provide: StorageRepository, useClass: DemoStorageRepository },
       ],
     });
     store = TestBed.inject(RestaurantStore);

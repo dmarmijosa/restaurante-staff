@@ -2,8 +2,10 @@
 
 ## Mejoras futuras
 
-- [ ] Supabase Storage para fotos de productos y logo del restaurante (los huecos "foto"/"logo" ya existen en la UI)
+- [x] ~~Supabase Storage para fotos de productos y logo~~ — hecho (bucket `imagenes`, subida en menú y ajustes)
 - [x] ~~Generador/impresión de códigos QR por mesa~~ — hecho (`app-table-qr`, generación local + impresión)
+- [x] ~~Registro inicial del administrador~~ — hecho (`/registro-inicial`, una sola vez)
+- [ ] Recorte/compresión de imágenes antes de subir (hoy se sube el archivo tal cual)
 - [ ] Fechas de temporada editables con date picker (hoy son informativas, como el mockup)
 - [ ] Asignación de mesas a meseros desde el plano (hoy viene del seed)
 - [ ] Multi-restaurante (multi-tenant): un despliegue, varios locales

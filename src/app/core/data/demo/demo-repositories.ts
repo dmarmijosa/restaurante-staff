@@ -28,6 +28,7 @@ import {
   OrdersRepository,
   SettingsRepository,
   StaffRepository,
+  StorageRepository,
   TablesRepository,
   type SessionUser,
 } from '../../domain/repositories/repositories';
@@ -106,6 +107,11 @@ export class DemoMenuRepository extends MenuRepository {
   async setProductAvailability(id: number, available: boolean): Promise<void> {
     const p = this.products.find((x) => x.id === id);
     if (p) p.available = available;
+  }
+
+  async setProductImage(id: number, imageUrl: string | null): Promise<void> {
+    const p = this.products.find((x) => x.id === id);
+    if (p) p.imageUrl = imageUrl;
   }
 }
 
@@ -271,5 +277,27 @@ export class DemoAuthRepository extends AuthRepository {
     const raw = sessionStorage.getItem('demo-session');
     this.current = raw ? (JSON.parse(raw) as SessionUser) : null;
     return this.current;
+  }
+
+  /** En demo siempre hay un admin de ejemplo, así que el registro inicial no aplica. */
+  async adminExists(): Promise<boolean> {
+    return true;
+  }
+
+  async signUpFirstAdmin(): Promise<SessionUser | null> {
+    throw new Error('El registro inicial no está disponible en modo demo');
+  }
+}
+
+@Injectable()
+export class DemoStorageRepository extends StorageRepository {
+  /** Devuelve un data URL local para previsualizar sin backend. */
+  async uploadImage(file: File, _folder: 'productos' | 'logo'): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    });
   }
 }

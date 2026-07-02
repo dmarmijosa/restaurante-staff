@@ -36,11 +36,15 @@ const STEP_DEFS: Array<{ key: OrderStatus; label: string; desc: string }> = [
         <!-- Cabecera -->
         <header class="flex-none px-[18px] pt-8 pb-2.5">
           <div class="mb-2.5 flex items-center gap-[9px]">
-            <div
-              class="flex h-[26px] w-[26px] items-center justify-center rounded-[7px] bg-terracota font-serif text-[13px] font-bold text-lino-calido"
-            >
-              C
-            </div>
+            @if (store.settings().logoUrl; as logo) {
+              <img [src]="logo" alt="Logo del restaurante" class="h-[26px] w-[26px] flex-none rounded-[7px] object-cover" />
+            } @else {
+              <div
+                class="flex h-[26px] w-[26px] items-center justify-center rounded-[7px] bg-terracota font-serif text-[13px] font-bold text-lino-calido"
+              >
+                {{ store.settings().name.charAt(0) }}
+              </div>
+            }
             <h1 class="m-0 flex-1 font-serif text-[21px] font-semibold">{{ store.settings().name }}</h1>
           </div>
           <div class="flex items-center gap-2">
@@ -104,11 +108,19 @@ const STEP_DEFS: Array<{ key: OrderStatus; label: string; desc: string }> = [
               <main class="flex flex-1 flex-col gap-2.5 overflow-y-auto px-[18px] pt-0.5 pb-[130px]">
                 @for (product of visibleProducts(); track product.id) {
                   <article class="flex gap-3 rounded-[14px] border border-borde-suave bg-papel p-2.5">
-                    <div
-                      class="flex h-16 w-16 flex-none items-center justify-center rounded-[10px] bg-panal font-mono text-[9px] text-tinta-media"
-                    >
-                      foto
-                    </div>
+                    @if (product.imageUrl) {
+                      <img
+                        [src]="product.imageUrl"
+                        [alt]="'Foto de ' + product.name"
+                        class="h-16 w-16 flex-none rounded-[10px] object-cover"
+                      />
+                    } @else {
+                      <div
+                        class="flex h-16 w-16 flex-none items-center justify-center rounded-[10px] bg-panal font-mono text-[9px] text-tinta-media"
+                      >
+                        foto
+                      </div>
+                    }
                     <div class="flex min-w-0 flex-1 flex-col gap-0.5">
                       <div class="text-[13.5px] font-semibold">{{ product.name }}</div>
                       <div class="text-[11px] leading-snug text-tinta-media">{{ product.description }}</div>

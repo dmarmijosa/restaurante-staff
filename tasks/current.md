@@ -1,0 +1,63 @@
+# Trabajo actual
+
+_Última actualización: 2026-07-02_
+
+## Qué se está desarrollando
+
+MVP completo de la plataforma (v0.4): réplica del diseño original con las cuatro vistas funcionando en modo demo y contra Supabase.
+
+**Hecho en esta iteración:**
+- ✅ Proyecto Angular 22 + Tailwind v4 con design tokens del mockup
+- ✅ Clean architecture: dominio, aplicación (store con signals), datos (Supabase + demo)
+- ✅ Autenticación con roles (admin/mesero/cocina) y guards; cliente sin login
+- ✅ Vistas: Cliente (home + QR `/mesa/:n`), Login (footer), Admin (7 secciones con plano drag & drop y fusión de mesas), Mesero, Cocina
+- ✅ Eliminación permanente de personal con doble confirmación (protección de datos)
+- ✅ Migraciones SQL + RLS + seed en `supabase/`
+- ✅ 19 pruebas unitarias (Vitest) y 25 E2E (Playwright, escritorio + móvil) en verde
+- ✅ Build de producción sin errores
+- ✅ Documentación en `docs/` y este tablero
+
+## Hecho tras conectar Supabase (2026-07-02, iteración 2)
+
+- ✅ MCP de Supabase autorizado; proyecto `vtkdvxrocemdyybynegs` ("Restaurante Staff") accesible
+- ✅ Migraciones aplicadas: esquema (8 tablas), RLS en todas, seed (4 categorías, 11 productos, 8 mesas, ajustes)
+- ✅ Advisors de seguridad revisados: revocado EXECUTE de las funciones SECURITY DEFINER e INSERT anónimos endurecidos (order_items/waiter_calls contra registros existentes). Solo queda el aviso de `rls_auto_enable`, función interna de Supabase.
+- ✅ `.env` con la clave publishable (gitignorado); app compila y corre en modo Supabase
+- ✅ Corregido 401 del cliente anónimo: `getOrders` ya no incrusta `profiles` (privacidad); `refreshAll` usa `allSettled`; nombre de mesero resuelto en el store
+- ✅ Verificado en preview: la home carga los 11 productos reales desde la base
+
+## Hecho tras el pulido de diseño (2026-07-02, iteración 3)
+
+- ✅ Pulido de accesibilidad/UX global con **ui-ux-pro-max** (identidad intacta): `:focus-visible` terracota, `prefers-reduced-motion`, transiciones 150–300 ms, `touch-action: manipulation`, `min-h-dvh` en todas las vistas
+- ✅ Login mejorado: validación inline tras *touched*, indicadores requeridos, toggle mostrar/ocultar contraseña, `aria-invalid`/`aria-describedby`, focus al primer campo inválido, `aria-live` en el error
+- ✅ **QR real por mesa** (`app-table-qr`): generación local con `qrcode` (sin llamadas externas), apunta a `/mesa/:numero`, botón de impresión. Reemplaza el placeholder del diseño
+- ✅ **LICENSE MIT** y **CI** (`.github/workflows/ci.yml`): build + unit + e2e en cada push/PR, en modo demo
+- ✅ E2E herméticas: `RS_FORCE_DEMO=1` fuerza modo demo en Playwright (no muta la base real). 25/25 verde
+- ✅ Verificado en preview: login pulido y QR generándose
+
+## Qué falta por terminar
+
+- Crear la primera cuenta admin (propietaria) en Supabase Auth y marcar `is_owner=true` — **acción del usuario** (no la puede hacer el asistente)
+- Subida de imágenes de productos y logo (Supabase Storage)
+
+## Próximos pasos
+
+1. Crear usuarios del personal en Supabase Auth y probar login real + RLS con los tres roles
+2. Implementar Supabase Storage para fotos de producto/logo
+3. Publicar el repositorio (ya tiene licencia MIT y CI)
+
+## Bloqueadores
+
+- Ninguno.
+
+## Archivos afectados (iteración 3 — diseño/pendientes)
+
+- `src/styles.css` (focus-visible, reduced-motion, transiciones, sr-only)
+- `src/app/features/auth/login.component.ts` (validación inline, toggle, a11y)
+- `src/app/shared/table-qr/table-qr.component.ts` (nuevo, QR por mesa)
+- `src/app/features/admin/floor-plan/floor-plan.component.ts` (usa el QR real)
+- `src/app/features/**` (`min-h-dvh` en las raíces)
+- `scripts/set-env.mjs` (RS_FORCE_DEMO), `playwright.config.ts` (env demo)
+- `e2e/auth.spec.ts`, `e2e/admin.spec.ts` (selectores por id)
+- `LICENSE` (MIT), `.github/workflows/ci.yml` (nuevo)
+- `docs/*.md`, `tasks/*.md`, `README.md`

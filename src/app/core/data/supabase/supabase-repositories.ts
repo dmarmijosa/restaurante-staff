@@ -1,0 +1,438 @@
+/**
+ * Implementación de los repositorios sobre Supabase (Postgres + Auth + Realtime).
+ *
+ * Cada método traduce entre el modelo de la base (snake_case, ids de auth) y
+ * las entidades del dominio (camelCase). Las reglas de autorización viven en
+ * las políticas RLS del servidor (supabase/migrations/..._rls.sql); aquí solo
+ * se hacen las llamadas.
+ */
+import { Injectable, inject } from '@angular/core';
+import type {
+  Category,
+  Order,
+  OrderItem,
+  OrderStatus,
+  Product,
+  RestaurantSettings,
+  RestaurantTable,
+  Shift,
+  StaffMember,
+  StaffRole,
+  WaiterCall,
+} from '../../domain/entities/entities';
+import {
+  AuthRepository,
+  CallsRepository,
+  MenuRepository,
+  OrdersRepository,
+  SettingsRepository,
+  StaffRepository,
+  TablesRepository,
+  type SessionUser,
+} from '../../domain/repositories/repositories';
+import { SupabaseClientService } from './supabase-client.service';
+
+/** Formatea la hora de creación como la muestra el diseño (HH:MM). */
+function toTimeLabel(iso: string): string {
+  const d = new Date(iso);
+  return `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
+@Injectable()
+export class SupabaseMenuRepository extends MenuRepository {
+  private supabase = inject(SupabaseClientService);
+
+  async getCategories(): Promise<Category[]> {
+    const { data, error } = await this.supabase.client
+      .from('categories')
+      .select('id, name, position')
+      .order('position');
+    if (error) throw error;
+    return data ?? [];
+  }
+
+  async addCategory(name: string): Promise<Category> {
+    const { data, error } = await this.supabase.client
+      .from('categories')
+      .insert({ name })
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  async deleteCategory(id: number): Promise<void> {
+    const { error } = await this.supabase.client.from('categories').delete().eq('id', id);
+    if (error) throw error;
+  }
+
+  async getProducts(): Promise<Product[]> {
+    const { data, error } = await this.supabase.client
+      .from('products')
+      .select('id, name, description, price, available, image_url, category_id, categories(name)')
+      .order('id');
+    if (error) throw error;
+    return (data ?? []).map((row) => ({
+      id: row.id,
+      name: row.name,
+      description: row.description,
+      price: Number(row.price),
+      categoryId: row.category_id,
+      categoryName: (row.categories as unknown as { name: string } | null)?.name ?? '',
+      available: row.available,
+      imageUrl: row.image_url,
+    }));
+  }
+
+  async addProduct(input: {
+    name: string;
+    price: number;
+    categoryId: number | null;
+    description?: string;
+  }): Promise<Product> {
+    const { data, error } = await this.supabase.client
+      .from('products')
+      .insert({
+        name: input.name,
+        price: input.price,
+        category_id: input.categoryId,
+        description: input.description ?? 'Nuevo platillo de la casa.',
+      })
+      .select('id, name, description, price, available, image_url, category_id, categories(name)')
+      .single();
+    if (error) throw error;
+    return {
+      id: data.id,
+      name: data.name,
+      description: data.description,
+      price: Number(data.price),
+      categoryId: data.category_id,
+      categoryName: (data.categories as unknown as { name: string } | null)?.name ?? '',
+      available: data.available,
+      imageUrl: data.image_url,
+    };
+  }
+
+  async setProductAvailability(id: number, available: boolean): Promise<void> {
+    const { error } = await this.supabase.client.from('products').update({ available }).eq('id', id);
+    if (error) throw error;
+  }
+}
+
+@Injectable()
+export class SupabaseTablesRepository extends TablesRepository {
+  private supabase = inject(SupabaseClientService);
+
+  private map(row: Record<string, unknown>): RestaurantTable {
+    return {
+      id: row['id'] as number,
+      number: row['number'] as number,
+      x: row['x'] as number,
+      y: row['y'] as number,
+      seats: row['seats'] as number,
+      shape: row['shape'] as RestaurantTable['shape'],
+      status: row['status'] as RestaurantTable['status'],
+      mergedNumbers: (row['merged_numbers'] as number[] | null) ?? null,
+    };
+  }
+
+  async getTables(): Promise<RestaurantTable[]> {
+    const { data, error } = await this.supabase.client.from('tables').select('*').order('number');
+    if (error) throw error;
+    return (data ?? []).map((r) => this.map(r));
+  }
+
+  async saveTable(table: RestaurantTable): Promise<RestaurantTable> {
+    const { error } = await this.supabase.client
+      .from('tables')
+      .update({
+        number: table.number,
+        x: table.x,
+        y: table.y,
+        seats: table.seats,
+        shape: table.shape,
+        status: table.status,
+        merged_numbers: table.mergedNumbers,
+      })
+      .eq('id', table.id);
+    if (error) throw error;
+    return table;
+  }
+
+  async addTable(table: Omit<RestaurantTable, 'id'>): Promise<RestaurantTable> {
+    const { data, error } = await this.supabase.client
+      .from('tables')
+      .insert({
+        number: table.number,
+        x: table.x,
+        y: table.y,
+        seats: table.seats,
+        shape: table.shape,
+        status: table.status,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    return this.map(data);
+  }
+
+  async deleteTable(id: number): Promise<void> {
+    const { error } = await this.supabase.client.from('tables').delete().eq('id', id);
+    if (error) throw error;
+  }
+}
+
+@Injectable()
+export class SupabaseOrdersRepository extends OrdersRepository {
+  private supabase = inject(SupabaseClientService);
+
+  async getOrders(): Promise<Order[]> {
+    // No se incrusta profiles(full_name): el cliente anónimo no puede leer
+    // profiles (contiene correos/roles del personal), y hacerlo público
+    // violaría la protección de datos. El nombre del mesero se resuelve en el
+    // store a partir de waiter_id y del listado de personal ya cargado.
+    const { data, error } = await this.supabase.client
+      .from('orders')
+      .select('id, table_number, waiter_id, status, created_at, order_items(product_id, product_name, unit_price, quantity)')
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return (data ?? []).map((row) => ({
+      id: row.id,
+      tableNumber: row.table_number,
+      waiterId: row.waiter_id,
+      waiterName: '—',
+      status: row.status as OrderStatus,
+      createdAt: toTimeLabel(row.created_at),
+      items: (row.order_items as unknown as Array<Record<string, unknown>>).map((it) => ({
+        productId: it['product_id'] as number | null,
+        productName: it['product_name'] as string,
+        unitPrice: Number(it['unit_price']),
+        quantity: it['quantity'] as number,
+      })),
+    }));
+  }
+
+  async placeOrder(tableNumber: number, items: OrderItem[]): Promise<Order> {
+    const { data, error } = await this.supabase.client
+      .from('orders')
+      .insert({ table_number: tableNumber, source: 'qr' })
+      .select()
+      .single();
+    if (error) throw error;
+    const { error: itemsError } = await this.supabase.client.from('order_items').insert(
+      items.map((it) => ({
+        order_id: data.id,
+        product_id: it.productId,
+        product_name: it.productName,
+        unit_price: it.unitPrice,
+        quantity: it.quantity,
+      })),
+    );
+    if (itemsError) throw itemsError;
+    return {
+      id: data.id,
+      tableNumber,
+      waiterName: '—',
+      status: 'recibido',
+      createdAt: 'ahora',
+      items,
+    };
+  }
+
+  async setStatus(orderId: number, status: OrderStatus): Promise<void> {
+    const { error } = await this.supabase.client.from('orders').update({ status }).eq('id', orderId);
+    if (error) throw error;
+  }
+
+  onChange(listener: () => void): () => void {
+    const channel = this.supabase.client
+      .channel('orders-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, listener)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'order_items' }, listener)
+      .subscribe();
+    return () => {
+      void this.supabase.client.removeChannel(channel);
+    };
+  }
+}
+
+@Injectable()
+export class SupabaseCallsRepository extends CallsRepository {
+  private supabase = inject(SupabaseClientService);
+
+  async getPendingCalls(): Promise<WaiterCall[]> {
+    const { data, error } = await this.supabase.client
+      .from('waiter_calls')
+      .select('*')
+      .eq('attended', false)
+      .order('created_at');
+    if (error) throw error;
+    return (data ?? []).map((row) => ({
+      id: row.id,
+      tableNumber: row.table_number,
+      attended: row.attended,
+      createdAt: toTimeLabel(row.created_at),
+    }));
+  }
+
+  async createCall(tableNumber: number): Promise<WaiterCall> {
+    const { data, error } = await this.supabase.client
+      .from('waiter_calls')
+      .insert({ table_number: tableNumber })
+      .select()
+      .single();
+    if (error) throw error;
+    return { id: data.id, tableNumber, attended: false, createdAt: 'ahora' };
+  }
+
+  async attendCall(id: number): Promise<void> {
+    const { error } = await this.supabase.client
+      .from('waiter_calls')
+      .update({ attended: true })
+      .eq('id', id);
+    if (error) throw error;
+  }
+
+  onChange(listener: () => void): () => void {
+    const channel = this.supabase.client
+      .channel('calls-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'waiter_calls' }, listener)
+      .subscribe();
+    return () => {
+      void this.supabase.client.removeChannel(channel);
+    };
+  }
+}
+
+@Injectable()
+export class SupabaseStaffRepository extends StaffRepository {
+  private supabase = inject(SupabaseClientService);
+
+  async getStaff(): Promise<StaffMember[]> {
+    const { data, error } = await this.supabase.client.from('profiles').select('*').order('created_at');
+    if (error) throw error;
+    return (data ?? []).map((row) => ({
+      id: row.id,
+      fullName: row.full_name,
+      email: row.email ?? '',
+      role: row.role as StaffRole,
+      shift: row.shift as Shift | null,
+      status: row.status,
+      isOwner: row.is_owner,
+      tables: [],
+    }));
+  }
+
+  /**
+   * El alta real de credenciales se hace en Supabase Auth (dashboard o
+   * invitación); aquí solo se registra el perfil operativo para que el admin
+   * gestione rol y turno.
+   */
+  async addStaff(input: { fullName: string; email: string; role: StaffRole; shift?: Shift }): Promise<StaffMember> {
+    const { data, error } = await this.supabase.client
+      .from('profiles')
+      .insert({
+        id: crypto.randomUUID(),
+        full_name: input.fullName,
+        email: input.email,
+        role: input.role,
+        shift: input.shift ?? null,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    return {
+      id: data.id,
+      fullName: data.full_name,
+      email: data.email ?? '',
+      role: data.role,
+      shift: data.shift,
+      status: data.status,
+      isOwner: data.is_owner,
+      tables: [],
+    };
+  }
+
+  async updateStaff(id: string, patch: Partial<Pick<StaffMember, 'role' | 'shift' | 'status'>>): Promise<void> {
+    const { error } = await this.supabase.client
+      .from('profiles')
+      .update({ role: patch.role, shift: patch.shift, status: patch.status })
+      .eq('id', id);
+    if (error) throw error;
+  }
+
+  async deleteStaffPermanently(id: string): Promise<void> {
+    const { error } = await this.supabase.client.from('profiles').delete().eq('id', id);
+    if (error) throw error;
+  }
+}
+
+@Injectable()
+export class SupabaseSettingsRepository extends SettingsRepository {
+  private supabase = inject(SupabaseClientService);
+
+  async getSettings(): Promise<RestaurantSettings> {
+    const { data, error } = await this.supabase.client
+      .from('restaurant_settings')
+      .select('*')
+      .eq('id', 1)
+      .single();
+    if (error) throw error;
+    return {
+      name: data.name,
+      isOpen: data.is_open,
+      season: data.season,
+      seasonStart: data.season_start,
+      seasonEnd: data.season_end,
+    };
+  }
+
+  async updateSettings(patch: Partial<RestaurantSettings>): Promise<void> {
+    const { error } = await this.supabase.client
+      .from('restaurant_settings')
+      .update({
+        name: patch.name,
+        is_open: patch.isOpen,
+        season: patch.season,
+        season_start: patch.seasonStart,
+        season_end: patch.seasonEnd,
+      })
+      .eq('id', 1);
+    if (error) throw error;
+  }
+}
+
+@Injectable()
+export class SupabaseAuthRepository extends AuthRepository {
+  private supabase = inject(SupabaseClientService);
+
+  private async toSessionUser(userId: string, email: string): Promise<SessionUser> {
+    const { data } = await this.supabase.client
+      .from('profiles')
+      .select('full_name, role')
+      .eq('id', userId)
+      .single();
+    return {
+      id: userId,
+      email,
+      fullName: data?.full_name ?? email,
+      role: (data?.role as StaffRole) ?? 'mesero',
+    };
+  }
+
+  async signIn(email: string, password: string): Promise<SessionUser> {
+    const { data, error } = await this.supabase.client.auth.signInWithPassword({ email, password });
+    if (error || !data.user) throw error ?? new Error('No se pudo iniciar sesión');
+    return this.toSessionUser(data.user.id, data.user.email ?? email);
+  }
+
+  async signOut(): Promise<void> {
+    await this.supabase.client.auth.signOut();
+  }
+
+  async getCurrentUser(): Promise<SessionUser | null> {
+    const { data } = await this.supabase.client.auth.getUser();
+    if (!data.user) return null;
+    return this.toSessionUser(data.user.id, data.user.email ?? '');
+  }
+}

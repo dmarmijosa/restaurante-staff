@@ -1,0 +1,180 @@
+/**
+ * Design tokens extraídos del diseño original "Restaurante Staff" (claude.ai/design).
+ * Se definen como tema de Tailwind v4 para que cada componente use las mismas
+ * clases utilitarias y el resultado sea idéntico al mockup.
+ */
+@import 'tailwindcss';
+
+@theme {
+  /* Tipografías del diseño */
+  --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-serif: 'Source Serif 4', ui-serif, Georgia, serif;
+
+  /* Fondos y superficies */
+  --color-crema: #f2ebdf; /* fondo general */
+  --color-papel: #fffcf7; /* tarjetas y paneles */
+  --color-marfil: #fbf5ec; /* fondo tablet mesero / cliente */
+  --color-panal: #efe7d9; /* columnas kanban, chips inactivos */
+  --color-arena: #f0e8da; /* chips cliente */
+  --color-duna: #f0e2d4; /* chips terracota suaves */
+
+  /* Bordes */
+  --color-borde: #e5daca;
+  --color-borde-suave: #ede3d2;
+  --color-borde-punteado: #d8ccbc;
+
+  /* Tinta (textos) */
+  --color-tinta: #2c2118;
+  --color-tinta-suave: #5d4f41;
+  --color-tinta-media: #8b7a69;
+  --color-tinta-tenue: #a3927f;
+
+  /* Barras oscuras */
+  --color-cacao: #241a11; /* barra superior / cocina */
+  --color-cacao-panel: #2a1f14; /* sidebar admin */
+  --color-cacao-hover: #4a3826;
+  --color-cacao-claro: #3a2c1e;
+  --color-lino: #f5efe6; /* texto sobre cacao */
+  --color-lino-calido: #fff6ec;
+  --color-lino-suave: #e8ddcb;
+  --color-lino-tenue: #c9bba8;
+  --color-lino-apagado: #b7a896;
+  --color-lino-gris: #a6957f;
+
+  /* Acento terracota */
+  --color-terracota: #c1683c;
+  --color-terracota-hover: #ad5a31;
+  --color-terracota-profundo: #8a5230;
+
+  /* Estados de mesa / pedidos */
+  --color-oliva: #7c905f; /* libre / listo */
+  --color-oliva-bg: #eef2e6;
+  --color-oliva-texto: #4e6337;
+  --color-arcilla: #b5764c; /* ocupada / preparando */
+  --color-arcilla-bg: #f7e8dc;
+  --color-ocre: #c49a3f; /* reservada / recibido */
+  --color-ocre-bg: #f7efdb;
+  --color-ocre-texto: #8a6b1f;
+  --color-rojizo: #b5493a; /* llamadas / eliminar */
+  --color-rojizo-hover: #9e3d30;
+  --color-rojizo-bg: #f8e9e3;
+  --color-rojizo-borde: #e5c4b5;
+
+  /* Avatares */
+  --color-avatar-1: #a66a4a;
+  --color-avatar-2: #7c905f;
+  --color-avatar-3: #c49a3f;
+  --color-avatar-4: #8a6b85;
+  --color-avatar-5: #5f7c90;
+}
+
+body {
+  margin: 0;
+  background: var(--color-crema);
+  color: var(--color-tinta);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+input,
+button,
+textarea,
+select {
+  font-family: inherit;
+}
+
+/* Elimina el retardo de 300 ms en toques y da feedback inmediato */
+button,
+a,
+[role='switch'],
+[role='button'] {
+  touch-action: manipulation;
+}
+
+/**
+ * Foco visible y accesible en todo elemento interactivo (regla CRÍTICA de
+ * accesibilidad). Se usa :focus-visible para no molestar al ratón, con un
+ * anillo terracota coherente con la identidad.
+ */
+:where(a, button, input, textarea, select, [role='switch'], [role='button'], [tabindex]):focus-visible {
+  outline: 2px solid var(--color-terracota);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Transición por defecto suave (150–300 ms) en controles interactivos */
+button,
+a,
+[role='switch'] {
+  transition:
+    background-color 0.18s ease,
+    color 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    opacity 0.18s ease;
+}
+
+/* Utilidad para clase de solo lectura por lectores de pantalla */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Animaciones del diseño original */
+@keyframes pulseDot {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+@keyframes toastIn {
+  from {
+    transform: translate(-50%, 14px);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
+}
+
+.animate-pulse-dot {
+  animation: pulseDot 1.2s infinite;
+}
+
+.animate-toast-in {
+  animation: toastIn 0.2s ease;
+}
+
+/**
+ * Respeta prefers-reduced-motion: quien pide menos movimiento no ve
+ * animaciones ni transiciones (regla de accesibilidad).
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Patrón de puntos del plano del salón */
+.plano-grid {
+  background-image: radial-gradient(#eadfce 1.3px, transparent 1.3px);
+  background-size: 26px 26px;
+}

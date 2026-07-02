@@ -1,0 +1,37 @@
+name: CI
+
+# Ejecuta build + pruebas en cada push/PR. Corre en modo demo (sin claves de
+# Supabase): el script set-env genera un entorno vacío y la app usa los
+# repositorios en memoria, así el pipeline no necesita secretos.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Compilar (producción)
+        run: npm run build
+
+      - name: Pruebas unitarias (Vitest)
+        run: npm test
+
+      - name: Instalar navegador de Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Pruebas E2E (Playwright)
+        run: npm run e2e

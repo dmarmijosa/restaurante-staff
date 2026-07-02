@@ -34,6 +34,7 @@ import {
   TablesRepository,
 } from '../domain/repositories/repositories';
 import { ToastService } from '../../shared/toast/toast.service';
+import { compressImage } from '../../shared/image-utils';
 
 /** Orden natural del flujo de una comanda. */
 const ORDER_CHAIN: OrderStatus[] = ['recibido', 'preparando', 'listo', 'entregado'];
@@ -290,7 +291,7 @@ export class RestaurantStore {
    */
   async setProductImageFromFile(id: number, file: File): Promise<void> {
     try {
-      const url = await this.storageRepo.uploadImage(file, 'productos');
+      const url = await this.storageRepo.uploadImage(await compressImage(file), 'productos');
       await this.menuRepo.setProductImage(id, url);
       this.products.update((ps) => ps.map((p) => (p.id === id ? { ...p, imageUrl: url } : p)));
       this.toast.show('Foto del producto actualizada');
@@ -396,6 +397,12 @@ export class RestaurantStore {
     await this.settingsRepo.updateSettings({ season });
   }
 
+  /** Actualiza inicio y/o fin de temporada (formato ISO yyyy-mm-dd o null). */
+  async setSeasonDates(patch: { seasonStart?: string | null; seasonEnd?: string | null }): Promise<void> {
+    this.settings.update((s) => ({ ...s, ...patch }));
+    await this.settingsRepo.updateSettings(patch);
+  }
+
   async setRestaurantName(name: string): Promise<void> {
     this.settings.update((s) => ({ ...s, name }));
     await this.settingsRepo.updateSettings({ name });
@@ -404,7 +411,8 @@ export class RestaurantStore {
   /** Sube el logo a Storage y lo propaga a todo el sistema. */
   async setLogoFromFile(file: File): Promise<void> {
     try {
-      const url = await this.storageRepo.uploadImage(file, 'logo');
+      // El logo se muestra pequeño: basta con 512px de lado mayor.
+      const url = await this.storageRepo.uploadImage(await compressImage(file, 512), 'logo');
       this.settings.update((s) => ({ ...s, logoUrl: url }));
       await this.settingsRepo.updateSettings({ logoUrl: url });
       this.toast.show('Logo actualizado');

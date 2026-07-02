@@ -76,19 +76,21 @@ const SEASON_DESCS: Record<Season, string> = {
           <div class="flex-1">
             <div class="mb-[5px] text-[11px] font-semibold text-tinta-media">Inicio de temporada</div>
             <input
-              value="15 mar 2026"
-              readonly
+              type="date"
+              [value]="store.settings().seasonStart ?? ''"
+              (change)="onStart($event)"
               aria-label="Inicio de temporada"
-              class="w-full rounded-[9px] border-[1.5px] border-borde bg-papel px-3 py-[9px] text-[13px] text-tinta outline-none"
+              class="min-h-11 w-full rounded-[9px] border-[1.5px] border-borde bg-papel px-3 py-[9px] text-[13px] text-tinta outline-none focus:border-terracota"
             />
           </div>
           <div class="flex-1">
             <div class="mb-[5px] text-[11px] font-semibold text-tinta-media">Fin de temporada</div>
             <input
-              value="15 sep 2026"
-              readonly
+              type="date"
+              [value]="store.settings().seasonEnd ?? ''"
+              (change)="onEnd($event)"
               aria-label="Fin de temporada"
-              class="w-full rounded-[9px] border-[1.5px] border-borde bg-papel px-3 py-[9px] text-[13px] text-tinta outline-none"
+              class="min-h-11 w-full rounded-[9px] border-[1.5px] border-borde bg-papel px-3 py-[9px] text-[13px] text-tinta outline-none focus:border-terracota"
             />
           </div>
         </div>
@@ -121,4 +123,12 @@ export class SeasonComponent {
   protected readonly store = inject(RestaurantStore);
   protected readonly seasonChips = SEASON_CHIPS;
   protected readonly seasonDesc = computed(() => SEASON_DESCS[this.store.settings().season]);
+
+  protected onStart(event: Event): void {
+    void this.store.setSeasonDates({ seasonStart: (event.target as HTMLInputElement).value || null });
+  }
+
+  protected onEnd(event: Event): void {
+    void this.store.setSeasonDates({ seasonEnd: (event.target as HTMLInputElement).value || null });
+  }
 }

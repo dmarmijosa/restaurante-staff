@@ -158,6 +158,8 @@ export class DemoOrdersRepository extends OrdersRepository {
       waiterName: 'Carlos M.',
       status: 'recibido',
       createdAt: 'ahora',
+      createdAtMs: Date.now(),
+      readyAtMs: null,
       paid: false,
       paymentMethod: null,
       paidAt: null,
@@ -170,7 +172,11 @@ export class DemoOrdersRepository extends OrdersRepository {
 
   async setStatus(orderId: number, status: OrderStatus): Promise<void> {
     const o = this.orders.find((x) => x.id === orderId);
-    if (o) o.status = status;
+    if (o) {
+      o.status = status;
+      // Al pasar a "listo" se sella el fin de cocina (si no estaba ya).
+      if (status === 'listo' && o.readyAtMs == null) o.readyAtMs = Date.now();
+    }
     this.emitter.emit();
   }
 

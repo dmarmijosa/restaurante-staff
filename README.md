@@ -25,6 +25,7 @@
 | Onboarding del panel con driver.js (guía interactiva) | ✅ Completo |
 | Rol Cajero + cobro por método de pago configurable | ✅ Completo |
 | Resumen/métricas del admin (ingresos, ticket medio, ventas por método, top productos) | ✅ Completo |
+| Tiempo de cocina (temporizador en vivo + tiempo medio de preparación) | ✅ Completo |
 | Manual de instalación para persona natural ([manual.md](manual.md)) | ✅ Completo |
 
 Pruebas: **19 unitarias** (Vitest) y **25 E2E** (Playwright, escritorio + móvil) en verde. Build de producción sin errores. CI en cada push/PR.

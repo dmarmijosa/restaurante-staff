@@ -202,7 +202,7 @@ export class SupabaseOrdersRepository extends OrdersRepository {
     const { data, error } = await this.supabase.client
       .from('orders')
       .select(
-        'id, table_number, waiter_id, status, created_at, paid, payment_method, paid_at, order_items(product_id, product_name, unit_price, quantity)',
+        'id, table_number, waiter_id, status, created_at, ready_at, paid, payment_method, paid_at, order_items(product_id, product_name, unit_price, quantity)',
       )
       .order('created_at', { ascending: false });
     if (error) throw error;
@@ -213,6 +213,8 @@ export class SupabaseOrdersRepository extends OrdersRepository {
       waiterName: '—',
       status: row.status as OrderStatus,
       createdAt: toTimeLabel(row.created_at),
+      createdAtMs: Date.parse(row.created_at),
+      readyAtMs: row.ready_at ? Date.parse(row.ready_at) : null,
       paid: row.paid ?? false,
       paymentMethod: row.payment_method ?? null,
       paidAt: row.paid_at ? toTimeLabel(row.paid_at) : null,
@@ -248,6 +250,8 @@ export class SupabaseOrdersRepository extends OrdersRepository {
       waiterName: '—',
       status: 'recibido',
       createdAt: 'ahora',
+      createdAtMs: Date.now(),
+      readyAtMs: null,
       paid: false,
       paymentMethod: null,
       paidAt: null,
@@ -256,7 +260,10 @@ export class SupabaseOrdersRepository extends OrdersRepository {
   }
 
   async setStatus(orderId: number, status: OrderStatus): Promise<void> {
-    const { error } = await this.supabase.client.from('orders').update({ status }).eq('id', orderId);
+    // Al pasar a "listo" se sella ready_at para medir el tiempo de cocina.
+    const patch: Record<string, unknown> = { status };
+    if (status === 'listo') patch['ready_at'] = new Date().toISOString();
+    const { error } = await this.supabase.client.from('orders').update(patch).eq('id', orderId);
     if (error) throw error;
   }
 

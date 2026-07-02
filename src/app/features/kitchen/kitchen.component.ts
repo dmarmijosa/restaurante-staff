@@ -3,10 +3,26 @@
  * comanda con cabecera ocre/arcilla según estado y un único botón de acción).
  * Cocina solo ve pedidos "recibido" y "preparando" — su trabajo termina cuando
  * el platillo está listo.
+ *
+ * Tiempo de cocina: cada comanda muestra los minutos que lleva esperando (reloj
+ * en vivo, se refresca cada 30 s) y se resalta en rojo si supera el umbral, para
+ * que la cocina priorice lo que más tiempo lleva.
  */
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  OnInit,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { RestaurantStore } from '../../core/application/restaurant.store';
 import { StaffTopbarComponent } from '../../shared/staff-topbar/staff-topbar.component';
+import { elapsedMinutes } from '../../core/domain/entities/entities';
+
+/** A partir de estos minutos, la comanda se marca como "lleva mucho". */
+const LATE_THRESHOLD_MIN = 15;
 
 @Component({
   selector: 'app-kitchen',
@@ -23,7 +39,7 @@ import { StaffTopbarComponent } from '../../shared/staff-topbar/staff-topbar.com
           <div class="text-sm text-lino-gris">{{ countLabel() }}</div>
         </div>
 
-        @if (store.kitchenOrders().length === 0) {
+        @if (cards().length === 0) {
           <div
             class="rounded-[18px] border-2 border-dashed border-lino/20 p-[60px] text-center text-xl text-lino-gris"
           >
@@ -32,19 +48,28 @@ import { StaffTopbarComponent } from '../../shared/staff-topbar/staff-topbar.com
         }
 
         <div class="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] items-start gap-4">
-          @for (order of store.kitchenOrders(); track order.id) {
-            <article class="overflow-hidden rounded-2xl bg-marfil">
+          @for (card of cards(); track card.order.id) {
+            <article
+              class="overflow-hidden rounded-2xl bg-marfil"
+              [style.box-shadow]="card.late ? '0 0 0 3px #B5493A' : 'none'"
+            >
               <header
                 class="flex items-center gap-2.5 px-[18px] py-3.5"
-                [style.background]="order.status === 'recibido' ? '#C49A3F' : '#B5764C'"
+                [style.background]="card.late ? '#B5493A' : order0(card.order.status)"
               >
-                <span class="font-serif text-[22px] font-bold text-lino-calido">Mesa {{ order.tableNumber }}</span>
+                <span class="font-serif text-[22px] font-bold text-lino-calido">Mesa {{ card.order.tableNumber }}</span>
                 <span class="flex-1"></span>
-                <span class="text-[13px] font-bold text-lino-calido opacity-85">{{ order.createdAt }}</span>
+                <!-- Temporizador en vivo: minutos que lleva la comanda -->
+                <span
+                  class="rounded-full bg-black/20 px-2.5 py-0.5 text-[13px] font-bold text-lino-calido"
+                  [attr.aria-label]="'Lleva ' + card.minutes + ' minutos'"
+                >
+                  {{ card.minutes }} min
+                </span>
               </header>
               <div class="px-[18px] pt-3.5 pb-4">
                 <ul class="mb-4 flex list-none flex-col gap-2 p-0">
-                  @for (item of order.items; track item.productName) {
+                  @for (item of card.order.items; track item.productName) {
                     <li class="flex gap-2.5 text-[17px] font-semibold text-tinta">
                       <span class="text-arcilla">{{ item.quantity }}×</span>
                       <span>{{ item.productName }}</span>
@@ -53,11 +78,11 @@ import { StaffTopbarComponent } from '../../shared/staff-topbar/staff-topbar.com
                 </ul>
                 <button
                   type="button"
-                  (click)="store.advanceOrder(order.id)"
+                  (click)="store.advanceOrder(card.order.id)"
                   class="w-full cursor-pointer rounded-xl border-none py-[15px] text-base font-bold text-lino-calido hover:opacity-90"
-                  [style.background]="order.status === 'recibido' ? '#2C2118' : '#7C905F'"
+                  [style.background]="card.order.status === 'recibido' ? '#2C2118' : '#7C905F'"
                 >
-                  {{ order.status === 'recibido' ? 'Empezar a preparar' : 'Platillo listo' }}
+                  {{ card.order.status === 'recibido' ? 'Empezar a preparar' : 'Platillo listo' }}
                 </button>
               </div>
             </article>
@@ -69,6 +94,22 @@ import { StaffTopbarComponent } from '../../shared/staff-topbar/staff-topbar.com
 })
 export class KitchenComponent implements OnInit {
   protected readonly store = inject(RestaurantStore);
+  private destroyRef = inject(DestroyRef);
+
+  /** Reloj compartido; se actualiza cada 30 s para refrescar los minutos. */
+  private readonly now = signal(Date.now());
+
+  /** Comandas de cocina ordenadas de más antigua a más reciente, con su tiempo. */
+  protected readonly cards = computed(() => {
+    const nowMs = this.now();
+    return this.store
+      .kitchenOrders()
+      .map((order) => {
+        const minutes = elapsedMinutes(order, nowMs);
+        return { order, minutes, late: minutes >= LATE_THRESHOLD_MIN };
+      })
+      .sort((a, b) => b.minutes - a.minutes);
+  });
 
   protected readonly countLabel = computed(() => {
     const n = this.store.kitchenOrders().length;
@@ -77,5 +118,12 @@ export class KitchenComponent implements OnInit {
 
   ngOnInit(): void {
     void this.store.init();
+    const timer = setInterval(() => this.now.set(Date.now()), 30_000);
+    this.destroyRef.onDestroy(() => clearInterval(timer));
+  }
+
+  /** Color de cabecera por estado (cuando no está retrasada). */
+  protected order0(status: string): string {
+    return status === 'recibido' ? '#C49A3F' : '#B5764C';
   }
 }

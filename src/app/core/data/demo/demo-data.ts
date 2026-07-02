@@ -64,9 +64,13 @@ export const DEMO_PAYMENT_METHODS: PaymentMethod[] = [
   { id: 3, name: 'Transferencia', active: true, position: 3 },
 ];
 
+const MIN = 60_000;
+const NOW = Date.now();
+
 export const DEMO_ORDERS: Order[] = [
   {
     id: 1043, tableNumber: 6, waiterName: 'Carlos M.', status: 'recibido', createdAt: '19:31',
+    createdAtMs: NOW - 6 * MIN, readyAtMs: null,
     paid: false, paymentMethod: null, paidAt: null,
     items: [
       { productId: 7, productName: 'Pesca del día a la brasa', unitPrice: 16.5, quantity: 1 },
@@ -75,6 +79,7 @@ export const DEMO_ORDERS: Order[] = [
   },
   {
     id: 1042, tableNumber: 2, waiterName: 'Carlos M.', status: 'preparando', createdAt: '19:20',
+    createdAtMs: NOW - 17 * MIN, readyAtMs: null,
     paid: false, paymentMethod: null, paidAt: null,
     items: [
       { productId: 6, productName: 'Risotto de hongos', unitPrice: 13, quantity: 1 },
@@ -83,6 +88,7 @@ export const DEMO_ORDERS: Order[] = [
   },
   {
     id: 1041, tableNumber: 3, waiterName: 'Lucía F.', status: 'listo', createdAt: '19:12',
+    createdAtMs: NOW - 25 * MIN, readyAtMs: NOW - 13 * MIN,
     paid: false, paymentMethod: null, paidAt: null,
     items: [
       { productId: 5, productName: 'Tacos de costilla', unitPrice: 11, quantity: 2 },
@@ -91,6 +97,7 @@ export const DEMO_ORDERS: Order[] = [
   },
   {
     id: 1039, tableNumber: 5, waiterName: 'Diego P.', status: 'entregado', createdAt: '18:47',
+    createdAtMs: NOW - 50 * MIN, readyAtMs: NOW - 41 * MIN,
     paid: true, paymentMethod: 'Tarjeta', paidAt: '18:55',
     items: [{ productId: 4, productName: 'Pollo al carbón con mole', unitPrice: 14.5, quantity: 1 }],
   },

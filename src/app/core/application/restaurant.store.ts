@@ -250,7 +250,13 @@ export class RestaurantStore {
     if (!order) return;
     const idx = ORDER_CHAIN.indexOf(order.status);
     const next = ORDER_CHAIN[Math.min(idx + 1, ORDER_CHAIN.length - 1)];
-    this.orders.update((os) => os.map((o) => (o.id === id ? { ...o, status: next } : o)));
+    this.orders.update((os) =>
+      os.map((o) =>
+        o.id === id
+          ? { ...o, status: next, readyAtMs: next === 'listo' && o.readyAtMs == null ? Date.now() : o.readyAtMs }
+          : o,
+      ),
+    );
     await this.ordersRepo.setStatus(id, next);
     this.toast.show(`Pedido #${id} → ${ORDER_LABELS[next]}`);
   }

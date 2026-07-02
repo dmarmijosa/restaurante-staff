@@ -5,7 +5,7 @@
  * (ingresos, ticket medio, ventas por método, top de productos). Aislarlos como
  * funciones puras permite probarlos sin montar la vista y reutilizarlos.
  */
-import { orderTotal, type Order } from './entities/entities';
+import { orderTotal, prepMinutes, type Order } from './entities/entities';
 
 export interface SalesByMethod {
   method: string;
@@ -33,6 +33,18 @@ export function totalRevenue(orders: Order[]): number {
 export function averageTicket(orders: Order[]): number {
   const paid = paidOrders(orders);
   return paid.length ? totalRevenue(orders) / paid.length : 0;
+}
+
+/**
+ * Tiempo medio de preparación en minutos (creación → listo), sobre los pedidos
+ * que ya pasaron por cocina. Devuelve null si todavía no hay ninguno listo.
+ */
+export function averagePrepMinutes(orders: Order[]): number | null {
+  const times = orders
+    .map((o) => prepMinutes(o))
+    .filter((m): m is number => m !== null);
+  if (!times.length) return null;
+  return Math.round(times.reduce((a, m) => a + m, 0) / times.length);
 }
 
 /** Ventas agrupadas por método de pago, de mayor a menor importe. */

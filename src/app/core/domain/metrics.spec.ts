@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { averageTicket, salesByMethod, topProducts, totalRevenue } from './metrics';
+import { averagePrepMinutes, averageTicket, salesByMethod, topProducts, totalRevenue } from './metrics';
 import type { Order } from './entities/entities';
 
 function order(partial: Partial<Order>): Order {
@@ -9,6 +9,8 @@ function order(partial: Partial<Order>): Order {
     waiterName: '—',
     status: 'entregado',
     createdAt: '12:00',
+    createdAtMs: 0,
+    readyAtMs: null,
     paid: false,
     paymentMethod: null,
     paidAt: null,
@@ -57,5 +59,16 @@ describe('metrics', () => {
     expect(top.find((p) => p.name === 'Flan')).toEqual({ name: 'Flan', quantity: 3, revenue: 15 });
     expect(top.find((p) => p.name === 'Tacos')).toEqual({ name: 'Tacos', quantity: 3, revenue: 30 });
     expect(top.find((p) => p.name === 'Sopa')).toEqual({ name: 'Sopa', quantity: 1, revenue: 8 });
+  });
+
+  it('averagePrepMinutes promedia el tiempo recibido → listo', () => {
+    const MIN = 60_000;
+    const timed = [
+      order({ id: 1, createdAtMs: 0, readyAtMs: 10 * MIN }), // 10 min
+      order({ id: 2, createdAtMs: 0, readyAtMs: 20 * MIN }), // 20 min
+      order({ id: 3, createdAtMs: 0, readyAtMs: null }), // aún en cocina: no cuenta
+    ];
+    expect(averagePrepMinutes(timed)).toBe(15);
+    expect(averagePrepMinutes([order({ readyAtMs: null })])).toBeNull();
   });
 });

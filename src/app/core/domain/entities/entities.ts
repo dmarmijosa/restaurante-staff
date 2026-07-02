@@ -85,7 +85,12 @@ export interface Order {
   waiterId?: string | null;
   waiterName: string;
   status: OrderStatus;
+  /** Etiqueta legible de la hora de creación (HH:MM). */
   createdAt: string;
+  /** Época (ms) de creación, para el temporizador de cocina en vivo. */
+  createdAtMs: number;
+  /** Época (ms) en que se marcó "listo"; null si aún no. Para el tiempo de cocina. */
+  readyAtMs: number | null;
   items: OrderItem[];
   /** Cobro: si está pagado, con qué método y cuándo (lo registra el cajero). */
   paid: boolean;
@@ -128,4 +133,15 @@ export function orderTotal(order: Order): number {
 /** El restaurante acepta pedidos solo si está abierto y no está cerrado por temporada. */
 export function isAcceptingOrders(settings: RestaurantSettings): boolean {
   return settings.isOpen && settings.season !== 'cerrado';
+}
+
+/** Minutos transcurridos desde que entró el pedido (para el temporizador de cocina). */
+export function elapsedMinutes(order: Order, nowMs: number): number {
+  return Math.max(0, Math.floor((nowMs - order.createdAtMs) / 60000));
+}
+
+/** Minutos de preparación (creación → listo); null si aún no está listo. */
+export function prepMinutes(order: Order): number | null {
+  if (order.readyAtMs == null) return null;
+  return Math.max(0, Math.round((order.readyAtMs - order.createdAtMs) / 60000));
 }

@@ -7,7 +7,13 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { RestaurantStore } from '../../../core/application/restaurant.store';
 import { MoneyPipe } from '../../../shared/money.pipe';
-import { averageTicket, salesByMethod, topProducts, totalRevenue } from '../../../core/domain/metrics';
+import {
+  averagePrepMinutes,
+  averageTicket,
+  salesByMethod,
+  topProducts,
+  totalRevenue,
+} from '../../../core/domain/metrics';
 
 @Component({
   selector: 'app-dashboard',
@@ -23,7 +29,7 @@ import { averageTicket, salesByMethod, topProducts, totalRevenue } from '../../.
       </div>
 
       <!-- Tarjetas de indicadores -->
-      <div class="mb-4 grid grid-cols-2 gap-3.5 md:grid-cols-4">
+      <div class="mb-4 grid grid-cols-2 gap-3.5 md:grid-cols-3 xl:grid-cols-5">
         @for (kpi of kpis(); track kpi.label) {
           <div class="rounded-[14px] border border-borde bg-papel px-4 py-4">
             <div class="text-[11.5px] font-semibold text-tinta-media">{{ kpi.label }}</div>
@@ -106,11 +112,17 @@ export class DashboardComponent {
     const paid = orders.filter((o) => o.paid).length;
     const pending = orders.filter((o) => !o.paid).length;
     const money = (n: number) => '$' + n.toFixed(2);
+    const prep = averagePrepMinutes(orders);
     return [
       { label: 'INGRESOS COBRADOS', value: money(totalRevenue(orders)), hint: paid + ' pedidos cobrados' },
       { label: 'TICKET MEDIO', value: money(averageTicket(orders)), hint: 'por pedido cobrado' },
       { label: 'PEDIDOS', value: String(orders.length), hint: paid + ' cobrados · ' + pending + ' pendientes' },
       { label: 'POR COBRAR', value: String(pending), hint: 'pedidos sin pagar' },
+      {
+        label: 'TIEMPO DE COCINA',
+        value: prep === null ? '—' : prep + ' min',
+        hint: 'promedio recibido → listo',
+      },
     ];
   });
 

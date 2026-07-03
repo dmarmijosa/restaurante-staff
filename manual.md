@@ -161,7 +161,23 @@ Cada empleado inicia sesión con su correo y contraseña, y solo ve la pantalla 
 
 ---
 
-## 9. ¿Dónde pedir ayuda?
+## 9. Modo demostración con reinicio diario (opcional)
+
+Para demos, el proyecto incluye una función de Supabase que **restablece cada
+madrugada** los datos operativos (pedidos, cobros, mesas, menú y métodos de
+pago) a su estado inicial, **sin borrar las cuentas** de usuario. Así puedes
+usar la app con normalidad durante el día y al día siguiente vuelve a empezar
+limpia.
+
+- Se instala con la migración `..._daily_demo_reset.sql` (crea `reset_demo_data()`
+  y la programa con **pg_cron** a las 08:00 UTC).
+- **Ejecutarla manualmente** (SQL Editor): `select public.reset_demo_data();`
+- **Cambiar la hora**: `select cron.alter_job((select jobid from cron.job where jobname='reset-demo-diario'), schedule => '0 6 * * *');`
+- **Desactivarla en producción**: `select cron.unschedule('reset-demo-diario');`
+
+> En un restaurante real **no** querrás este reinicio: desactívalo tras la demo.
+
+## 10. ¿Dónde pedir ayuda?
 
 Este es un proyecto **open source** (licencia MIT). Puedes abrir una incidencia en
 el repositorio de GitHub del proyecto describiendo tu problema.

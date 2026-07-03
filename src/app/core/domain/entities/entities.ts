@@ -62,6 +62,8 @@ export interface RestaurantTable {
   seats: number;
   shape: TableShape;
   status: TableStatus;
+  /** Mesero asignado a la mesa (id de profiles), o null si nadie. */
+  waiterId: string | null;
   /** Números originales cuando la mesa es resultado de una fusión. */
   mergedNumbers: number[] | null;
   /**

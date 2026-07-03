@@ -11,7 +11,10 @@
 - [x] ~~Compresión/redimensionado de imágenes antes de subir~~ — hecho (`shared/image-utils.ts`, canvas)
 - [x] ~~Fechas de temporada editables con date picker~~ — hecho (persistidas en `restaurant_settings`)
 - [ ] Recorte manual (crop) de la imagen antes de subir
-- [ ] Asignación de mesas a meseros desde el plano (hoy viene del seed)
+- [x] ~~Asignación de mesas a meseros desde el plano~~ — hecho (selector en el panel + resaltado en vista mesero)
+- [x] ~~Notificación sonora en cocina~~ — hecho (Web Audio + toggle de silencio)
+- [x] ~~Historial de caja y pedidos~~ — hecho (`/admin/historial`: pestañas Pedidos y Caja)
+- [x] ~~Reinicio diario de datos (demo Supabase)~~ — hecho (`reset_demo_data()` + pg_cron)
 - [ ] Multi-restaurante (multi-tenant): un despliegue, varios locales
 - [ ] i18n (el dominio es en español; extraer textos para otros idiomas)
 - [ ] PWA/offline para la tablet del mesero

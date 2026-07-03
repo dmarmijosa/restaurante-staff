@@ -140,6 +140,7 @@ export class SupabaseTablesRepository extends TablesRepository {
       seats: row['seats'] as number,
       shape: row['shape'] as RestaurantTable['shape'],
       status: row['status'] as RestaurantTable['status'],
+      waiterId: (row['waiter_id'] as string | null) ?? null,
       mergedNumbers: (row['merged_numbers'] as number[] | null) ?? null,
     };
   }
@@ -160,6 +161,7 @@ export class SupabaseTablesRepository extends TablesRepository {
         seats: table.seats,
         shape: table.shape,
         status: table.status,
+        waiter_id: table.waiterId,
         merged_numbers: table.mergedNumbers,
       })
       .eq('id', table.id);

@@ -82,10 +82,17 @@ import { orderTotal } from '../../core/domain/entities/entities';
                 <div class="mb-3 text-xs font-bold tracking-[.05em] text-tinta-media">MESAS DEL SALÓN</div>
                 <div class="grid grid-cols-2 gap-2">
                   @for (table of store.tables(); track table.id) {
-                    <div class="flex items-center gap-2 rounded-[10px] border border-borde bg-papel px-[11px] py-[9px]">
+                    <div
+                      class="flex items-center gap-2 rounded-[10px] border px-[11px] py-[9px]"
+                      [class]="table.waiterId === currentId() ? 'border-terracota bg-duna/40' : 'border-borde bg-papel'"
+                    >
                       <span class="h-2 w-2 rounded-full" [style.background]="tableUi[table.status].border"></span>
                       <span class="flex-1 text-xs font-semibold">{{ tableLabel(table.number, table.mergedNumbers) }}</span>
-                      <span class="text-[10px] text-tinta-media">{{ tableUi[table.status].label }}</span>
+                      @if (table.waiterId === currentId()) {
+                        <span class="rounded-full bg-terracota px-1.5 py-px text-[9px] font-bold text-lino-calido">Tuya</span>
+                      } @else {
+                        <span class="text-[10px] text-tinta-media">{{ tableUi[table.status].label }}</span>
+                      }
                     </div>
                   }
                 </div>
@@ -151,6 +158,8 @@ export class WaiterComponent implements OnInit {
 
   protected readonly waiterName = computed(() => this.auth.user()?.fullName ?? 'Mesero');
   protected readonly initials = computed(() => initialsOf(this.waiterName()));
+  /** Id del mesero en sesión, para resaltar sus mesas asignadas. */
+  protected readonly currentId = computed(() => this.auth.user()?.id ?? null);
 
   protected tableLabel(num: number, merged: number[] | null): string {
     return merged?.length ? 'Mesas ' + merged.join('+') : 'Mesa ' + num;

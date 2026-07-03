@@ -174,10 +174,18 @@ export class RestaurantStore {
       seats: 4,
       shape: 'sq',
       status: 'libre',
+      waiterId: null,
       mergedNumbers: null,
     });
     this.tables.update((list) => [...list, created]);
     this.toast.show('Mesa agregada al salón');
+  }
+
+  /** Asigna (o quita) el mesero responsable de una mesa. */
+  async assignWaiter(tableId: number, waiterId: string | null): Promise<void> {
+    this.tables.update((ts) => ts.map((t) => (t.id === tableId ? { ...t, waiterId } : t)));
+    const table = this.tables().find((t) => t.id === tableId);
+    if (table) await this.tablesRepo.saveTable(table);
   }
 
   async removeTable(id: number): Promise<void> {

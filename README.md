@@ -27,6 +27,9 @@
 | Resumen/métricas del admin (ingresos, ticket medio, ventas por método, top productos) | ✅ Completo |
 | Tiempo de cocina (temporizador en vivo + tiempo medio de preparación) | ✅ Completo |
 | Filtros por fecha en el Resumen (Hoy / 7 días / 30 días / Todo) | ✅ Completo |
+| Aviso sonoro en cocina + asignación de mesas a meseros | ✅ Completo |
+| Historial de caja y pedidos (arqueo por método) | ✅ Completo |
+| Reinicio diario de demo en Supabase (pg_cron) | ✅ Completo |
 | Manual de instalación para persona natural ([manual.md](manual.md)) | ✅ Completo |
 
 Pruebas: **19 unitarias** (Vitest) y **25 E2E** (Playwright, escritorio + móvil) en verde. Build de producción sin errores. CI en cada push/PR.

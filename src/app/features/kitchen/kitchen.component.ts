@@ -14,11 +14,13 @@ import {
   DestroyRef,
   OnInit,
   computed,
+  effect,
   inject,
   signal,
 } from '@angular/core';
 import { RestaurantStore } from '../../core/application/restaurant.store';
 import { StaffTopbarComponent } from '../../shared/staff-topbar/staff-topbar.component';
+import { BeepService } from '../../shared/beep.service';
 import { elapsedMinutes } from '../../core/domain/entities/entities';
 
 /** A partir de estos minutos, la comanda se marca como "lleva mucho". */
@@ -28,6 +30,8 @@ const LATE_THRESHOLD_MIN = 15;
   selector: 'app-kitchen',
   imports: [StaffTopbarComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  // El AudioContext solo suena tras un gesto: lo despertamos en el primer toque.
+  host: { '(pointerdown)': 'beep.prime()' },
   template: `
     <div class="flex min-h-dvh flex-col">
       <app-staff-topbar />
@@ -36,6 +40,19 @@ const LATE_THRESHOLD_MIN = 15;
           <h1 class="font-serif text-[26px] font-semibold text-lino">Cocina</h1>
           <div class="text-sm text-lino-gris">Toca el botón cuando salga el platillo — nada más.</div>
           <div class="flex-1"></div>
+          <button
+            type="button"
+            (click)="beep.toggleMuted()"
+            [attr.aria-pressed]="beep.muted()"
+            [attr.aria-label]="beep.muted() ? 'Activar sonido' : 'Silenciar sonido'"
+            class="flex cursor-pointer items-center gap-2 rounded-full border border-lino/20 bg-transparent px-3 py-1.5 text-[12px] font-semibold text-lino-gris hover:text-lino"
+          >
+            <span
+              class="h-2 w-2 rounded-full"
+              [style.background]="beep.muted() ? '#8B7A69' : '#7C905F'"
+            ></span>
+            {{ beep.muted() ? 'Sonido apagado' : 'Sonido activo' }}
+          </button>
           <div class="text-sm text-lino-gris">{{ countLabel() }}</div>
         </div>
 
@@ -94,10 +111,23 @@ const LATE_THRESHOLD_MIN = 15;
 })
 export class KitchenComponent implements OnInit {
   protected readonly store = inject(RestaurantStore);
+  protected readonly beep = inject(BeepService);
   private destroyRef = inject(DestroyRef);
 
   /** Reloj compartido; se actualiza cada 30 s para refrescar los minutos. */
   private readonly now = signal(Date.now());
+
+  /** Nº de comandas en la anterior comprobación, para detectar entradas nuevas. */
+  private prevCount = -1;
+
+  constructor() {
+    // Suena cuando la cola de cocina crece (entra una comanda nueva).
+    effect(() => {
+      const count = this.store.kitchenOrders().length;
+      if (this.prevCount >= 0 && count > this.prevCount) this.beep.beep();
+      this.prevCount = count;
+    });
+  }
 
   /** Comandas de cocina ordenadas de más antigua a más reciente, con su tiempo. */
   protected readonly cards = computed(() => {

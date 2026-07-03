@@ -102,6 +102,7 @@ export class AdminLayoutComponent implements OnInit {
     { path: 'resumen', label: 'Resumen', badge: 0, tour: 'Vista rápida del día: ingresos cobrados, ticket medio, ventas por método de pago y productos más vendidos.' },
     { path: 'plano', label: 'Plano del salón', badge: 0, tour: 'Diseña el salón: arrastra mesas, ajusta sillas, fusiónalas e imprime el QR de cada una.' },
     { path: 'pedidos', label: 'Pedidos', badge: this.store.activeOrders().length, tour: 'Tablero en vivo de comandas por estado: recibido → preparando → listo → entregado.' },
+    { path: 'historial', label: 'Historial', badge: 0, tour: 'Historial de pedidos y arqueo de caja (totales por método de pago) del periodo que elijas.' },
     { path: 'menu', label: 'Menú y productos', badge: 0, tour: 'Crea platillos, sube su foto y actívalos/desactívalos; el menú del cliente se actualiza al instante.' },
     { path: 'categorias', label: 'Categorías', badge: 0, tour: 'Organiza el menú en categorías (Entradas, Postres…).' },
     { path: 'meseros', label: 'Meseros y turnos', badge: 0, tour: 'Da de alta al equipo (mesero, cocina y cajero), asigna rol y turno, o da de baja (borrado permanente).' },

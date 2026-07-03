@@ -25,6 +25,10 @@ export const ADMIN_ROUTES: Routes = [
         loadComponent: () => import('./orders/orders-board.component').then((m) => m.OrdersBoardComponent),
       },
       {
+        path: 'historial',
+        loadComponent: () => import('./history/history.component').then((m) => m.HistoryComponent),
+      },
+      {
         path: 'menu',
         loadComponent: () => import('./menu/menu-products.component').then((m) => m.MenuProductsComponent),
       },

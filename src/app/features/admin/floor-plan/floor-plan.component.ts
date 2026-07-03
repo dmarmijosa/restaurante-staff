@@ -16,6 +16,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { RestaurantStore } from '../../../core/application/restaurant.store';
 import { TABLE_STATUS_UI } from '../../../shared/ui-maps';
 import { TableQrComponent } from '../../../shared/table-qr/table-qr.component';
@@ -35,7 +36,7 @@ interface DragState {
 
 @Component({
   selector: 'app-floor-plan',
-  imports: [TableQrComponent],
+  imports: [TableQrComponent, FormsModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div data-testid="admin-plano">
@@ -191,6 +192,21 @@ interface DragState {
                   </button>
                 }
               </div>
+
+              <label class="mb-1.5 block text-[11.5px] font-semibold text-tinta-media" [for]="'mesero-' + table.id">
+                MESERO ASIGNADO
+              </label>
+              <select
+                [id]="'mesero-' + table.id"
+                [ngModel]="table.waiterId ?? ''"
+                (ngModelChange)="store.assignWaiter(table.id, $event || null)"
+                class="mb-[18px] w-full cursor-pointer rounded-[9px] border-[1.5px] border-borde bg-papel px-3 py-2 text-[12.5px] text-tinta outline-none focus:border-terracota"
+              >
+                <option value="">Sin asignar</option>
+                @for (w of store.waiters(); track w.id) {
+                  <option [value]="w.id">{{ w.fullName }}</option>
+                }
+              </select>
 
               <button
                 type="button"

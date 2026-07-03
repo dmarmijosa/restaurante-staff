@@ -36,14 +36,14 @@ export const DEMO_PRODUCTS: Product[] = [
 ];
 
 export const DEMO_TABLES: RestaurantTable[] = [
-  { id: 1, number: 1, x: 40, y: 40, seats: 4, shape: 'sq', status: 'libre', mergedNumbers: null },
-  { id: 2, number: 2, x: 230, y: 60, seats: 2, shape: 'rd', status: 'ocupada', mergedNumbers: null },
-  { id: 3, number: 3, x: 400, y: 40, seats: 4, shape: 'sq', status: 'ocupada', mergedNumbers: null },
-  { id: 4, number: 4, x: 590, y: 80, seats: 4, shape: 'sq', status: 'ocupada', mergedNumbers: null },
-  { id: 5, number: 5, x: 70, y: 230, seats: 6, shape: 'sq', status: 'reservada', mergedNumbers: null },
-  { id: 6, number: 6, x: 330, y: 250, seats: 4, shape: 'rd', status: 'ocupada', mergedNumbers: null },
-  { id: 7, number: 7, x: 600, y: 280, seats: 2, shape: 'rd', status: 'ocupada', mergedNumbers: null },
-  { id: 8, number: 8, x: 160, y: 410, seats: 8, shape: 'sq', status: 'libre', mergedNumbers: null },
+  { id: 1, number: 1, x: 40, y: 40, seats: 4, shape: 'sq', status: 'libre', waiterId: 'w2', mergedNumbers: null },
+  { id: 2, number: 2, x: 230, y: 60, seats: 2, shape: 'rd', status: 'ocupada', waiterId: 'w1', mergedNumbers: null },
+  { id: 3, number: 3, x: 400, y: 40, seats: 4, shape: 'sq', status: 'ocupada', waiterId: 'w2', mergedNumbers: null },
+  { id: 4, number: 4, x: 590, y: 80, seats: 4, shape: 'sq', status: 'ocupada', waiterId: 'w1', mergedNumbers: null },
+  { id: 5, number: 5, x: 70, y: 230, seats: 6, shape: 'sq', status: 'reservada', waiterId: 'w3', mergedNumbers: null },
+  { id: 6, number: 6, x: 330, y: 250, seats: 4, shape: 'rd', status: 'ocupada', waiterId: 'w1', mergedNumbers: null },
+  { id: 7, number: 7, x: 600, y: 280, seats: 2, shape: 'rd', status: 'ocupada', waiterId: 'w1', mergedNumbers: null },
+  { id: 8, number: 8, x: 160, y: 410, seats: 8, shape: 'sq', status: 'libre', waiterId: 'w3', mergedNumbers: null },
 ];
 
 export const DEMO_STAFF: StaffMember[] = [

@@ -2,20 +2,9 @@
 
 _Última actualización: 2026-07-03 (iteración 7)_
 
-## Qué se está desarrollando
+## Estado actual
 
-MVP completo de la plataforma (v0.4): réplica del diseño original con las cuatro vistas funcionando en modo demo y contra Supabase.
-
-**Hecho en esta iteración:**
-- ✅ Proyecto Angular 22 + Tailwind v4 con design tokens del mockup
-- ✅ Clean architecture: dominio, aplicación (store con signals), datos (Supabase + demo)
-- ✅ Autenticación con roles (admin/mesero/cocina) y guards; cliente sin login
-- ✅ Vistas: Cliente (home + QR `/mesa/:n`), Login (footer), Admin (7 secciones con plano drag & drop y fusión de mesas), Mesero, Cocina
-- ✅ Eliminación permanente de personal con doble confirmación (protección de datos)
-- ✅ Migraciones SQL + RLS + seed en `supabase/`
-- ✅ 19 pruebas unitarias (Vitest) y 25 E2E (Playwright, escritorio + móvil) en verde
-- ✅ Build de producción sin errores
-- ✅ Documentación en `docs/` y este tablero
+MVP completo de la plataforma (v0.5): todas las vistas operativas en modo demo y contra Supabase real. Stack estable, 8 migraciones aplicadas, 33 pruebas unitarias y 28 E2E en verde.
 
 ## Hecho tras conectar Supabase (2026-07-02, iteración 2)
 
@@ -77,27 +66,3 @@ MVP completo de la plataforma (v0.4): réplica del diseño original con las cuat
 ## Bloqueadores
 
 - Ninguno.
-
-## Archivos afectados (iteración 5)
-
-- `supabase/migrations/20260702000005_cajero_role_and_payments.sql` (nuevo)
-- `src/app/core/**` (entities/repos/store: PaymentMethod, chargeOrder, cajero)
-- `src/app/features/cashier/cashier.component.ts` (nuevo)
-- `src/app/features/admin/payments/payments.component.ts` (nuevo)
-- `src/app/features/admin/admin-layout.component.ts` (nav pagos + driver.js)
-- `src/app/features/admin/staff/staff-page.component.ts` (alta con rol + cajero)
-- `src/app/features/auth/login.component.ts` (redirección a registro inicial)
-- `src/app/app.routes.ts`, `role.guard.ts`, `staff-topbar` (rol cajero)
-- `manual.md` (nuevo), `angular.json` (driver.css), specs + e2e
-
-## Archivos afectados (iteración 3 — diseño/pendientes)
-
-- `src/styles.css` (focus-visible, reduced-motion, transiciones, sr-only)
-- `src/app/features/auth/login.component.ts` (validación inline, toggle, a11y)
-- `src/app/shared/table-qr/table-qr.component.ts` (nuevo, QR por mesa)
-- `src/app/features/admin/floor-plan/floor-plan.component.ts` (usa el QR real)
-- `src/app/features/**` (`min-h-dvh` en las raíces)
-- `scripts/set-env.mjs` (RS_FORCE_DEMO), `playwright.config.ts` (env demo)
-- `e2e/auth.spec.ts`, `e2e/admin.spec.ts` (selectores por id)
-- `LICENSE` (MIT), `.github/workflows/ci.yml` (nuevo)
-- `docs/*.md`, `tasks/*.md`, `README.md`

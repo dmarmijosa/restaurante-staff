@@ -4,7 +4,7 @@
 
 ## Estado de la aplicación
 
-**v0.4 · MVP funcional** — actualizado el 2026-07-02
+**v0.5 · MVP completo** — actualizado el 2026-07-03
 
 | Módulo | Estado |
 |---|---|

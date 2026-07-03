@@ -1,6 +1,6 @@
 # Trabajo actual
 
-_Última actualización: 2026-07-03_
+_Última actualización: 2026-07-03 (iteración 7)_
 
 ## Qué se está desarrollando
 
@@ -58,15 +58,20 @@ MVP completo de la plataforma (v0.4): réplica del diseño original con las cuat
 - ✅ Cobertura de pruebas: unitaria para la utilidad de recorte + E2E Playwright del flujo real en admin (subir → recortar → aplicar)
 - ✅ Suite validada en verde: **33 unitarias** y **28 E2E**
 
+## Hecho en la iteración 7 (registro inicial + cierre del registro público)
+
+- ✅ **Registro del administrador propietario**: servidor arrancado apuntando a Supabase real; el admin entra en `http://localhost:4200/registro-inicial` y crea su cuenta
+- ✅ **Registro público desactivado a nivel base de datos**: nueva función `check_signup_allowed()` + trigger `on_auth_signup_check` en `auth.users BEFORE INSERT` — bloquea cualquier registro una vez que existe un propietario; las invitaciones del dashboard Supabase (`invited_at`) se siguen permitiendo
+- ✅ Migración `20260703000008_disable_public_signup.sql` creada y aplicada al proyecto Supabase
+
 ## Qué falta por terminar
 
-- **Registrar el administrador propietario** entrando a la app (te redirige solo a `/registro-inicial`) — **acción del usuario**.
-- Opcional: desactivar el registro público en Supabase Auth tras el bootstrap (ver manual.md §5.1).
+- Ninguno — el stack está completo. Los próximos pasos son operativos (dar de alta al equipo, publicar).
 
 ## Próximos pasos
 
-1. Hacer el registro inicial y probar login real + RLS con los tres roles
-2. Dar de alta al equipo desde el panel y asignar roles
+1. Completar el formulario de registro en `http://localhost:4200/registro-inicial` (acción del usuario)
+2. Dar de alta al equipo: en el panel de Supabase (Authentication → Users → **Invite user**) y luego asignar rol/turno desde el panel admin
 3. Publicar el repositorio (ya tiene licencia MIT y CI)
 
 ## Bloqueadores

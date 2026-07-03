@@ -31,6 +31,7 @@
 | Historial de caja y pedidos (arqueo por método) | ✅ Completo |
 | Reinicio diario de demo en Supabase (pg_cron) | ✅ Completo |
 | Recorte manual de imagen antes de subir (logo y productos) | ✅ Completo |
+| Bloqueo de registro público tras bootstrap (trigger en `auth.users`) | ✅ Completo |
 | Manual de instalación para persona natural ([manual.md](manual.md)) | ✅ Completo |
 
 Pruebas: **33 unitarias** (Vitest) y **28 E2E** (Playwright, escritorio + móvil) en verde. Build de producción sin errores. CI en cada push/PR.

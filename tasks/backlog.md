@@ -15,6 +15,8 @@
 - [x] ~~Notificación sonora en cocina~~ — hecho (Web Audio + toggle de silencio)
 - [x] ~~Historial de caja y pedidos~~ — hecho (`/admin/historial`: pestañas Pedidos y Caja)
 - [x] ~~Reinicio diario de datos (demo Supabase)~~ — hecho (`reset_demo_data()` + pg_cron)
+- [x] ~~Registro inicial del administrador propietario~~ — hecho (servidor en modo Supabase, usuario completa `/registro-inicial`)
+- [x] ~~Desactivar registro público tras el bootstrap~~ — hecho (trigger `on_auth_signup_check` en `auth.users`, invitaciones del dashboard permitidas)
 - [ ] Multi-restaurante (multi-tenant): un despliegue, varios locales
 - [ ] i18n (el dominio es en español; extraer textos para otros idiomas)
 - [ ] PWA/offline para la tablet del mesero

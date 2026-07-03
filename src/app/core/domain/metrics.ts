@@ -24,6 +24,14 @@ function paidOrders(orders: Order[]): Order[] {
   return orders.filter((o) => o.paid);
 }
 
+/**
+ * Filtra pedidos por rango de creación [fromMs, toMs] (épocas ms). Base de los
+ * filtros por fecha del Resumen; función pura para poder probarla aislada.
+ */
+export function ordersInRange(orders: Order[], fromMs: number, toMs = Infinity): Order[] {
+  return orders.filter((o) => o.createdAtMs >= fromMs && o.createdAtMs <= toMs);
+}
+
 /** Ingreso total cobrado. */
 export function totalRevenue(orders: Order[]): number {
   return paidOrders(orders).reduce((acc, o) => acc + orderTotal(o), 0);

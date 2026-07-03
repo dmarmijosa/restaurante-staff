@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { averagePrepMinutes, averageTicket, salesByMethod, topProducts, totalRevenue } from './metrics';
+import {
+  averagePrepMinutes,
+  averageTicket,
+  ordersInRange,
+  salesByMethod,
+  topProducts,
+  totalRevenue,
+} from './metrics';
 import type { Order } from './entities/entities';
 
 function order(partial: Partial<Order>): Order {
@@ -59,6 +66,17 @@ describe('metrics', () => {
     expect(top.find((p) => p.name === 'Flan')).toEqual({ name: 'Flan', quantity: 3, revenue: 15 });
     expect(top.find((p) => p.name === 'Tacos')).toEqual({ name: 'Tacos', quantity: 3, revenue: 30 });
     expect(top.find((p) => p.name === 'Sopa')).toEqual({ name: 'Sopa', quantity: 1, revenue: 8 });
+  });
+
+  it('ordersInRange filtra por época de creación', () => {
+    const set = [
+      order({ id: 1, createdAtMs: 100 }),
+      order({ id: 2, createdAtMs: 200 }),
+      order({ id: 3, createdAtMs: 300 }),
+    ];
+    expect(ordersInRange(set, 200).map((o) => o.id)).toEqual([2, 3]);
+    expect(ordersInRange(set, 150, 250).map((o) => o.id)).toEqual([2]);
+    expect(ordersInRange(set, 0).length).toBe(3);
   });
 
   it('averagePrepMinutes promedia el tiempo recibido → listo', () => {

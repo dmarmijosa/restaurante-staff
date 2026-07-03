@@ -4,16 +4,19 @@
  * productos más vendidos. Usa barras CSS (sin librerías) para no añadir peso y
  * mantener la identidad terracota/crema.
  */
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RestaurantStore } from '../../../core/application/restaurant.store';
 import { MoneyPipe } from '../../../shared/money.pipe';
 import {
   averagePrepMinutes,
   averageTicket,
+  ordersInRange,
   salesByMethod,
   topProducts,
   totalRevenue,
 } from '../../../core/domain/metrics';
+
+type Range = 'hoy' | '7d' | '30d' | 'todo';
 
 @Component({
   selector: 'app-dashboard',
@@ -21,11 +24,26 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div data-testid="admin-resumen">
-      <div class="mb-[18px]">
-        <h1 class="m-0 font-serif text-[27px] font-semibold">Resumen</h1>
-        <p class="mt-1 mb-0 text-[13px] text-tinta-media">
-          Cómo va el servicio hoy: ingresos, cobros por método y lo que más se pide.
-        </p>
+      <div class="mb-4 flex flex-wrap items-end gap-4">
+        <div class="flex-1">
+          <h1 class="m-0 font-serif text-[27px] font-semibold">Resumen</h1>
+          <p class="mt-1 mb-0 text-[13px] text-tinta-media">
+            Ingresos, cobros por método y lo que más se pide — en el periodo elegido.
+          </p>
+        </div>
+        <!-- Filtro por fecha -->
+        <div class="flex gap-1.5" role="group" aria-label="Periodo">
+          @for (r of rangeChips; track r.key) {
+            <button
+              type="button"
+              (click)="range.set(r.key)"
+              class="cursor-pointer rounded-full border-none px-3.5 py-2 text-[12px] font-semibold"
+              [class]="range() === r.key ? 'bg-tinta text-lino' : 'bg-panal text-tinta-suave'"
+            >
+              {{ r.label }}
+            </button>
+          }
+        </div>
       </div>
 
       <!-- Tarjetas de indicadores -->
@@ -95,7 +113,36 @@ import {
 export class DashboardComponent {
   protected readonly store = inject(RestaurantStore);
 
-  private readonly orders = computed(() => this.store.orders());
+  protected readonly rangeChips: Array<{ key: Range; label: string }> = [
+    { key: 'hoy', label: 'Hoy' },
+    { key: '7d', label: '7 días' },
+    { key: '30d', label: '30 días' },
+    { key: 'todo', label: 'Todo' },
+  ];
+  /** Periodo seleccionado; por defecto "Hoy" (lo más útil para la operación diaria). */
+  protected readonly range = signal<Range>('hoy');
+
+  /** Época (ms) desde la que se cuentan los pedidos según el periodo. */
+  private readonly fromMs = computed(() => {
+    const now = Date.now();
+    const DAY = 86_400_000;
+    switch (this.range()) {
+      case 'hoy': {
+        const d = new Date();
+        d.setHours(0, 0, 0, 0); // medianoche local
+        return d.getTime();
+      }
+      case '7d':
+        return now - 7 * DAY;
+      case '30d':
+        return now - 30 * DAY;
+      default:
+        return 0;
+    }
+  });
+
+  /** Pedidos del periodo elegido; todas las métricas parten de aquí. */
+  private readonly orders = computed(() => ordersInRange(this.store.orders(), this.fromMs()));
 
   protected readonly methods = computed(() => salesByMethod(this.orders()));
   protected readonly products = computed(() => topProducts(this.orders()));

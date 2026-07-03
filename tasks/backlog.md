@@ -34,7 +34,8 @@
 
 - Propinas y división de cuenta desde el QR
 - [x] ~~Panel de métricas para el admin (ticket medio, platos más vendidos)~~ — hecho (sección "Resumen")
-- [x] ~~Tiempos de cocina~~ — hecho (temporizador en vivo en Cocina + KPI de tiempo medio); pendiente: filtros por fecha en el Resumen
+- [x] ~~Tiempos de cocina~~ — hecho (temporizador en vivo en Cocina + KPI de tiempo medio)
+- [x] ~~Filtros por fecha en el Resumen~~ — hecho (Hoy/7 días/30 días/Todo); pendiente: rango personalizado con date picker
 - Reservas online con la mesa reservada reflejada en el plano
 - Modo "pizarra" para cocina en pantallas grandes (fuente aún mayor)
 - Integración con impresoras térmicas de comandas

@@ -30,9 +30,10 @@
 | Aviso sonoro en cocina + asignación de mesas a meseros | ✅ Completo |
 | Historial de caja y pedidos (arqueo por método) | ✅ Completo |
 | Reinicio diario de demo en Supabase (pg_cron) | ✅ Completo |
+| Recorte manual de imagen antes de subir (logo y productos) | ✅ Completo |
 | Manual de instalación para persona natural ([manual.md](manual.md)) | ✅ Completo |
 
-Pruebas: **19 unitarias** (Vitest) y **25 E2E** (Playwright, escritorio + móvil) en verde. Build de producción sin errores. CI en cada push/PR.
+Pruebas: **33 unitarias** (Vitest) y **28 E2E** (Playwright, escritorio + móvil) en verde. Build de producción sin errores. CI en cada push/PR.
 
 > Diseño mejorado con la skill **ui-ux-pro-max** aplicando sus principios (foco visible, `prefers-reduced-motion`, transiciones 150–300 ms, touch targets ≥44px, `min-h-dvh`, validación inline) **sin alterar la identidad visual** (paleta terracota/crema, Instrument Sans + Source Serif 4).
 

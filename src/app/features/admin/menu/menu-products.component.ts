@@ -7,12 +7,14 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RestaurantStore } from '../../../core/application/restaurant.store';
+import { ImageCropperModalComponent, type CropSelection } from '../../../shared/image-cropper-modal.component';
+import { cropImageSquare } from '../../../shared/image-utils';
 import { MoneyPipe } from '../../../shared/money.pipe';
 import { ToastService } from '../../../shared/toast/toast.service';
 
 @Component({
   selector: 'app-menu-products',
-  imports: [MoneyPipe, FormsModule],
+  imports: [MoneyPipe, FormsModule, ImageCropperModalComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div data-testid="admin-menu">
@@ -150,6 +152,14 @@ import { ToastService } from '../../../shared/toast/toast.service';
           </article>
         }
       </div>
+
+      <app-image-cropper-modal
+        [open]="cropOpen()"
+        [imageUrl]="cropImageUrl()"
+        title="Recortar foto del producto"
+        (cancel)="cancelCrop()"
+        (apply)="applyProductCrop($event)"
+      />
     </div>
   `,
 })
@@ -159,9 +169,13 @@ export class MenuProductsComponent {
 
   protected readonly showForm = signal(false);
   protected readonly filterId = signal<number | 'todas'>('todas');
+  protected readonly cropOpen = signal(false);
+  protected readonly cropImageUrl = signal<string | null>(null);
   protected draftName = '';
   protected draftPrice = '';
   protected readonly draftCategoryId = signal<number | null>(null);
+  private pendingImageProductId: number | null = null;
+  private pendingImageFile: File | null = null;
 
   protected readonly filterChips = computed(() => [
     { id: 'todas' as const, name: 'Todas' },
@@ -192,7 +206,47 @@ export class MenuProductsComponent {
   protected onProductImage(id: number, event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
-    if (file) void this.store.setProductImageFromFile(id, file);
+    if (file) {
+      this.pendingImageProductId = id;
+      this.pendingImageFile = file;
+      this.openCrop(file);
+    }
     input.value = ''; // permite volver a elegir el mismo archivo
+  }
+
+  protected cancelCrop(): void {
+    this.closeCrop();
+  }
+
+  protected async applyProductCrop(selection: CropSelection): Promise<void> {
+    if (!this.pendingImageFile || this.pendingImageProductId == null) {
+      this.closeCrop();
+      return;
+    }
+
+    const productId = this.pendingImageProductId;
+    const originalFile = this.pendingImageFile;
+    this.closeCrop();
+    const cropped = await cropImageSquare(originalFile, { ...selection, outputSize: 900 });
+    await this.store.setProductImageFromFile(productId, cropped);
+  }
+
+  private openCrop(file: File): void {
+    this.releaseCropUrl();
+    this.cropImageUrl.set(URL.createObjectURL(file));
+    this.cropOpen.set(true);
+  }
+
+  private closeCrop(): void {
+    this.cropOpen.set(false);
+    this.releaseCropUrl();
+    this.pendingImageFile = null;
+    this.pendingImageProductId = null;
+  }
+
+  private releaseCropUrl(): void {
+    const current = this.cropImageUrl();
+    if (current) URL.revokeObjectURL(current);
+    this.cropImageUrl.set(null);
   }
 }

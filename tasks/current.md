@@ -1,6 +1,6 @@
 # Trabajo actual
 
-_Última actualización: 2026-07-02_
+_Última actualización: 2026-07-03_
 
 ## Qué se está desarrollando
 
@@ -50,6 +50,13 @@ MVP completo de la plataforma (v0.4): réplica del diseño original con las cuat
 - ✅ **Rol Cajero**: DB (rol en profiles, tabla `payment_methods`, `orders.paid/payment_method/paid_at`), vista `/cajero` (cobro por método), sección admin "Métodos de pago", alta de cajeros en "Meseros y turnos" (con selección de rol mesero/cocina/cajero).
 - ✅ **manual.md**: guía de instalación no técnica (Supabase, claves, primer admin, día a día), que se irá actualizando.
 - ✅ 24 unit + 27 e2e verde; build limpio.
+
+## Hecho en la iteración 6 (recorte manual de imágenes)
+
+- ✅ **Recorte manual antes de subir** en imágenes de producto y logo: modal reutilizable con preview, zoom y desplazamiento horizontal/vertical
+- ✅ Nueva utilidad `cropImageSquare` en `shared/image-utils.ts` para generar un recorte cuadrado controlado por el usuario
+- ✅ Cobertura de pruebas: unitaria para la utilidad de recorte + E2E Playwright del flujo real en admin (subir → recortar → aplicar)
+- ✅ Suite validada en verde: **33 unitarias** y **28 E2E**
 
 ## Qué falta por terminar
 

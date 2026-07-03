@@ -5,6 +5,11 @@
  */
 import { expect, test, type Page } from '@playwright/test';
 
+const PNG_1PX = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=',
+  'base64',
+);
+
 async function loginAdmin(page: Page) {
   await page.goto('/login');
   await page.locator('#email').fill('admin@demo.dev');
@@ -41,6 +46,25 @@ test.describe('Panel de administración', () => {
     await page.getByRole('link', { name: 'Menú y productos' }).click();
     await page.getByRole('switch', { name: 'Disponibilidad de Tostadas de tinga' }).click();
     await expect(page.getByText('“Tostadas de tinga” marcado como agotado')).toBeVisible();
+  });
+
+  test('permite recortar manualmente una foto antes de subirla al producto', async ({ page }) => {
+    await loginAdmin(page);
+    await page.getByRole('link', { name: 'Menú y productos' }).click();
+
+    const photoInput = page.locator('label:has-text("Subir foto") input[type="file"]').first();
+    await photoInput.setInputFiles({
+      name: 'producto.png',
+      mimeType: 'image/png',
+      buffer: PNG_1PX,
+    });
+
+    await expect(page.getByRole('heading', { name: 'Recortar foto del producto' })).toBeVisible();
+    await page.getByLabel('Zoom del recorte').fill('1.5');
+    await page.getByLabel('Desplazamiento horizontal').fill('18');
+    await page.getByRole('button', { name: 'Aplicar recorte' }).click();
+
+    await expect(page.getByText('Foto del producto actualizada')).toBeVisible();
   });
 
   test('las categorías con productos no se pueden eliminar', async ({ page }) => {

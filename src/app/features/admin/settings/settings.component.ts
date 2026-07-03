@@ -6,12 +6,14 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RestaurantStore } from '../../../core/application/restaurant.store';
+import { ImageCropperModalComponent, type CropSelection } from '../../../shared/image-cropper-modal.component';
+import { cropImageSquare } from '../../../shared/image-utils';
 import { ToastService } from '../../../shared/toast/toast.service';
 import { AVATAR_PALETTE, initialsOf } from '../../../shared/ui-maps';
 
 @Component({
   selector: 'app-settings',
-  imports: [FormsModule],
+  imports: [FormsModule, ImageCropperModalComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="max-w-[640px]" data-testid="admin-ajustes">
@@ -132,6 +134,14 @@ import { AVATAR_PALETTE, initialsOf } from '../../../shared/ui-maps';
           Cada administrador inicia sesión con su correo. La cuenta propietaria no puede eliminarse.
         </div>
       </div>
+
+      <app-image-cropper-modal
+        [open]="cropOpen()"
+        [imageUrl]="cropImageUrl()"
+        title="Recortar logo"
+        (cancel)="cancelCrop()"
+        (apply)="applyLogoCrop($event)"
+      />
     </div>
   `,
 })
@@ -140,16 +150,38 @@ export class SettingsComponent {
   private toast = inject(ToastService);
 
   protected readonly showForm = signal(false);
+  protected readonly cropOpen = signal(false);
+  protected readonly cropImageUrl = signal<string | null>(null);
   protected draftName = '';
   protected draftEmail = '';
   protected readonly confirmingId = signal<string | null>(null);
+  private pendingLogoFile: File | null = null;
 
   /** Sube el logo elegido a Storage. */
   protected onLogo(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
-    if (file) void this.store.setLogoFromFile(file);
+    if (file) {
+      this.pendingLogoFile = file;
+      this.openCrop(file);
+    }
     input.value = '';
+  }
+
+  protected cancelCrop(): void {
+    this.closeCrop();
+  }
+
+  protected async applyLogoCrop(selection: CropSelection): Promise<void> {
+    if (!this.pendingLogoFile) {
+      this.closeCrop();
+      return;
+    }
+
+    const originalFile = this.pendingLogoFile;
+    this.closeCrop();
+    const cropped = await cropImageSquare(originalFile, { ...selection, outputSize: 512 });
+    await this.store.setLogoFromFile(cropped);
   }
 
   protected readonly adminRows = computed(() =>
@@ -183,5 +215,23 @@ export class SettingsComponent {
     }
     this.confirmingId.set(null);
     await this.store.deleteStaffPermanently(id);
+  }
+
+  private openCrop(file: File): void {
+    this.releaseCropUrl();
+    this.cropImageUrl.set(URL.createObjectURL(file));
+    this.cropOpen.set(true);
+  }
+
+  private closeCrop(): void {
+    this.cropOpen.set(false);
+    this.releaseCropUrl();
+    this.pendingLogoFile = null;
+  }
+
+  private releaseCropUrl(): void {
+    const current = this.cropImageUrl();
+    if (current) URL.revokeObjectURL(current);
+    this.cropImageUrl.set(null);
   }
 }

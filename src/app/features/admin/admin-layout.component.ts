@@ -148,8 +148,13 @@ export class AdminLayoutComponent implements OnInit {
               'Te muestro en 30 segundos para qué sirve cada sección. Podrás repetir esta guía cuando quieras con “Ver guía del panel”.',
           },
         },
-        ...steps,
-      ],
+        ...steps,        {
+          popover: {
+            title: '¿Tienes más locales?',
+            description:
+              'Esta plataforma soporta múltiples restaurantes en un solo despliegue. Para crear un segundo local visita <strong>/nuevo-restaurante</strong> — cada uno tiene su propio menú, equipo, mesas y pedidos completamente separados.',
+          },
+        },      ],
       onDestroyed: () => {
         try {
           localStorage.setItem(TOUR_SEEN_KEY, '1');

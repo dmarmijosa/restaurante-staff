@@ -113,6 +113,24 @@ test.describe('Panel de administración', () => {
     await ownerRow.getByRole('button', { name: 'Eliminar' }).click();
     await expect(page.getByRole('status').filter({ hasText: 'La cuenta propietaria no puede eliminarse' })).toBeVisible();
   });
+
+  test('el tour del panel incluye el paso de multi-restaurante con la ruta /nuevo-restaurante', async ({ page }) => {
+    await loginAdmin(page);
+    // Limpiar la marca para forzar que el tour aparezca
+    await page.evaluate(() => localStorage.removeItem('rs-admin-tour-seen'));
+    await page.getByRole('button', { name: 'Ver guía del panel' }).click();
+
+    // Avanzar por todos los pasos hasta el último (multi-restaurante)
+    const nextBtn = page.getByRole('button', { name: 'Siguiente' });
+    while (await nextBtn.isVisible().catch(() => false)) {
+      await nextBtn.click();
+    }
+
+    // El último paso menciona /nuevo-restaurante
+    await expect(page.getByText('¿Tienes más locales?')).toBeVisible();
+    await expect(page.getByText('/nuevo-restaurante')).toBeVisible();
+    await page.getByRole('button', { name: 'Entendido' }).click();
+  });
 });
 
 test.describe('Cocina', () => {

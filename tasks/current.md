@@ -1,10 +1,10 @@
 # Trabajo actual
 
-_Última actualización: 2026-07-04 (iteración 8)_
+_Última actualización: 2026-07-04 (iteración 9)_
 
 ## Estado actual
 
-MVP completo de la plataforma (v0.5): todas las vistas operativas en modo demo y contra Supabase real. Stack estable, 8 migraciones aplicadas, 33 pruebas unitarias y 28 E2E en verde.
+Plataforma **v0.6 — multi-restaurante**: 9 migraciones SQL aplicadas, 33 pruebas unitarias y 29 E2E en verde.
 
 ## Hecho tras conectar Supabase (2026-07-02, iteración 2)
 
@@ -47,7 +47,21 @@ MVP completo de la plataforma (v0.5): todas las vistas operativas en modo demo y
 - ✅ Cobertura de pruebas: unitaria para la utilidad de recorte + E2E Playwright del flujo real en admin (subir → recortar → aplicar)
 - ✅ Suite validada en verde: **33 unitarias** y **28 E2E**
 
-## Hecho en la iteración 8 (multi-restaurante / multi-tenant)
+## Hecho en la iteración 9 (tour onboarding: paso multi-restaurante)
+
+- ✅ **Nuevo paso en el tour de driver.js**: al final de la guía interactiva del panel aparece el paso "¿Tienes más locales?" que explica la URL `/nuevo-restaurante` para crear nuevos tenants.
+- ✅ E2E actualizado: prueba que navega por todos los pasos del tour y verifica que el último menciona `/nuevo-restaurante`.
+- ✅ Suite en verde: **33 unitarias + 29 E2E**.
+
+## Qué falta por terminar
+
+- Ninguno — ver backlog para próximas funcionalidades opcionales.
+
+## Próximos pasos
+
+1. Completar el formulario de registro en `http://localhost:4200/nuevo-restaurante` (acción del usuario)
+2. Dar de alta al equipo desde el panel de Supabase (Authentication → Users → **Invite user**)
+3. Publicar el repositorio (ya tiene licencia MIT y CI)
 
 - ✅ **Tabla `restaurants`** como raíz de cada tenant; `restaurant_id` FK en todas las tablas de negocio (profiles, settings, categories, products, tables, orders, waiter_calls, payment_methods). Datos existentes migrados al restaurante por defecto.
 - ✅ **RLS actualizado**: autenticados ven solo su restaurante (`my_restaurant_id()`); anon (cliente QR) filtra por `restaurant_id` en la query.

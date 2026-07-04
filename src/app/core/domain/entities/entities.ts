@@ -127,6 +127,13 @@ export interface RestaurantSettings {
   logoUrl: string | null;
 }
 
+/** Restaurante registrado en la plataforma (tenant). */
+export interface Restaurant {
+  id: string;
+  name: string;
+  slug: string;
+}
+
 /** Total de una comanda; vive en el dominio para no duplicar la regla en cada vista. */
 export function orderTotal(order: Order): number {
   return order.items.reduce((acc, it) => acc + it.unitPrice * it.quantity, 0);

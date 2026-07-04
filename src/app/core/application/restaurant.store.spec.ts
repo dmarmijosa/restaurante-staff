@@ -11,6 +11,7 @@ import {
   MenuRepository,
   OrdersRepository,
   PaymentsRepository,
+  RestaurantRepository,
   SettingsRepository,
   StaffRepository,
   StorageRepository,
@@ -22,6 +23,7 @@ import {
   DemoMenuRepository,
   DemoOrdersRepository,
   DemoPaymentsRepository,
+  DemoRestaurantRepository,
   DemoSettingsRepository,
   DemoStaffRepository,
   DemoStorageRepository,
@@ -43,6 +45,7 @@ describe('RestaurantStore', () => {
         { provide: AuthRepository, useClass: DemoAuthRepository },
         { provide: StorageRepository, useClass: DemoStorageRepository },
         { provide: PaymentsRepository, useClass: DemoPaymentsRepository },
+        { provide: RestaurantRepository, useClass: DemoRestaurantRepository },
       ],
     });
     store = TestBed.inject(RestaurantStore);

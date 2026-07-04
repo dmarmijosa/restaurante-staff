@@ -17,7 +17,7 @@
 - [x] ~~Reinicio diario de datos (demo Supabase)~~ — hecho (`reset_demo_data()` + pg_cron)
 - [x] ~~Registro inicial del administrador propietario~~ — hecho (servidor en modo Supabase, usuario completa `/registro-inicial`)
 - [x] ~~Desactivar registro público tras el bootstrap~~ — hecho (trigger `on_auth_signup_check` en `auth.users`, invitaciones del dashboard permitidas)
-- [ ] Multi-restaurante (multi-tenant): un despliegue, varios locales
+- [x] ~~Multi-restaurante (multi-tenant): un despliegue, varios locales~~ — hecho (tabla `restaurants`, `restaurant_id` en todas las tablas, RLS scoped, RPCs `create_restaurant`/`restaurant_by_slug`, rutas `/r/:slug`, bootstrap con nombre de restaurante)
 - [ ] i18n (el dominio es en español; extraer textos para otros idiomas)
 - [ ] PWA/offline para la tablet del mesero
 - [ ] Notificación sonora en cocina al entrar comanda nueva

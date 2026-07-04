@@ -13,6 +13,7 @@ import {
   MenuRepository,
   OrdersRepository,
   PaymentsRepository,
+  RestaurantRepository,
   SettingsRepository,
   StaffRepository,
   StorageRepository,
@@ -24,6 +25,7 @@ import {
   DemoMenuRepository,
   DemoOrdersRepository,
   DemoPaymentsRepository,
+  DemoRestaurantRepository,
   DemoSettingsRepository,
   DemoStaffRepository,
   DemoStorageRepository,
@@ -35,6 +37,7 @@ import {
   SupabaseMenuRepository,
   SupabaseOrdersRepository,
   SupabasePaymentsRepository,
+  SupabaseRestaurantRepository,
   SupabaseSettingsRepository,
   SupabaseStaffRepository,
   SupabaseStorageRepository,
@@ -54,5 +57,6 @@ export function provideRepositories(): Provider[] {
     { provide: AuthRepository, useClass: useSupabase ? SupabaseAuthRepository : DemoAuthRepository },
     { provide: StorageRepository, useClass: useSupabase ? SupabaseStorageRepository : DemoStorageRepository },
     { provide: PaymentsRepository, useClass: useSupabase ? SupabasePaymentsRepository : DemoPaymentsRepository },
+    { provide: RestaurantRepository, useClass: useSupabase ? SupabaseRestaurantRepository : DemoRestaurantRepository },
   ];
 }

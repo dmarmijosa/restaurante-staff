@@ -27,6 +27,7 @@ import {
   MenuRepository,
   OrdersRepository,
   PaymentsRepository,
+  RestaurantRepository,
   SettingsRepository,
   StaffRepository,
   StorageRepository,
@@ -34,6 +35,7 @@ import {
   type SessionUser,
 } from '../../domain/repositories/repositories';
 import { SupabaseClientService } from './supabase-client.service';
+import { RestaurantContextService } from '../../application/restaurant-context.service';
 
 /** Formatea la hora de creación como la muestra el diseño (HH:MM). */
 function toTimeLabel(iso: string): string {
@@ -44,20 +46,21 @@ function toTimeLabel(iso: string): string {
 @Injectable()
 export class SupabaseMenuRepository extends MenuRepository {
   private supabase = inject(SupabaseClientService);
+  private context = inject(RestaurantContextService);
 
   async getCategories(): Promise<Category[]> {
-    const { data, error } = await this.supabase.client
-      .from('categories')
-      .select('id, name, position')
-      .order('position');
+    const rId = this.context.restaurantId();
+    const base = this.supabase.client.from('categories').select('id, name, position').order('position');
+    const { data, error } = await (rId ? base.eq('restaurant_id', rId) : base);
     if (error) throw error;
     return data ?? [];
   }
 
   async addCategory(name: string): Promise<Category> {
+    const rId = this.context.restaurantId();
     const { data, error } = await this.supabase.client
       .from('categories')
-      .insert({ name })
+      .insert({ name, restaurant_id: rId })
       .select()
       .single();
     if (error) throw error;
@@ -70,10 +73,12 @@ export class SupabaseMenuRepository extends MenuRepository {
   }
 
   async getProducts(): Promise<Product[]> {
-    const { data, error } = await this.supabase.client
+    const rId = this.context.restaurantId();
+    const base = this.supabase.client
       .from('products')
       .select('id, name, description, price, available, image_url, category_id, categories(name)')
       .order('id');
+    const { data, error } = await (rId ? base.eq('restaurant_id', rId) : base);
     if (error) throw error;
     return (data ?? []).map((row) => ({
       id: row.id,
@@ -93,6 +98,7 @@ export class SupabaseMenuRepository extends MenuRepository {
     categoryId: number | null;
     description?: string;
   }): Promise<Product> {
+    const rId = this.context.restaurantId();
     const { data, error } = await this.supabase.client
       .from('products')
       .insert({
@@ -100,6 +106,7 @@ export class SupabaseMenuRepository extends MenuRepository {
         price: input.price,
         category_id: input.categoryId,
         description: input.description ?? 'Nuevo platillo de la casa.',
+        restaurant_id: rId,
       })
       .select('id, name, description, price, available, image_url, category_id, categories(name)')
       .single();
@@ -130,6 +137,7 @@ export class SupabaseMenuRepository extends MenuRepository {
 @Injectable()
 export class SupabaseTablesRepository extends TablesRepository {
   private supabase = inject(SupabaseClientService);
+  private context = inject(RestaurantContextService);
 
   private map(row: Record<string, unknown>): RestaurantTable {
     return {
@@ -146,7 +154,9 @@ export class SupabaseTablesRepository extends TablesRepository {
   }
 
   async getTables(): Promise<RestaurantTable[]> {
-    const { data, error } = await this.supabase.client.from('tables').select('*').order('number');
+    const rId = this.context.restaurantId();
+    const base = this.supabase.client.from('tables').select('*').order('number');
+    const { data, error } = await (rId ? base.eq('restaurant_id', rId) : base);
     if (error) throw error;
     return (data ?? []).map((r) => this.map(r));
   }
@@ -195,18 +205,18 @@ export class SupabaseTablesRepository extends TablesRepository {
 @Injectable()
 export class SupabaseOrdersRepository extends OrdersRepository {
   private supabase = inject(SupabaseClientService);
+  private context = inject(RestaurantContextService);
 
   async getOrders(): Promise<Order[]> {
-    // No se incrusta profiles(full_name): el cliente anónimo no puede leer
-    // profiles (contiene correos/roles del personal), y hacerlo público
-    // violaría la protección de datos. El nombre del mesero se resuelve en el
-    // store a partir de waiter_id y del listado de personal ya cargado.
-    const { data, error } = await this.supabase.client
+    // No se incrusta profiles(full_name): privacidad del personal.
+    const rId = this.context.restaurantId();
+    const base = this.supabase.client
       .from('orders')
       .select(
         'id, table_number, waiter_id, status, created_at, ready_at, paid, payment_method, paid_at, order_items(product_id, product_name, unit_price, quantity)',
       )
       .order('created_at', { ascending: false });
+    const { data, error } = await (rId ? base.eq('restaurant_id', rId) : base);
     if (error) throw error;
     return (data ?? []).map((row) => ({
       id: row.id,
@@ -230,9 +240,10 @@ export class SupabaseOrdersRepository extends OrdersRepository {
   }
 
   async placeOrder(tableNumber: number, items: OrderItem[]): Promise<Order> {
+    const rId = this.context.restaurantId();
     const { data, error } = await this.supabase.client
       .from('orders')
-      .insert({ table_number: tableNumber, source: 'qr' })
+      .insert({ table_number: tableNumber, source: 'qr', restaurant_id: rId })
       .select()
       .single();
     if (error) throw error;
@@ -292,13 +303,16 @@ export class SupabaseOrdersRepository extends OrdersRepository {
 @Injectable()
 export class SupabaseCallsRepository extends CallsRepository {
   private supabase = inject(SupabaseClientService);
+  private context = inject(RestaurantContextService);
 
   async getPendingCalls(): Promise<WaiterCall[]> {
-    const { data, error } = await this.supabase.client
+    const rId = this.context.restaurantId();
+    const base = this.supabase.client
       .from('waiter_calls')
       .select('*')
       .eq('attended', false)
       .order('created_at');
+    const { data, error } = await (rId ? base.eq('restaurant_id', rId) : base);
     if (error) throw error;
     return (data ?? []).map((row) => ({
       id: row.id,
@@ -309,9 +323,10 @@ export class SupabaseCallsRepository extends CallsRepository {
   }
 
   async createCall(tableNumber: number): Promise<WaiterCall> {
+    const rId = this.context.restaurantId();
     const { data, error } = await this.supabase.client
       .from('waiter_calls')
-      .insert({ table_number: tableNumber })
+      .insert({ table_number: tableNumber, restaurant_id: rId })
       .select()
       .single();
     if (error) throw error;
@@ -340,6 +355,7 @@ export class SupabaseCallsRepository extends CallsRepository {
 @Injectable()
 export class SupabaseStaffRepository extends StaffRepository {
   private supabase = inject(SupabaseClientService);
+  private context = inject(RestaurantContextService);
 
   async getStaff(): Promise<StaffMember[]> {
     const { data, error } = await this.supabase.client.from('profiles').select('*').order('created_at');
@@ -362,6 +378,7 @@ export class SupabaseStaffRepository extends StaffRepository {
    * gestione rol y turno.
    */
   async addStaff(input: { fullName: string; email: string; role: StaffRole; shift?: Shift }): Promise<StaffMember> {
+    const rId = this.context.restaurantId();
     const { data, error } = await this.supabase.client
       .from('profiles')
       .insert({
@@ -370,6 +387,7 @@ export class SupabaseStaffRepository extends StaffRepository {
         email: input.email,
         role: input.role,
         shift: input.shift ?? null,
+        restaurant_id: rId,
       })
       .select()
       .single();
@@ -403,13 +421,13 @@ export class SupabaseStaffRepository extends StaffRepository {
 @Injectable()
 export class SupabaseSettingsRepository extends SettingsRepository {
   private supabase = inject(SupabaseClientService);
+  private context = inject(RestaurantContextService);
 
   async getSettings(): Promise<RestaurantSettings> {
-    const { data, error } = await this.supabase.client
-      .from('restaurant_settings')
-      .select('*')
-      .eq('id', 1)
-      .single();
+    const rId = this.context.restaurantId();
+    const base = this.supabase.client.from('restaurant_settings').select('*');
+    const q = rId ? base.eq('restaurant_id', rId) : base;
+    const { data, error } = await q.single();
     if (error) throw error;
     return {
       name: data.name,
@@ -422,17 +440,16 @@ export class SupabaseSettingsRepository extends SettingsRepository {
   }
 
   async updateSettings(patch: Partial<RestaurantSettings>): Promise<void> {
-    const { error } = await this.supabase.client
-      .from('restaurant_settings')
-      .update({
-        name: patch.name,
-        is_open: patch.isOpen,
-        season: patch.season,
-        season_start: patch.seasonStart,
-        season_end: patch.seasonEnd,
-        logo_url: patch.logoUrl,
-      })
-      .eq('id', 1);
+    const rId = this.context.restaurantId();
+    const base = this.supabase.client.from('restaurant_settings').update({
+      name: patch.name,
+      is_open: patch.isOpen,
+      season: patch.season,
+      season_start: patch.seasonStart,
+      season_end: patch.seasonEnd,
+      logo_url: patch.logoUrl,
+    });
+    const { error } = await (rId ? base.eq('restaurant_id', rId) : base);
     if (error) throw error;
   }
 }
@@ -440,11 +457,12 @@ export class SupabaseSettingsRepository extends SettingsRepository {
 @Injectable()
 export class SupabaseAuthRepository extends AuthRepository {
   private supabase = inject(SupabaseClientService);
+  private context = inject(RestaurantContextService);
 
   private async toSessionUser(userId: string, email: string): Promise<SessionUser> {
     const { data } = await this.supabase.client
       .from('profiles')
-      .select('full_name, role')
+      .select('full_name, role, restaurant_id')
       .eq('id', userId)
       .single();
     return {
@@ -452,6 +470,7 @@ export class SupabaseAuthRepository extends AuthRepository {
       email,
       fullName: data?.full_name ?? email,
       role: (data?.role as StaffRole) ?? 'mesero',
+      restaurantId: (data?.restaurant_id as string) ?? '',
     };
   }
 
@@ -471,26 +490,56 @@ export class SupabaseAuthRepository extends AuthRepository {
     return this.toSessionUser(data.user.id, data.user.email ?? '');
   }
 
-  async adminExists(): Promise<boolean> {
-    const { data, error } = await this.supabase.client.rpc('admin_exists');
+  async adminExists(restaurantId?: string): Promise<boolean> {
+    const { data, error } = await this.supabase.client.rpc('admin_exists', {
+      p_restaurant_id: restaurantId ?? null,
+    });
     if (error) throw error;
     return Boolean(data);
   }
 
   /**
-   * Registra al primer administrador. El trigger `handle_new_user` lo marca
-   * como admin propietario por ser el primer perfil. Si el proyecto exige
-   * confirmación por correo, no habrá sesión todavía y se devuelve null.
+   * Registra al primer administrador de un restaurante ya creado. El trigger
+   * `handle_new_user` lo marca como admin+propietario al ser el primer perfil
+   * del restaurante. Si se requiere confirmación de correo devuelve null.
    */
-  async signUpFirstAdmin(input: { fullName: string; email: string; password: string }): Promise<SessionUser | null> {
+  async signUpFirstAdmin(input: {
+    fullName: string;
+    email: string;
+    password: string;
+    restaurantId: string;
+  }): Promise<SessionUser | null> {
     const { data, error } = await this.supabase.client.auth.signUp({
       email: input.email,
       password: input.password,
-      options: { data: { full_name: input.fullName, role: 'admin' } },
+      options: { data: { full_name: input.fullName, role: 'admin', restaurant_id: input.restaurantId } },
     });
     if (error) throw error;
-    if (!data.session || !data.user) return null; // requiere confirmar correo
+    if (!data.session || !data.user) return null;
     return this.toSessionUser(data.user.id, data.user.email ?? input.email);
+  }
+}
+
+@Injectable()
+export class SupabaseRestaurantRepository extends RestaurantRepository {
+  private supabase = inject(SupabaseClientService);
+
+  /** Llama al RPC `create_restaurant(name, slug)` y devuelve el UUID nuevo. */
+  async create(name: string, slug: string): Promise<string> {
+    const { data, error } = await this.supabase.client.rpc('create_restaurant', {
+      p_name: name,
+      p_slug: slug,
+    });
+    if (error) throw error;
+    return data as string;
+  }
+
+  /** Resuelve el slug de la URL al restaurante correspondiente. */
+  async getBySlug(slug: string): Promise<{ id: string; name: string; slug: string } | null> {
+    const { data, error } = await this.supabase.client.rpc('restaurant_by_slug', { p_slug: slug });
+    if (error) throw error;
+    const row = (data as Array<{ id: string; name: string; slug: string }> | null)?.[0];
+    return row ?? null;
   }
 }
 

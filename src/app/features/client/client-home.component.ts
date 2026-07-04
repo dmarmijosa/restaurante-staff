@@ -1,14 +1,17 @@
 /**
  * Home pública de la app = vista del cliente del diseño (menú QR).
  *
- * El cliente NO se autentica: escanea el QR de su mesa (`/mesa/:numero`) o
- * entra a `/` y navega el menú, arma su pedido, lo envía y sigue su estado.
- * Al final de la página, en el footer, está el acceso del personal (login),
- * tal como pide el flujo del producto.
+ * Soporta dos modos:
+ *  - Ruta `/r/:slug/mesa/:numero` (multi-tenant): resuelve el slug al
+ *    restaurant_id y lo pasa al store antes de cargar los datos.
+ *  - Rutas `/` y `/mesa/:numero` (demo / mono-tenant): usa el contexto ya
+ *    establecido por el auth service o el restaurante demo en memoria.
  */
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, numberAttribute, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { RestaurantStore } from '../../core/application/restaurant.store';
+import { RestaurantContextService } from '../../core/application/restaurant-context.service';
+import { RestaurantRepository } from '../../core/domain/repositories/repositories';
 import { MoneyPipe } from '../../shared/money.pipe';
 import type { OrderStatus, Product } from '../../core/domain/entities/entities';
 
@@ -309,8 +312,11 @@ const STEP_DEFS: Array<{ key: OrderStatus; label: string; desc: string }> = [
 })
 export class ClientHomeComponent implements OnInit {
   protected readonly store = inject(RestaurantStore);
+  private readonly route = inject(ActivatedRoute);
+  private readonly restaurantRepo = inject(RestaurantRepository);
+  private readonly context = inject(RestaurantContextService);
 
-  /** Número de mesa que codifica el QR (`/mesa/:numero`); 4 por defecto como el diseño. */
+  /** Número de mesa que codifica el QR (`/mesa/:numero` o `/r/:slug/mesa/:numero`); 4 por defecto. */
   readonly numero = input(4, { transform: numberAttribute });
 
   protected readonly screen = signal<ClientScreen>('menu');
@@ -351,7 +357,13 @@ export class ClientHomeComponent implements OnInit {
     }));
   });
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
+    // En rutas /r/:slug resuelve el slug al restaurant_id antes de cargar datos.
+    const slug = this.route.snapshot.paramMap.get('slug');
+    if (slug && !this.context.restaurantId()) {
+      const restaurant = await this.restaurantRepo.getBySlug(slug);
+      if (restaurant) this.context.set(restaurant.id);
+    }
     void this.store.init();
   }
 

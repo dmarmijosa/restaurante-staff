@@ -28,6 +28,7 @@ import {
   MenuRepository,
   OrdersRepository,
   PaymentsRepository,
+  RestaurantRepository,
   SettingsRepository,
   StaffRepository,
   StorageRepository,
@@ -40,6 +41,7 @@ import {
   DEMO_ORDERS,
   DEMO_PAYMENT_METHODS,
   DEMO_PRODUCTS,
+  DEMO_RESTAURANT_ID,
   DEMO_SETTINGS,
   DEMO_STAFF,
   DEMO_TABLES,
@@ -284,7 +286,13 @@ export class DemoAuthRepository extends AuthRepository {
     const match = DEMO_USERS.find((u) => u.email === email && u.password === password);
     if (!match) throw new Error('Credenciales incorrectas');
     const staff = DEMO_STAFF.find((s) => s.id === match.staffId)!;
-    this.current = { id: staff.id, email: staff.email, fullName: staff.fullName, role: staff.role };
+    this.current = {
+      id: staff.id,
+      email: staff.email,
+      fullName: staff.fullName,
+      role: staff.role,
+      restaurantId: DEMO_RESTAURANT_ID,
+    };
     sessionStorage.setItem('demo-session', JSON.stringify(this.current));
     return this.current;
   }
@@ -302,12 +310,22 @@ export class DemoAuthRepository extends AuthRepository {
   }
 
   /** En demo siempre hay un admin de ejemplo, así que el registro inicial no aplica. */
-  async adminExists(): Promise<boolean> {
+  async adminExists(_restaurantId?: string): Promise<boolean> {
     return true;
   }
 
   async signUpFirstAdmin(): Promise<SessionUser | null> {
     throw new Error('El registro inicial no está disponible en modo demo');
+  }
+}
+
+@Injectable()
+export class DemoRestaurantRepository extends RestaurantRepository {
+  async create(_name: string, _slug: string): Promise<string> {
+    return DEMO_RESTAURANT_ID;
+  }
+  async getBySlug(_slug: string): Promise<{ id: string; name: string; slug: string }> {
+    return { id: DEMO_RESTAURANT_ID, name: 'Casa Nogal (demo)', slug: 'demo' };
   }
 }
 

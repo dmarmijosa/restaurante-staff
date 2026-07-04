@@ -1,12 +1,15 @@
 /**
- * Registro inicial del administrador propietario (una sola vez).
+ * Bootstrap de un nuevo restaurante (tenant) + su primer administrador.
  *
- * Solo es accesible mientras no exista ningún admin (ver bootstrapGuard). El
- * primer usuario registrado se convierte en admin propietario por el trigger
- * `handle_new_user`. Tras crear la cuenta, si el proyecto exige confirmación
- * por correo se informa al usuario; si no, entra directo al panel.
+ * Accesible desde /nuevo-restaurante (siempre) y desde /registro-inicial
+ * (legacy, con guard). Flujo:
+ *  1. El formulario recoge: nombre del restaurante, slug, nombre completo,
+ *     correo y contraseña del administrador.
+ *  2. Se crea el restaurante vía RPC `create_restaurant` → restaurant_id.
+ *  3. Se hace signUp con el restaurant_id en los metadatos.
+ *  4. El trigger `handle_new_user` crea el perfil admin+propietario.
  */
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
@@ -48,16 +51,71 @@ import { AuthService } from '../../core/auth/auth.service';
           [formGroup]="form"
           (ngSubmit)="submit()"
           class="w-full max-w-[420px] rounded-2xl border border-borde bg-papel p-7"
+          novalidate
         >
           <span class="mb-2 inline-block rounded-full bg-duna px-2.5 py-1 text-[10.5px] font-bold text-terracota-profundo">
-            CONFIGURACIÓN INICIAL
+            NUEVO RESTAURANTE
           </span>
-          <h1 class="m-0 font-serif text-[23px] font-semibold text-tinta">Crea tu cuenta de administrador</h1>
+          <h1 class="m-0 font-serif text-[23px] font-semibold text-tinta">Crea tu restaurante</h1>
           <p class="mt-1 mb-5 text-[13px] leading-relaxed text-tinta-media">
-            Es la primera y única cuenta propietaria. Desde ella darás de alta al resto del equipo (meseros,
-            cocina y más administradores) y asignarás sus roles.
+            Cada restaurante es independiente: su menú, personal y pedidos no se mezclan con otros.
           </p>
 
+          <!-- Nombre del restaurante -->
+          <label class="mb-1.5 block text-[11.5px] font-semibold text-tinta-media" for="restaurantName">
+            NOMBRE DEL RESTAURANTE <span class="text-rojizo" aria-hidden="true">*</span>
+          </label>
+          <input
+            id="restaurantName"
+            type="text"
+            formControlName="restaurantName"
+            autocomplete="organization"
+            required
+            placeholder="Casa Nogal"
+            (blur)="restaurantNameTouched.set(true)"
+            (input)="autoSlug()"
+            [attr.aria-invalid]="restaurantNameInvalid()"
+            [attr.aria-describedby]="restaurantNameInvalid() ? 'rname-error' : null"
+            class="min-h-11 w-full rounded-[9px] border-[1.5px] bg-papel px-3 py-[9px] text-[13px] text-tinta outline-none focus:border-terracota"
+            [class.border-borde]="!restaurantNameInvalid()"
+            [class.border-rojizo]="restaurantNameInvalid()"
+          />
+          @if (restaurantNameInvalid()) {
+            <p id="rname-error" class="mt-1.5 mb-2.5 text-[11.5px] font-semibold text-rojizo">Escribe el nombre del restaurante.</p>
+          } @else {
+            <div class="mb-4"></div>
+          }
+
+          <!-- Slug (URL del menú QR) -->
+          <label class="mb-1.5 block text-[11.5px] font-semibold text-tinta-media" for="slug">
+            URL DEL MENÚ (slug) <span class="text-rojizo" aria-hidden="true">*</span>
+          </label>
+          <div class="flex items-center gap-2 mb-1.5">
+            <span class="text-[12px] text-tinta-media whitespace-nowrap">/r/</span>
+            <input
+              id="slug"
+              type="text"
+              formControlName="slug"
+              required
+              placeholder="casa-nogal"
+              (blur)="slugTouched.set(true)"
+              [attr.aria-invalid]="slugInvalid()"
+              [attr.aria-describedby]="slugInvalid() ? 'slug-error' : null"
+              class="min-h-11 flex-1 rounded-[9px] border-[1.5px] bg-papel px-3 py-[9px] text-[13px] font-mono text-tinta outline-none focus:border-terracota"
+              [class.border-borde]="!slugInvalid()"
+              [class.border-rojizo]="slugInvalid()"
+            />
+          </div>
+          @if (slugInvalid()) {
+            <p id="slug-error" class="mb-2.5 text-[11.5px] font-semibold text-rojizo">Solo letras, números y guiones (mín. 2 caracteres).</p>
+          } @else {
+            <div class="mb-4"></div>
+          }
+
+          <div class="my-4 border-t border-panal"></div>
+          <p class="mb-4 text-[12px] text-tinta-media">Cuenta de administrador propietario</p>
+
+          <!-- Nombre completo -->
           <label class="mb-1.5 block text-[11.5px] font-semibold text-tinta-media" for="fullName">
             NOMBRE COMPLETO <span class="text-rojizo" aria-hidden="true">*</span>
           </label>
@@ -81,6 +139,7 @@ import { AuthService } from '../../core/auth/auth.service';
             <div class="mb-4"></div>
           }
 
+          <!-- Correo -->
           <label class="mb-1.5 block text-[11.5px] font-semibold text-tinta-media" for="email">
             CORREO <span class="text-rojizo" aria-hidden="true">*</span>
           </label>
@@ -107,6 +166,7 @@ import { AuthService } from '../../core/auth/auth.service';
             <div class="mb-4"></div>
           }
 
+          <!-- Contraseña -->
           <label class="mb-1.5 block text-[11.5px] font-semibold text-tinta-media" for="password">
             CONTRASEÑA <span class="text-rojizo" aria-hidden="true">*</span>
           </label>
@@ -158,13 +218,13 @@ import { AuthService } from '../../core/auth/auth.service';
             [disabled]="loading()"
             class="w-full cursor-pointer rounded-[10px] border-none bg-terracota py-[11px] text-[13.5px] font-bold text-lino-calido hover:bg-terracota-hover disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {{ loading() ? 'Creando cuenta…' : 'Crear administrador' }}
+            {{ loading() ? 'Creando restaurante…' : 'Crear restaurante y cuenta' }}
           </button>
         </form>
       }
 
       <a routerLink="/" class="mt-6 text-[12.5px] font-semibold text-terracota-profundo hover:underline">
-        ← Volver al menú del restaurante
+        ← Volver al menú
       </a>
     </div>
   `,
@@ -179,48 +239,69 @@ export class RegisterAdminComponent {
   protected readonly done = signal(false);
   protected readonly showPassword = signal(false);
 
+  protected readonly restaurantNameTouched = signal(false);
+  protected readonly slugTouched = signal(false);
   protected readonly nameTouched = signal(false);
   protected readonly emailTouched = signal(false);
   protected readonly passwordTouched = signal(false);
 
   protected readonly form = this.fb.nonNullable.group({
+    restaurantName: ['', [Validators.required, Validators.minLength(2)]],
+    slug: ['', [Validators.required, Validators.minLength(2), Validators.pattern(/^[a-z0-9-]+$/)]],
     fullName: ['', [Validators.required, Validators.minLength(2)]],
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(8)]],
   });
 
-  protected nameInvalid(): boolean {
-    return this.nameTouched() && this.form.controls.fullName.invalid;
-  }
-  protected emailInvalid(): boolean {
-    return this.emailTouched() && this.form.controls.email.invalid;
-  }
-  protected passwordInvalid(): boolean {
-    return this.passwordTouched() && this.form.controls.password.invalid;
+  protected restaurantNameInvalid = computed(
+    () => this.restaurantNameTouched() && this.form.controls.restaurantName.invalid,
+  );
+  protected slugInvalid = computed(() => this.slugTouched() && this.form.controls.slug.invalid);
+  protected nameInvalid = computed(() => this.nameTouched() && this.form.controls.fullName.invalid);
+  protected emailInvalid = computed(() => this.emailTouched() && this.form.controls.email.invalid);
+  protected passwordInvalid = computed(() => this.passwordTouched() && this.form.controls.password.invalid);
+
+  /** Genera automáticamente el slug desde el nombre del restaurante. */
+  protected autoSlug(): void {
+    const name = this.form.controls.restaurantName.value;
+    const slug = name
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
+    this.form.controls.slug.setValue(slug);
   }
 
   protected async submit(): Promise<void> {
+    this.restaurantNameTouched.set(true);
+    this.slugTouched.set(true);
+    this.nameTouched.set(true);
+    this.emailTouched.set(true);
+    this.passwordTouched.set(true);
+
     if (this.form.invalid) {
-      this.nameTouched.set(true);
-      this.emailTouched.set(true);
-      this.passwordTouched.set(true);
-      const first = this.form.controls.fullName.invalid
-        ? 'fullName'
-        : this.form.controls.email.invalid
-          ? 'email'
-          : 'password';
-      document.getElementById(first)?.focus();
+      const firstInvalid = (['restaurantName', 'slug', 'fullName', 'email', 'password'] as const).find(
+        (k) => this.form.controls[k].invalid,
+      );
+      document.getElementById(firstInvalid === 'restaurantName' ? 'restaurantName' : (firstInvalid ?? 'fullName'))?.focus();
       return;
     }
+
     this.loading.set(true);
     this.error.set(null);
     try {
-      const { fullName, email, password } = this.form.getRawValue();
-      const user = await this.auth.signUpFirstAdmin({ fullName, email, password });
+      const { restaurantName, slug, fullName, email, password } = this.form.getRawValue();
+
+      // Paso 1: crear el restaurante (tenant).
+      const restaurantId = await this.auth.createRestaurant(restaurantName, slug);
+
+      // Paso 2: registrar al primer admin con el restaurant_id en los metadatos.
+      const user = await this.auth.signUpFirstAdmin({ fullName, email, password, restaurantId });
+
       if (user) {
         await this.router.navigateByUrl('/admin');
       } else {
-        // El proyecto exige confirmar el correo antes de iniciar sesión.
         this.done.set(true);
       }
     } catch (e) {
@@ -228,7 +309,9 @@ export class RegisterAdminComponent {
       this.error.set(
         message.includes('already registered') || message.includes('registrado')
           ? 'Ese correo ya tiene una cuenta. Inicia sesión.'
-          : 'No se pudo crear la cuenta. Inténtalo de nuevo.',
+          : message.includes('duplicate') || message.includes('slug')
+            ? 'Ese slug ya está en uso. Elige otro nombre para la URL.'
+            : 'No se pudo crear el restaurante. Inténtalo de nuevo.',
       );
     } finally {
       this.loading.set(false);

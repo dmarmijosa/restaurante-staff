@@ -14,6 +14,7 @@ import type {
   OrderStatus,
   PaymentMethod,
   Product,
+  Restaurant,
   RestaurantSettings,
   RestaurantTable,
   Shift,
@@ -92,6 +93,8 @@ export interface SessionUser {
   email: string;
   fullName: string;
   role: StaffRole;
+  /** Restaurante al que pertenece este miembro del personal. */
+  restaurantId: string;
 }
 
 export abstract class AuthRepository {
@@ -99,19 +102,30 @@ export abstract class AuthRepository {
   abstract signOut(): Promise<void>;
   abstract getCurrentUser(): Promise<SessionUser | null>;
   /**
-   * ¿Ya existe un administrador? El registro inicial solo se muestra cuando
-   * devuelve false, garantizando que ocurre "una sola vez".
+   * ¿Ya existe un administrador para el restaurante dado?
+   * Si no se pasa restaurantId, comprueba si existe algún admin (compatibilidad).
    */
-  abstract adminExists(): Promise<boolean>;
+  abstract adminExists(restaurantId?: string): Promise<boolean>;
   /**
-   * Registro del primer administrador (propietario). Devuelve la sesión si el
-   * proyecto no exige confirmación por correo, o null si hay que confirmar.
+   * Registro del primer administrador de un restaurante.
+   * Devuelve la sesión si el proyecto no exige confirmación por correo, o null.
    */
   abstract signUpFirstAdmin(input: {
     fullName: string;
     email: string;
     password: string;
+    restaurantId: string;
   }): Promise<SessionUser | null>;
+}
+
+/**
+ * Acceso a la tabla de restaurantes (tenants).
+ */
+export abstract class RestaurantRepository {
+  /** Crea un nuevo restaurante y devuelve su UUID. */
+  abstract create(name: string, slug: string): Promise<string>;
+  /** Resuelve el slug de la URL a los datos del restaurante. */
+  abstract getBySlug(slug: string): Promise<Restaurant | null>;
 }
 
 /**

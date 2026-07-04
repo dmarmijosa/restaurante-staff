@@ -14,6 +14,9 @@ import type {
   WaiterCall,
 } from '../../domain/entities/entities';
 
+/** UUID fijo del restaurante demo (en memoria, sin Supabase). */
+export const DEMO_RESTAURANT_ID = '00000000-0000-0000-0000-000000000001';
+
 export const DEMO_CATEGORIES: Category[] = [
   { id: 1, name: 'Entradas', position: 1 },
   { id: 2, name: 'Principales', position: 2 },

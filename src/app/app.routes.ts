@@ -3,15 +3,24 @@ import { roleGuard } from './core/auth/role.guard';
 import { bootstrapGuard } from './core/auth/bootstrap.guard';
 
 /**
- * Mapa de rutas por rol:
- *  - `/` es la vista del cliente (menú QR): pública, sin autenticación, con el
- *    login del personal en el footer, como pide el flujo del producto.
- *  - `/mesa/:numero` es la URL que codifica el QR físico de cada mesa.
- *  - `/admin`, `/mesero` y `/cocina` van protegidas por rol; el admin puede
- *    entrar a todas.
- * Lazy loading en todas las features para un primer paint mínimo del menú.
+ * Mapa de rutas:
+ *  - `/` y `/mesa/:numero` — cliente del restaurante demo (o el único en mono-tenant).
+ *  - `/r/:slug` y `/r/:slug/mesa/:numero` — cliente multi-tenant; el slug identifica al restaurante.
+ *  - `/nuevo-restaurante` — bootstrap de un nuevo tenant (siempre accesible).
+ *  - `/registro-inicial` — alias legacy; redirige al nuevo bootstrap multi-tenant.
+ *  - `/admin`, `/mesero`, `/cocina`, `/cajero` — protegidos por rol.
  */
 export const routes: Routes = [
+  // ── Cliente (rutas multi-tenant) ──────────────────────────────────────────
+  {
+    path: 'r/:slug',
+    loadComponent: () => import('./features/client/client-home.component').then((m) => m.ClientHomeComponent),
+  },
+  {
+    path: 'r/:slug/mesa/:numero',
+    loadComponent: () => import('./features/client/client-home.component').then((m) => m.ClientHomeComponent),
+  },
+  // ── Cliente (ruta raíz, compatible con demo y mono-tenant) ────────────────
   {
     path: '',
     loadComponent: () => import('./features/client/client-home.component').then((m) => m.ClientHomeComponent),
@@ -20,17 +29,26 @@ export const routes: Routes = [
     path: 'mesa/:numero',
     loadComponent: () => import('./features/client/client-home.component').then((m) => m.ClientHomeComponent),
   },
+  // ── Autenticación y bootstrap ─────────────────────────────────────────────
   {
     path: 'login',
     loadComponent: () => import('./features/auth/login.component').then((m) => m.LoginComponent),
   },
   {
-    // Alta del administrador propietario; el guard la cierra en cuanto existe uno.
+    // Crea un nuevo restaurante + primer admin; siempre accesible para permitir
+    // múltiples tenants en el mismo despliegue.
+    path: 'nuevo-restaurante',
+    loadComponent: () =>
+      import('./features/auth/register-admin.component').then((m) => m.RegisterAdminComponent),
+  },
+  {
+    // Alias legado; el guard redirige si ya hay un admin para evitar re-registro.
     path: 'registro-inicial',
     canActivate: [bootstrapGuard],
     loadComponent: () =>
       import('./features/auth/register-admin.component').then((m) => m.RegisterAdminComponent),
   },
+  // ── Panel de personal (protegido por rol) ─────────────────────────────────
   {
     path: 'admin',
     canActivate: [roleGuard('admin')],

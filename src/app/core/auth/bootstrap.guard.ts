@@ -1,7 +1,7 @@
 /**
- * Guard del registro inicial. Solo deja entrar a `/registro-inicial` cuando aún
- * NO existe ningún administrador; en cuanto hay uno, redirige a `/login`. Es la
- * garantía de que el alta de administrador propietario ocurre una sola vez.
+ * Guard del registro inicial (legacy, alias /registro-inicial).
+ * Últimamente /nuevo-restaurante está siempre disponible para crear nuevos
+ * tenants; este guard solo protege el alias legado.
  */
 import { inject } from '@angular/core';
 import { Router, type CanActivateFn } from '@angular/router';
@@ -11,10 +11,10 @@ export const bootstrapGuard: CanActivateFn = async () => {
   const auth = inject(AuthService);
   const router = inject(Router);
   try {
+    // Sin restaurant_id específico: si hay cualquier admin, la ruta legacy se cierra.
     const exists = await auth.adminExists();
     return exists ? router.createUrlTree(['/login']) : true;
   } catch {
-    // Ante un fallo de red, no exponemos el registro: mejor mandar al login.
     return router.createUrlTree(['/login']);
   }
 };

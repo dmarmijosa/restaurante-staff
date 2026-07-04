@@ -5,8 +5,8 @@
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { AuthService } from './auth.service';
-import { AuthRepository } from '../domain/repositories/repositories';
-import { DemoAuthRepository } from '../data/demo/demo-repositories';
+import { AuthRepository, RestaurantRepository } from '../domain/repositories/repositories';
+import { DemoAuthRepository, DemoRestaurantRepository } from '../data/demo/demo-repositories';
 
 describe('AuthService', () => {
   let auth: AuthService;
@@ -14,7 +14,10 @@ describe('AuthService', () => {
   beforeEach(() => {
     sessionStorage.clear();
     TestBed.configureTestingModule({
-      providers: [{ provide: AuthRepository, useClass: DemoAuthRepository }],
+      providers: [
+        { provide: AuthRepository, useClass: DemoAuthRepository },
+        { provide: RestaurantRepository, useClass: DemoRestaurantRepository },
+      ],
     });
     auth = TestBed.inject(AuthService);
   });
@@ -57,7 +60,7 @@ describe('AuthService', () => {
   it('en modo demo ya existe un admin (registro inicial deshabilitado)', async () => {
     expect(await auth.adminExists()).toBe(true);
     await expect(
-      auth.signUpFirstAdmin({ fullName: 'X', email: 'x@x.dev', password: 'password1' }),
+      auth.signUpFirstAdmin({ fullName: 'X', email: 'x@x.dev', password: 'password1', restaurantId: 'r1' }),
     ).rejects.toThrow();
   });
 });

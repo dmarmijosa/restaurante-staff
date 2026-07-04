@@ -111,7 +111,7 @@ test.describe('Panel de administración', () => {
     // La cuenta propietaria no puede eliminarse
     const ownerRow = page.getByTestId('admin-row').filter({ hasText: 'Ana Ríos' });
     await ownerRow.getByRole('button', { name: 'Eliminar' }).click();
-    await expect(page.getByText('La cuenta propietaria no puede eliminarse')).toBeVisible();
+    await expect(page.getByRole('status').filter({ hasText: 'La cuenta propietaria no puede eliminarse' })).toBeVisible();
   });
 });
 

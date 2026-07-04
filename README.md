@@ -4,37 +4,37 @@
 
 ## Estado de la aplicación
 
-**v0.5 · MVP completo** — actualizado el 2026-07-03
+**v0.6 · Multi-restaurante** — actualizado el 2026-07-04
 
-| Módulo | Estado |
-|---|---|
-| Cliente (home pública, menú QR, carrito, seguimiento de pedido, llamar mesero) | ✅ Completo |
-| Login del personal (email + contraseña, desde el footer de la home) | ✅ Completo |
-| Admin · Plano del salón (drag & drop, sillas, fusión/separación de mesas) | ✅ Completo |
-| Admin · Pedidos (kanban 4 estados), Menú, Categorías, Meseros y turnos, Temporada, Ajustes | ✅ Completo |
-| Roles (admin/mesero/cocina) asignables por el admin + guards por área | ✅ Completo |
-| Eliminación permanente de datos del personal (protección de datos) | ✅ Completo |
-| Mesero (tablet: llamadas de mesa, mesas del salón, pedidos activos) | ✅ Completo |
-| Cocina (pantalla de comandas: preparar → listo) | ✅ Completo |
-| Esquema Supabase (migraciones + RLS + seed) | ✅ Aplicado al proyecto y verificado |
-| QR real por mesa (generación local + impresión) | ✅ Completo |
-| Accesibilidad y microinteracciones (focus-visible, reduced-motion, validación inline) | ✅ Completo |
-| Licencia MIT + CI (GitHub Actions) | ✅ Completo |
-| Registro inicial del administrador (una sola vez, con redirección automática) | ✅ Completo |
-| Imágenes de productos y logo (Supabase Storage, con compresión) | ✅ Completo |
-| Onboarding del panel con driver.js (guía interactiva) | ✅ Completo |
-| Rol Cajero + cobro por método de pago configurable | ✅ Completo |
-| Resumen/métricas del admin (ingresos, ticket medio, ventas por método, top productos) | ✅ Completo |
-| Tiempo de cocina (temporizador en vivo + tiempo medio de preparación) | ✅ Completo |
-| Filtros por fecha en el Resumen (Hoy / 7 días / 30 días / Todo) | ✅ Completo |
-| Aviso sonoro en cocina + asignación de mesas a meseros | ✅ Completo |
-| Historial de caja y pedidos (arqueo por método) | ✅ Completo |
-| Reinicio diario de demo en Supabase (pg_cron) | ✅ Completo |
-| Recorte manual de imagen antes de subir (logo y productos) | ✅ Completo |
-| Bloqueo de registro público tras bootstrap (trigger en `auth.users`) | ✅ Completo |
-| Manual de instalación para persona natural ([manual.md](manual.md)) | ✅ Completo |
+| Módulo                                                                                     | Estado                               |
+| ------------------------------------------------------------------------------------------ | ------------------------------------ |
+| Cliente (home pública, menú QR, carrito, seguimiento de pedido, llamar mesero)             | ✅ Completo                          |
+| Login del personal (email + contraseña, desde el footer de la home)                        | ✅ Completo                          |
+| Admin · Plano del salón (drag & drop, sillas, fusión/separación de mesas)                  | ✅ Completo                          |
+| Admin · Pedidos (kanban 4 estados), Menú, Categorías, Meseros y turnos, Temporada, Ajustes | ✅ Completo                          |
+| Roles (admin/mesero/cocina) asignables por el admin + guards por área                      | ✅ Completo                          |
+| Eliminación permanente de datos del personal (protección de datos)                         | ✅ Completo                          |
+| Mesero (tablet: llamadas de mesa, mesas del salón, pedidos activos)                        | ✅ Completo                          |
+| Cocina (pantalla de comandas: preparar → listo)                                            | ✅ Completo                          |
+| Esquema Supabase (migraciones + RLS + seed)                                                | ✅ Aplicado al proyecto y verificado |
+| QR real por mesa (generación local + impresión)                                            | ✅ Completo                          |
+| Accesibilidad y microinteracciones (focus-visible, reduced-motion, validación inline)      | ✅ Completo                          |
+| Licencia MIT + CI (GitHub Actions)                                                         | ✅ Completo                          |
+| Registro inicial del administrador (una sola vez, con redirección automática)              | ✅ Completo                          |
+| Imágenes de productos y logo (Supabase Storage, con compresión)                            | ✅ Completo                          |
+| Onboarding del panel con driver.js (guía interactiva)                                      | ✅ Completo                          |
+| Rol Cajero + cobro por método de pago configurable                                         | ✅ Completo                          |
+| Resumen/métricas del admin (ingresos, ticket medio, ventas por método, top productos)      | ✅ Completo                          |
+| Tiempo de cocina (temporizador en vivo + tiempo medio de preparación)                      | ✅ Completo                          |
+| Filtros por fecha en el Resumen (Hoy / 7 días / 30 días / Todo)                            | ✅ Completo                          |
+| Aviso sonoro en cocina + asignación de mesas a meseros                                     | ✅ Completo                          |
+| Historial de caja y pedidos (arqueo por método)                                            | ✅ Completo                          |
+| Reinicio diario de demo en Supabase (pg_cron)                                              | ✅ Completo                          |
+| Recorte manual de imagen antes de subir (logo y productos)                                 | ✅ Completo                          |
+| Bloqueo de registro público tras bootstrap (trigger en `auth.users`)                       | ✅ Completo                          |
+| Manual de instalación para persona natural ([manual.md](manual.md))                        | ✅ Completo                          |
 
-Pruebas: **33 unitarias** (Vitest) y **28 E2E** (Playwright, escritorio + móvil) en verde. Build de producción sin errores. CI en cada push/PR.
+Pruebas: **33 unitarias** (Vitest) y **28 E2E** (Playwright, escritorio + móvil) en verde.
 
 > Diseño mejorado con la skill **ui-ux-pro-max** aplicando sus principios (foco visible, `prefers-reduced-motion`, transiciones 150–300 ms, touch targets ≥44px, `min-h-dvh`, validación inline) **sin alterar la identidad visual** (paleta terracota/crema, Instrument Sans + Source Serif 4).
 
@@ -47,9 +47,9 @@ npm start          # http://localhost:4200
 
 Sin credenciales de Supabase la app usa **datos de ejemplo en memoria** (los del diseño). Cuentas demo:
 
-| Rol | Correo | Contraseña |
-|---|---|---|
-| Admin | `admin@demo.dev` | `admin123` |
+| Rol    | Correo            | Contraseña  |
+| ------ | ----------------- | ----------- |
+| Admin  | `admin@demo.dev`  | `admin123`  |
 | Mesero | `mesero@demo.dev` | `mesero123` |
 | Cocina | `cocina@demo.dev` | `cocina123` |
 | Cajero | `cajero@demo.dev` | `cajero123` |
@@ -76,13 +76,13 @@ cp .env.example .env
 
 ## Scripts
 
-| Comando | Qué hace |
-|---|---|
-| `npm start` | Dev server (genera env primero) |
-| `npm run build` | Build de producción |
-| `npm test` | Unitarias (Vitest) |
-| `npm run e2e` | Playwright (levanta el server solo) |
-| `npm run set-env` | Regenera `env.generated.ts` |
+| Comando           | Qué hace                            |
+| ----------------- | ----------------------------------- |
+| `npm start`       | Dev server (genera env primero)     |
+| `npm run build`   | Build de producción                 |
+| `npm test`        | Unitarias (Vitest)                  |
+| `npm run e2e`     | Playwright (levanta el server solo) |
+| `npm run set-env` | Regenera `env.generated.ts`         |
 
 ## Documentación
 

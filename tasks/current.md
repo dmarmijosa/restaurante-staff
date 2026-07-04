@@ -1,6 +1,6 @@
 # Trabajo actual
 
-_Última actualización: 2026-07-03 (iteración 7)_
+_Última actualización: 2026-07-04 (iteración 8)_
 
 ## Estado actual
 
@@ -18,7 +18,7 @@ MVP completo de la plataforma (v0.5): todas las vistas operativas en modo demo y
 ## Hecho tras el pulido de diseño (2026-07-02, iteración 3)
 
 - ✅ Pulido de accesibilidad/UX global con **ui-ux-pro-max** (identidad intacta): `:focus-visible` terracota, `prefers-reduced-motion`, transiciones 150–300 ms, `touch-action: manipulation`, `min-h-dvh` en todas las vistas
-- ✅ Login mejorado: validación inline tras *touched*, indicadores requeridos, toggle mostrar/ocultar contraseña, `aria-invalid`/`aria-describedby`, focus al primer campo inválido, `aria-live` en el error
+- ✅ Login mejorado: validación inline tras _touched_, indicadores requeridos, toggle mostrar/ocultar contraseña, `aria-invalid`/`aria-describedby`, focus al primer campo inválido, `aria-live` en el error
 - ✅ **QR real por mesa** (`app-table-qr`): generación local con `qrcode` (sin llamadas externas), apunta a `/mesa/:numero`, botón de impresión. Reemplaza el placeholder del diseño
 - ✅ **LICENSE MIT** y **CI** (`.github/workflows/ci.yml`): build + unit + e2e en cada push/PR, en modo demo
 - ✅ E2E herméticas: `RS_FORCE_DEMO=1` fuerza modo demo en Playwright (no muta la base real). 25/25 verde
@@ -47,7 +47,24 @@ MVP completo de la plataforma (v0.5): todas las vistas operativas en modo demo y
 - ✅ Cobertura de pruebas: unitaria para la utilidad de recorte + E2E Playwright del flujo real en admin (subir → recortar → aplicar)
 - ✅ Suite validada en verde: **33 unitarias** y **28 E2E**
 
-## Hecho en la iteración 7 (registro inicial + cierre del registro público)
+## Hecho en la iteración 8 (multi-restaurante / multi-tenant)
+
+- ✅ **Tabla `restaurants`** como raíz de cada tenant; `restaurant_id` FK en todas las tablas de negocio (profiles, settings, categories, products, tables, orders, waiter_calls, payment_methods). Datos existentes migrados al restaurante por defecto.
+- ✅ **RLS actualizado**: autenticados ven solo su restaurante (`my_restaurant_id()`); anon (cliente QR) filtra por `restaurant_id` en la query.
+- ✅ **RPCs públicos**: `create_restaurant(name, slug)` (crea tenant + settings iniciales), `restaurant_by_slug(slug)` (resuelve URL → UUID), `admin_exists(restaurant_id?)` (por tenant).
+- ✅ **Triggers actualizados**: `handle_new_user` usa `restaurant_id` del metadata; `check_signup_allowed` exige restaurant_id válido o `invited_at`.
+- ✅ **Angular — dominio**: entidad `Restaurant`, `RestaurantRepository`, `restaurantId` en `SessionUser`.
+- ✅ **Angular — datos**: `RestaurantContextService` (signal compartido del tenant activo); todos los repos Supabase inyectan el contexto y filtran por `restaurant_id`; `DemoRestaurantRepository` con UUID fijo.
+- ✅ **Angular — auth**: `AuthService.restaurantId` signal; `createRestaurant()` + `signUpFirstAdmin({..., restaurantId})`.
+- ✅ **Angular — routing**: rutas `/r/:slug` y `/r/:slug/mesa/:numero` para clientes multi-tenant; `/nuevo-restaurante` siempre disponible; `/registro-inicial` como alias legacy con guard.
+- ✅ **Angular — bootstrap**: formulario `RegisterAdminComponent` con campos de nombre de restaurante + slug (auto-generado) + admin; flujo: `createRestaurant` → `signUpFirstAdmin`.
+- ✅ **Angular — cliente QR**: `ClientHomeComponent` lee el `:slug` del param de ruta, lo resuelve a `restaurant_id` vía `RestaurantRepository` y lo fija en el contexto antes de cargar datos.
+- ✅ Migración SQL aplicada en Supabase; slug corregido a `casa-nogal`.
+- ✅ **33 unitarias + 28 E2E** en verde.
+
+## Qué falta por terminar
+
+- Ninguno — el stack multi-tenant está completo. Los próximos pasos son operativos.
 
 - ✅ **Registro del administrador propietario**: servidor arrancado apuntando a Supabase real; el admin entra en `http://localhost:4200/registro-inicial` y crea su cuenta
 - ✅ **Registro público desactivado a nivel base de datos**: nueva función `check_signup_allowed()` + trigger `on_auth_signup_check` en `auth.users BEFORE INSERT` — bloquea cualquier registro una vez que existe un propietario; las invitaciones del dashboard Supabase (`invited_at`) se siguen permitiendo

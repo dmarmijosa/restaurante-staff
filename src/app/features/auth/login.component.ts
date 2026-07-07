@@ -23,43 +23,7 @@ import { isSupabaseConfigured } from '../../core/data/supabase/supabase-client.s
         </div>
       </a>
 
-      @if (demoMode) {
-        <!-- Modo demo: selección rápida de perfil, sin formulario -->
-        <div class="w-full max-w-[400px] rounded-2xl border border-borde bg-papel p-7">
-          <h1 class="m-0 font-serif text-[23px] font-semibold text-tinta" data-testid="login-heading">{{ 'login.title' | translate }}</h1>
-          <p class="mt-1 mb-5 text-[13px] text-tinta-media">Selecciona un perfil para entrar al modo demo.</p>
-
-          <div class="flex flex-col gap-2">
-            @for (account of demoAccounts; track account.role) {
-              <button
-                type="button"
-                (click)="loginDemo(account.email, account.password)"
-                [disabled]="loading()"
-                class="flex w-full cursor-pointer items-center gap-3 rounded-[10px] border border-borde bg-crema px-4 py-3 text-left hover:border-terracota hover:bg-papel disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-terracota font-serif text-sm font-bold text-lino-calido">
-                  {{ account.initial }}
-                </span>
-                <div>
-                  <div class="text-[13px] font-semibold text-tinta">{{ account.label }}</div>
-                  <div class="text-[11px] text-tinta-media">{{ account.email }}</div>
-                </div>
-              </button>
-            }
-          </div>
-
-          @if (error()) {
-            <div
-              class="mt-4 rounded-[9px] border border-rojizo-borde bg-rojizo-bg px-3.5 py-2.5 text-[12.5px] font-semibold text-rojizo"
-              role="alert"
-              aria-live="assertive"
-            >
-              {{ error()! | translate }}
-            </div>
-          }
-        </div>
-      } @else {
-        <!-- Modo Supabase: formulario real -->
+      <!-- Formulario de acceso (demo y Supabase comparten el mismo form) -->
         <form
           [formGroup]="form"
           (ngSubmit)="submit()"
@@ -148,14 +112,13 @@ import { isSupabaseConfigured } from '../../core/data/supabase/supabase-client.s
             {{ (loading() ? 'login.submitting' : 'login.submit') | translate }}
           </button>
 
-          @if (noAdmin()) {
-            <p class="mt-5 text-center text-[12px] text-tinta-media">
-              ¿Aún no tienes restaurante?
-              <a routerLink="/nuevo-restaurante" class="font-semibold text-terracota-profundo hover:underline">Crear restaurante</a>
-            </p>
+          @if (demoMode) {
+            <div class="mt-5 rounded-[10px] border-[1.5px] border-dashed border-borde-punteado p-3.5 text-[11.5px] leading-relaxed text-tinta-media">
+              <strong>Modo demo</strong> — sin Supabase configurado. Cuentas de prueba:<br />
+              admin&#64;demo.dev / admin123 &nbsp;·&nbsp; mesero&#64;demo.dev / mesero123 &nbsp;·&nbsp; cocina&#64;demo.dev / cocina123
+            </div>
           }
         </form>
-      }
 
       <a routerLink="/" class="mt-6 text-[12.5px] font-semibold text-terracota-profundo hover:underline">
         {{ 'login.back_to_menu' | translate }}
@@ -169,20 +132,12 @@ export class LoginComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private fb = inject(FormBuilder);
 
-  ngOnInit(): void {
-    // Con Supabase: comprueba si hay admin para mostrar el enlace de registro
-    if (this.demoMode) return;
-    void this.auth
-      .adminExists()
-      .then((exists) => { this.noAdmin.set(!exists); })
-      .catch(() => { /* si falla, no mostramos nada extra */ });
-  }
+  ngOnInit(): void {}
 
   protected readonly demoMode = !isSupabaseConfigured();
   protected readonly loading = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly showPassword = signal(false);
-  protected readonly noAdmin = signal(false);
 
   protected readonly demoAccounts = [
     { role: 'admin',  label: 'Administrador', initial: 'A',  email: 'admin@demo.dev',  password: 'admin123'  },

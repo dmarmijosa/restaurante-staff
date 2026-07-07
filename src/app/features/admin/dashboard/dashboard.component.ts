@@ -4,8 +4,11 @@
  * productos más vendidos. Usa barras CSS (sin librerías) para no añadir peso y
  * mantener la identidad terracota/crema.
  */
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { RestaurantStore } from '../../../core/application/restaurant.store';
+import { AuthService } from '../../../core/auth/auth.service';
+import { isSupabaseConfigured } from '../../../core/data/supabase/supabase-client.service';
 import { MoneyPipe } from '../../../shared/money.pipe';
 import {
   averagePrepMinutes,
@@ -20,10 +23,26 @@ type Range = 'hoy' | '7d' | '30d' | 'todo';
 
 @Component({
   selector: 'app-dashboard',
-  imports: [MoneyPipe],
+  imports: [MoneyPipe, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div data-testid="admin-resumen">
+
+      @if (showCreateRestaurant()) {
+        <div class="mb-5 rounded-2xl border-[1.5px] border-dashed border-borde-punteado bg-papel p-5 flex items-center gap-4">
+          <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-terracota font-serif text-xl font-bold text-lino-calido">R</div>
+          <div class="flex-1">
+            <div class="font-semibold text-tinta">Crea tu primer restaurante</div>
+            <div class="mt-0.5 text-[12.5px] text-tinta-media">Aún no hay ningún restaurante registrado en este despliegue.</div>
+          </div>
+          <a
+            routerLink="/nuevo-restaurante"
+            class="shrink-0 rounded-[10px] bg-terracota px-4 py-2.5 text-[13px] font-bold text-lino-calido hover:bg-terracota-hover"
+          >
+            Crear restaurante
+          </a>
+        </div>
+      }
       <div class="mb-4 flex flex-wrap items-end gap-4">
         <div class="flex-1">
           <h1 class="m-0 font-serif text-[27px] font-semibold">Resumen</h1>
@@ -110,8 +129,18 @@ type Range = 'hoy' | '7d' | '30d' | 'todo';
     </div>
   `,
 })
-export class DashboardComponent {
+export class DashboardComponent implements OnInit {
   protected readonly store = inject(RestaurantStore);
+  private readonly auth = inject(AuthService);
+
+  protected readonly showCreateRestaurant = signal(false);
+
+  ngOnInit(): void {
+    if (!isSupabaseConfigured()) return;
+    void this.auth.adminExists().then((exists) => {
+      this.showCreateRestaurant.set(!exists);
+    }).catch(() => {});
+  }
 
   protected readonly rangeChips: Array<{ key: Range; label: string }> = [
     { key: 'hoy', label: 'Hoy' },

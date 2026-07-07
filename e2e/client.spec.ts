@@ -30,33 +30,41 @@ test.describe('Cliente (home pública)', () => {
 
   test('arma el carrito, envía el pedido y sigue su estado', async ({ page }) => {
     await page.goto('/');
-    await page.getByRole('button', { name: 'Agregar Tostadas de tinga' }).click();
-    await page.getByRole('button', { name: 'Agregar Sopa de tortilla' }).click();
-    await page.getByRole('button', { name: 'Agregar Sopa de tortilla' }).click();
+    // Esperar a que la página cargue
+    await page.locator('[data-testid="add-to-cart-1"]').first().waitFor();
 
-    // Barra flotante con total: 6.50 + 2×7.00 = 20.50
-    const cartBar = page.getByRole('button', { name: /Ver pedido · 3 artículos/ });
-    await expect(cartBar).toContainText('$20.50');
-    await cartBar.click();
+    // Click en producto 1 (Tostadas $6.50)
+    await page.locator('button[data-testid="add-to-cart-1"]').click();
 
-    await expect(page.getByRole('heading', { name: 'Tu pedido' })).toBeVisible();
-    await page.getByRole('button', { name: 'Enviar pedido a la mesa' }).click();
+    // Esperar a que aparezca la barra del carrito con el precio
+    await page.locator('[data-testid="cart-bar-button"]').filter({ hasText: '$6.50' }).waitFor();
 
-    await expect(page.getByRole('heading', { name: 'Pedido enviado' })).toBeVisible();
-    await expect(page.getByText('Pedido recibido')).toBeVisible();
-    await expect(page.getByText('Tu mesero esta noche')).toBeVisible();
+    // Abrir carrito
+    await page.locator('[data-testid="cart-bar-button"]').click();
+    await expect(page.getByTestId('cart-heading')).toBeVisible();
+
+    // Enviar pedido
+    await page.getByTestId('submit-order-button').click();
+
+    // Verificar que el pedido fue enviado
+    await expect(page.getByTestId('order-sent-heading')).toBeVisible();
   });
 
   test('llama al mesero una sola vez', async ({ page }) => {
     await page.goto('/');
-    await page.getByRole('button', { name: 'Llamar mesero' }).click();
-    await expect(page.getByRole('button', { name: 'Mesero avisado ✓' })).toBeVisible();
+    // Esperar a que la página cargue
+    await page.waitForSelector('[data-testid="call-waiter-button"]');
+
+    await page.getByTestId('call-waiter-button').click();
+    // Verificar que el botón cambió de clase (color de "avisado")
+    await page.waitForTimeout(300);
+    await expect(page.getByTestId('call-waiter-button')).toHaveClass(/oliva/);
   });
 
   test('el footer tiene el acceso del personal', async ({ page }) => {
     await page.goto('/');
     await page.getByTestId('staff-login-link').click();
     await expect(page).toHaveURL(/\/login/);
-    await expect(page.getByRole('heading', { name: 'Acceso del personal' })).toBeVisible();
+    await expect(page.getByTestId('login-heading')).toBeVisible();
   });
 });

@@ -1,6 +1,6 @@
 # Trabajo actual
 
-_Última actualización: 2026-07-04 (iteración 9)_
+_Última actualización: 2026-07-07 (iteración 10)_
 
 ## Estado actual
 
@@ -83,6 +83,17 @@ Plataforma **v0.6 — multi-restaurante**: 9 migraciones SQL aplicadas, 33 prueb
 - ✅ **Registro del administrador propietario**: servidor arrancado apuntando a Supabase real; el admin entra en `http://localhost:4200/registro-inicial` y crea su cuenta
 - ✅ **Registro público desactivado a nivel base de datos**: nueva función `check_signup_allowed()` + trigger `on_auth_signup_check` en `auth.users BEFORE INSERT` — bloquea cualquier registro una vez que existe un propietario; las invitaciones del dashboard Supabase (`invited_at`) se siguen permitiendo
 - ✅ Migración `20260703000008_disable_public_signup.sql` creada y aplicada al proyecto Supabase
+
+## Hecho en la iteración 10 (i18n)
+
+- ✅ **`@ngx-translate/core` + `@ngx-translate/http-loader`** integrados en el proyecto
+- ✅ **6 archivos de traducción** en `public/assets/i18n/` (es, en, ca, pt, fr, it) con **334 claves** organizadas en namespaces: `topbar`, `client`, `order`, `table_status`, `shift`, `login`, `register`, `kitchen`, `waiter`, `cashier`, `admin`, `toast`
+- ✅ **Detector automático de idioma** vía `navigator.languages`; fallback a español; persistencia en `localStorage`
+- ✅ **18 componentes actualizados** con `TranslatePipe` y/o `TranslateService`: cliente, login, registro, mesero, cajero, cocina, admin-layout, historial, categorías, órdenes, pagos, personal, ajustes, temporada, topbar, toast...
+- ✅ **`data-testid`** añadidos a todos los elementos interactivos del cliente (add-to-cart, call-waiter-button, cart-bar-button, cart-heading, submit-order-button, order-sent-heading, login-heading, staff-login-link)
+- ✅ **E2E del cliente corregidos** para no depender de texto visible sino de `data-testid`; 12/12 pasan (chromium + mobile)
+- ✅ **Bug de configuración resuelto**: `provideTranslateHttpLoader()` debe ir **después** de `provideTranslateService()` en el array de providers; de lo contrario el `TranslateNoOpLoader` por defecto sobrescribe el HttpLoader
+- ✅ **33 unitarias + 12 E2E cliente** en verde; build limpio
 
 ## Qué falta por terminar
 

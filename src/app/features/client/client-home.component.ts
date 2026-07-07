@@ -9,6 +9,7 @@
  */
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, numberAttribute, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { RestaurantStore } from '../../core/application/restaurant.store';
 import { RestaurantContextService } from '../../core/application/restaurant-context.service';
 import { RestaurantRepository } from '../../core/domain/repositories/repositories';
@@ -31,7 +32,7 @@ const STEP_DEFS: Array<{ key: OrderStatus; label: string; desc: string }> = [
 
 @Component({
   selector: 'app-client-home',
-  imports: [MoneyPipe, RouterLink],
+  imports: [MoneyPipe, RouterLink, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex min-h-dvh flex-col items-center bg-crema">
@@ -52,16 +53,17 @@ const STEP_DEFS: Array<{ key: OrderStatus; label: string; desc: string }> = [
           </div>
           <div class="flex items-center gap-2">
             <span class="rounded-full bg-duna px-[11px] py-1 text-[11.5px] font-bold text-terracota-profundo">
-              Mesa {{ mesa() }}
+              {{ 'admin.orders.mesa' | translate }} {{ mesa() }}
             </span>
-            <span class="flex-1 text-[10.5px] text-tinta-media">vía código QR</span>
+            <span class="flex-1 text-[10.5px] text-tinta-media">{{ 'client.via_qr' | translate }}</span>
             <button
               type="button"
               (click)="callWaiter()"
               class="cursor-pointer rounded-full border-none px-[13px] py-[7px] text-[11.5px] font-bold"
               [class]="callSent() ? 'bg-oliva-bg text-oliva-texto' : 'bg-cacao text-lino'"
+              data-testid="call-waiter-button"
             >
-              {{ callSent() ? 'Mesero avisado ✓' : 'Llamar mesero' }}
+              {{ callSent() ? ('client.waiter_notified' | translate) : ('client.call_waiter' | translate) }}
             </button>
           </div>
         </header>
@@ -74,9 +76,9 @@ const STEP_DEFS: Array<{ key: OrderStatus; label: string; desc: string }> = [
             >
               ·
             </div>
-            <div class="font-serif text-[26px] leading-tight font-semibold">Cerrado por temporada</div>
+            <div class="font-serif text-[26px] leading-tight font-semibold">{{ 'client.closed_season_title' | translate }}</div>
             <div class="text-[13.5px] leading-relaxed text-tinta-media">
-              Volvemos pronto. ¡Gracias por visitarnos y hasta pronto!
+              {{ 'client.closed_season_msg' | translate }}
             </div>
           </div>
         } @else {
@@ -91,7 +93,7 @@ const STEP_DEFS: Array<{ key: OrderStatus; label: string; desc: string }> = [
                     class="cursor-pointer rounded-full border-none px-3.5 py-[7px] text-xs font-semibold whitespace-nowrap"
                     [class]="activeCat() === cat ? 'bg-cacao text-lino' : 'bg-arena text-tinta-suave'"
                   >
-                    {{ cat }}
+                    {{ cat === '__all__' ? ('client.category_all' | translate) : cat }}
                   </button>
                 }
               </div>
@@ -102,7 +104,7 @@ const STEP_DEFS: Array<{ key: OrderStatus; label: string; desc: string }> = [
                   (click)="screen.set('status')"
                   class="mx-[18px] mb-2 flex cursor-pointer gap-1.5 rounded-[10px] border-none bg-duna px-[13px] py-[9px] text-left text-xs font-semibold text-terracota-profundo"
                 >
-                  <span class="flex-1">Pedido #{{ order.id }} · {{ statusLabel(order.status) }} — ver estado</span>
+                  <span class="flex-1">{{ 'client.follow_order' | translate }} #{{ order.id }} · {{ statusLabel(order.status) }}</span>
                   <span>→</span>
                 </button>
               }
@@ -156,6 +158,7 @@ const STEP_DEFS: Array<{ key: OrderStatus; label: string; desc: string }> = [
                           (click)="addToCart(product)"
                           class="h-8 w-8 cursor-pointer rounded-[10px] border-none bg-terracota text-[17px] text-lino-calido hover:bg-terracota-hover"
                           [attr.aria-label]="'Agregar ' + product.name"
+                          [attr.data-testid]="'add-to-cart-' + product.id"
                         >
                           +
                         </button>
@@ -171,9 +174,10 @@ const STEP_DEFS: Array<{ key: OrderStatus; label: string; desc: string }> = [
                   type="button"
                   (click)="screen.set('cart')"
                   class="absolute right-[18px] bottom-[70px] left-[18px] flex cursor-pointer items-center gap-2 rounded-[14px] border-none bg-cacao px-[18px] py-[13px] text-lino shadow-[0_12px_28px_rgba(36,26,17,.35)] hover:bg-cacao-claro"
+                  data-testid="cart-bar-button"
                 >
                   <span class="flex-1 text-left text-[13px] font-bold">
-                    Ver pedido · {{ cartCount() }} {{ cartCount() === 1 ? 'artículo' : 'artículos' }}
+                    {{ 'client.cart_title' | translate }} · {{ cartCount() }}
                   </span>
                   <span class="text-[13px] font-bold">{{ cartTotal() | money }}</span>
                   <span class="text-[13px]">→</span>
@@ -189,9 +193,9 @@ const STEP_DEFS: Array<{ key: OrderStatus; label: string; desc: string }> = [
                     (click)="screen.set('menu')"
                     class="cursor-pointer border-none bg-transparent p-0 text-[12.5px] font-semibold text-terracota-profundo"
                   >
-                    ← Menú
+                    {{ 'client.cart_back' | translate }}
                   </button>
-                  <h2 class="m-0 font-serif text-[19px] font-semibold">Tu pedido</h2>
+                  <h2 class="m-0 font-serif text-[19px] font-semibold" data-testid="cart-heading">{{ 'client.cart_title' | translate }}</h2>
                 </div>
                 <div class="flex flex-1 flex-col gap-2.5 overflow-y-auto pb-4">
                   @for (line of cart(); track line.product.id) {
@@ -220,7 +224,7 @@ const STEP_DEFS: Array<{ key: OrderStatus; label: string; desc: string }> = [
                 </div>
                 <div class="flex-none border-t border-borde pt-3.5 pb-6">
                   <div class="mb-3 flex justify-between text-sm">
-                    <span class="text-tinta-media">Total</span>
+                    <span class="text-tinta-media">{{ 'admin.history.total' | translate }}</span>
                     <span class="text-base font-bold">{{ cartTotal() | money }}</span>
                   </div>
                   <button
@@ -228,8 +232,9 @@ const STEP_DEFS: Array<{ key: OrderStatus; label: string; desc: string }> = [
                     (click)="placeOrder()"
                     [disabled]="cartCount() === 0"
                     class="w-full cursor-pointer rounded-[13px] border-none bg-terracota py-3.5 text-[14.5px] font-bold text-lino-calido hover:bg-terracota-hover disabled:opacity-50"
+                    data-testid="submit-order-button"
                   >
-                    Enviar pedido a la mesa
+                    {{ 'client.cart_send' | translate }}
                   </button>
                 </div>
               </div>
@@ -237,10 +242,10 @@ const STEP_DEFS: Array<{ key: OrderStatus; label: string; desc: string }> = [
 
             @case ('status') {
               <div class="flex min-h-0 flex-1 flex-col overflow-y-auto px-[22px] pt-1">
-                <h2 class="m-0 mb-0.5 font-serif text-[23px] font-semibold">Pedido enviado</h2>
+                <h2 class="m-0 mb-0.5 font-serif text-[23px] font-semibold" data-testid="order-sent-heading">{{ 'client.order_sent_title' | translate }}</h2>
                 @if (myOrder(); as order) {
                   <div class="mb-5 text-[12.5px] text-tinta-media">
-                    Pedido #{{ order.id }} · Mesa {{ mesa() }} · {{ orderTotalOf(order) | money }}
+                    {{ 'client.follow_order' | translate }} #{{ order.id }} · {{ 'admin.orders.mesa' | translate }} {{ mesa() }} · {{ orderTotalOf(order) | money }}
                   </div>
                   <div class="flex flex-col">
                     @for (step of statusSteps(); track step.key; let last = $last) {
@@ -274,7 +279,7 @@ const STEP_DEFS: Array<{ key: OrderStatus; label: string; desc: string }> = [
                     </div>
                     <div class="flex-1">
                       <div class="text-[12.5px] font-semibold">{{ order.waiterName }}</div>
-                      <div class="text-[11px] text-tinta-media">Tu mesero esta noche</div>
+                        <div class="text-[11px] text-tinta-media">{{ 'topbar.area.waiter' | translate }}</div>
                     </div>
                   </div>
                 }
@@ -283,7 +288,7 @@ const STEP_DEFS: Array<{ key: OrderStatus; label: string; desc: string }> = [
                   (click)="screen.set('menu')"
                   class="mb-6 cursor-pointer rounded-xl border-[1.5px] border-tinta bg-transparent py-[11px] text-[13px] font-bold text-tinta hover:bg-crema"
                 >
-                  Pedir algo más
+                  {{ 'client.cart_back' | translate }}
                 </button>
               </div>
             }
@@ -302,7 +307,7 @@ const STEP_DEFS: Array<{ key: OrderStatus; label: string; desc: string }> = [
               data-testid="staff-login-link"
               class="rounded-full border-[1.5px] border-borde-punteado px-3.5 py-1.5 text-[11.5px] font-bold text-tinta-suave hover:bg-panal"
             >
-              Acceso del personal →
+              {{ 'client.footer_access' | translate }} →
             </a>
           </div>
         </footer>
@@ -312,6 +317,7 @@ const STEP_DEFS: Array<{ key: OrderStatus; label: string; desc: string }> = [
 })
 export class ClientHomeComponent implements OnInit {
   protected readonly store = inject(RestaurantStore);
+  private readonly translate = inject(TranslateService);
   private readonly route = inject(ActivatedRoute);
   private readonly restaurantRepo = inject(RestaurantRepository);
   private readonly context = inject(RestaurantContextService);
@@ -320,20 +326,20 @@ export class ClientHomeComponent implements OnInit {
   readonly numero = input(4, { transform: numberAttribute });
 
   protected readonly screen = signal<ClientScreen>('menu');
-  protected readonly activeCat = signal('Todas');
+  protected readonly activeCat = signal('__all__');
   protected readonly cart = signal<CartLine[]>([]);
   protected readonly myOrderId = signal<number | null>(null);
   protected readonly callSent = signal(false);
 
   protected readonly mesa = computed(() => (Number.isFinite(this.numero()) ? this.numero() : 4));
 
-  protected readonly catChips = computed(() => ['Todas', ...this.store.categories().map((c) => c.name)]);
+  protected readonly catChips = computed(() => ['__all__', ...this.store.categories().map((c) => c.name)]);
 
   /** El cliente solo ve productos disponibles (lo agotado desaparece del QR). */
   protected readonly visibleProducts = computed(() =>
     this.store
       .products()
-      .filter((p) => p.available && (this.activeCat() === 'Todas' || p.categoryName === this.activeCat())),
+        .filter((p) => p.available && (this.activeCat() === '__all__' || p.categoryName === this.activeCat())),
   );
 
   protected readonly cartCount = computed(() => this.cart().reduce((acc, l) => acc + l.qty, 0));
@@ -409,7 +415,7 @@ export class ClientHomeComponent implements OnInit {
   }
 
   protected statusLabel(status: OrderStatus): string {
-    return { recibido: 'Recibido', preparando: 'En preparación', listo: 'Listo', entregado: 'Entregado' }[status];
+    return this.translate.instant(`order.status.${status}`);
   }
 
   protected orderTotalOf(order: { items: Array<{ unitPrice: number; quantity: number }> }): number {

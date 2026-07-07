@@ -1,21 +1,27 @@
 /**
- * Toasts globales, réplica del comportamiento del diseño original (mensaje
- * flotante inferior que desaparece a los 2,6 s).
+ * Toasts globales con soporte i18n (ngx-translate).
  *
- * ¿Por qué servicio + signal? Cualquier capa (store, componentes) puede
- * anunciar un mensaje sin conocer al componente que lo pinta.
+ * El servicio acepta una clave de traducción y parámetros opcionales; el
+ * componente `ToastComponent` los traduce antes de mostrarlos. Cualquier
+ * capa (store, componentes) puede lanzar un toast sin conocer el idioma activo.
  */
 import { Injectable, signal } from '@angular/core';
+
+export interface ToastMessage {
+  key: string;
+  params?: Record<string, unknown>;
+}
 
 @Injectable({ providedIn: 'root' })
 export class ToastService {
   private timeout: ReturnType<typeof setTimeout> | null = null;
 
-  readonly message = signal<string | null>(null);
+  readonly message = signal<ToastMessage | null>(null);
 
-  show(message: string, durationMs = 2600): void {
+  show(key: string, params?: Record<string, unknown>, durationMs = 2600): void {
     if (this.timeout) clearTimeout(this.timeout);
-    this.message.set(message);
+    this.message.set({ key, params });
     this.timeout = setTimeout(() => this.message.set(null), durationMs);
   }
 }
+

@@ -8,6 +8,7 @@
  * del Resumen.
  */
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { RestaurantStore } from '../../../core/application/restaurant.store';
 import { MoneyPipe } from '../../../shared/money.pipe';
 import { ORDER_STATUS_UI } from '../../../shared/ui-maps';
@@ -19,14 +20,14 @@ type Tab = 'pedidos' | 'caja';
 
 @Component({
   selector: 'app-history',
-  imports: [MoneyPipe],
+  imports: [MoneyPipe, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div data-testid="admin-historial">
       <div class="mb-4 flex flex-wrap items-end gap-4">
         <div class="flex-1">
-          <h1 class="m-0 font-serif text-[27px] font-semibold">Historial</h1>
-          <p class="mt-1 mb-0 text-[13px] text-tinta-media">Pedidos y arqueo de caja del periodo elegido.</p>
+          <h1 class="m-0 font-serif text-[27px] font-semibold">{{ 'admin.history.title' | translate }}</h1>
+          <p class="mt-1 mb-0 text-[13px] text-tinta-media">{{ 'admin.history.subtitle' | translate }}</p>
         </div>
         <div class="flex gap-1.5" role="group" aria-label="Periodo">
           @for (r of rangeChips; track r.key) {
@@ -79,7 +80,7 @@ type Tab = 'pedidos' | 'caja';
                     [style.background]="orderUi[o.status].bg"
                     [style.color]="orderUi[o.status].color"
                   >
-                    {{ orderUi[o.status].label }}
+                          {{ ('order.status.' + o.status) | translate }}
                   </span>
                 </span>
                 <span>
@@ -88,13 +89,13 @@ type Tab = 'pedidos' | 'caja';
                       {{ o.paymentMethod }}
                     </span>
                   } @else {
-                    <span class="text-[11px] text-tinta-media">Sin cobrar</span>
+                    <span class="text-[11px] text-tinta-media">{{ 'admin.history.unpaid' | translate }}</span>
                   }
                 </span>
               </div>
             }
           </div>
-          <div class="mt-2 text-[11.5px] text-tinta-media">{{ orders().length }} pedidos en el periodo.</div>
+          <div class="mt-2 text-[11.5px] text-tinta-media">{{ 'admin.history.orders_count' | translate: { count: orders().length } }}</div>
         }
       } @else {
         <!-- Caja / arqueo -->

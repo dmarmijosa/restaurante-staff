@@ -18,6 +18,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { RestaurantStore } from '../../core/application/restaurant.store';
 import { StaffTopbarComponent } from '../../shared/staff-topbar/staff-topbar.component';
 import { BeepService } from '../../shared/beep.service';
@@ -28,7 +29,7 @@ const LATE_THRESHOLD_MIN = 15;
 
 @Component({
   selector: 'app-kitchen',
-  imports: [StaffTopbarComponent],
+  imports: [StaffTopbarComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   // El AudioContext solo suena tras un gesto: lo despertamos en el primer toque.
   host: { '(pointerdown)': 'beep.prime()' },
@@ -37,30 +38,30 @@ const LATE_THRESHOLD_MIN = 15;
       <app-staff-topbar />
       <div class="flex-1 overflow-y-auto bg-cacao px-[30px] py-[26px]">
         <div class="mb-5 flex items-baseline gap-3.5">
-          <h1 class="font-serif text-[26px] font-semibold text-lino">Cocina</h1>
-          <div class="text-sm text-lino-gris">Toca el botón cuando salga el platillo — nada más.</div>
+          <h1 class="font-serif text-[26px] font-semibold text-lino">{{ 'kitchen.title' | translate }}</h1>
+          <div class="text-sm text-lino-gris">{{ 'kitchen.subtitle' | translate }}</div>
           <div class="flex-1"></div>
           <button
             type="button"
             (click)="beep.toggleMuted()"
             [attr.aria-pressed]="beep.muted()"
-            [attr.aria-label]="beep.muted() ? 'Activar sonido' : 'Silenciar sonido'"
+            [attr.aria-label]="(beep.muted() ? 'kitchen.activate_sound' : 'kitchen.mute_sound') | translate"
             class="flex cursor-pointer items-center gap-2 rounded-full border border-lino/20 bg-transparent px-3 py-1.5 text-[12px] font-semibold text-lino-gris hover:text-lino"
           >
             <span
               class="h-2 w-2 rounded-full"
               [style.background]="beep.muted() ? '#8B7A69' : '#7C905F'"
             ></span>
-            {{ beep.muted() ? 'Sonido apagado' : 'Sonido activo' }}
+            {{ (beep.muted() ? 'kitchen.sound_off' : 'kitchen.sound_on') | translate }}
           </button>
-          <div class="text-sm text-lino-gris">{{ countLabel() }}</div>
+          <div class="text-sm text-lino-gris">{{ countLabel().key | translate: (countLabel().params ?? {}) }}</div>
         </div>
 
         @if (cards().length === 0) {
           <div
             class="rounded-[18px] border-2 border-dashed border-lino/20 p-[60px] text-center text-xl text-lino-gris"
           >
-            Sin comandas pendientes — todo al día
+            {{ 'kitchen.no_orders' | translate }}
           </div>
         }
 
@@ -79,9 +80,9 @@ const LATE_THRESHOLD_MIN = 15;
                 <!-- Temporizador en vivo: minutos que lleva la comanda -->
                 <span
                   class="rounded-full bg-black/20 px-2.5 py-0.5 text-[13px] font-bold text-lino-calido"
-                  [attr.aria-label]="'Lleva ' + card.minutes + ' minutos'"
+                  [attr.aria-label]="'kitchen.elapsed_label' | translate: { minutes: card.minutes }"
                 >
-                  {{ card.minutes }} min
+                  {{ card.minutes }} {{ 'kitchen.min_label' | translate }}
                 </span>
               </header>
               <div class="px-[18px] pt-3.5 pb-4">
@@ -99,7 +100,7 @@ const LATE_THRESHOLD_MIN = 15;
                   class="w-full cursor-pointer rounded-xl border-none py-[15px] text-base font-bold text-lino-calido hover:opacity-90"
                   [style.background]="card.order.status === 'recibido' ? '#2C2118' : '#7C905F'"
                 >
-                  {{ card.order.status === 'recibido' ? 'Empezar a preparar' : 'Platillo listo' }}
+                  {{ (card.order.status === 'recibido' ? 'kitchen.start_preparing' : 'kitchen.mark_ready') | translate }}
                 </button>
               </div>
             </article>
@@ -143,7 +144,9 @@ export class KitchenComponent implements OnInit {
 
   protected readonly countLabel = computed(() => {
     const n = this.store.kitchenOrders().length;
-    return n === 1 ? '1 comanda en cola' : `${n} comandas en cola`;
+    return n === 1
+      ? { key: 'kitchen.queue_one' }
+      : { key: 'kitchen.queue_many', params: { n } };
   });
 
   ngOnInit(): void {

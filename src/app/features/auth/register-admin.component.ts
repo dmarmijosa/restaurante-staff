@@ -12,11 +12,12 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
 import { AuthService } from '../../core/auth/auth.service';
 
 @Component({
   selector: 'app-register-admin',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex min-h-dvh flex-col items-center justify-center bg-crema px-6 py-10">
@@ -28,22 +29,21 @@ import { AuthService } from '../../core/auth/auth.service';
         </div>
         <div>
           <div class="font-serif text-xl leading-tight font-semibold text-tinta">Restaurante Staff</div>
-          <div class="text-[11px] text-tinta-media">Plataforma open source para restaurantes</div>
+          <div class="text-[11px] text-tinta-media">{{ 'topbar.platform' | translate }}</div>
         </div>
       </div>
 
       @if (done()) {
         <div class="w-full max-w-[420px] rounded-2xl border border-borde bg-papel p-7 text-center">
-          <h1 class="m-0 font-serif text-[22px] font-semibold text-tinta">Revisa tu correo</h1>
+          <h1 class="m-0 font-serif text-[22px] font-semibold text-tinta">{{ 'register.confirm_title' | translate }}</h1>
           <p class="mt-2 text-[13px] leading-relaxed text-tinta-media">
-            Te enviamos un enlace para confirmar la cuenta de administrador. Al confirmarlo podrás iniciar
-            sesión y configurar tu restaurante.
+            {{ 'register.confirm_msg' | translate }}
           </p>
           <a
             routerLink="/login"
             class="mt-5 inline-block rounded-[10px] bg-terracota px-5 py-2.5 text-[13px] font-bold text-lino-calido hover:bg-terracota-hover"
           >
-            Ir a iniciar sesión
+            {{ 'register.confirm_login' | translate }}
           </a>
         </div>
       } @else {
@@ -54,11 +54,11 @@ import { AuthService } from '../../core/auth/auth.service';
           novalidate
         >
           <span class="mb-2 inline-block rounded-full bg-duna px-2.5 py-1 text-[10.5px] font-bold text-terracota-profundo">
-            NUEVO RESTAURANTE
+            {{ 'register.badge' | translate }}
           </span>
-          <h1 class="m-0 font-serif text-[23px] font-semibold text-tinta">Crea tu restaurante</h1>
+          <h1 class="m-0 font-serif text-[23px] font-semibold text-tinta">{{ 'register.title' | translate }}</h1>
           <p class="mt-1 mb-5 text-[13px] leading-relaxed text-tinta-media">
-            Cada restaurante es independiente: su menú, personal y pedidos no se mezclan con otros.
+            {{ 'register.subtitle' | translate }}
           </p>
 
           <!-- Nombre del restaurante -->
@@ -209,7 +209,7 @@ import { AuthService } from '../../core/auth/auth.service';
               role="alert"
               aria-live="assertive"
             >
-              {{ error() }}
+              {{ error()! | translate }}
             </div>
           }
 
@@ -224,7 +224,7 @@ import { AuthService } from '../../core/auth/auth.service';
       }
 
       <a routerLink="/" class="mt-6 text-[12.5px] font-semibold text-terracota-profundo hover:underline">
-        ← Volver al menú
+        {{ 'register.back_to_menu' | translate }}
       </a>
     </div>
   `,
@@ -308,10 +308,10 @@ export class RegisterAdminComponent {
       const message = e instanceof Error ? e.message : '';
       this.error.set(
         message.includes('already registered') || message.includes('registrado')
-          ? 'Ese correo ya tiene una cuenta. Inicia sesión.'
+          ? 'register.err_already_registered'
           : message.includes('duplicate') || message.includes('slug')
-            ? 'Ese slug ya está en uso. Elige otro nombre para la URL.'
-            : 'No se pudo crear el restaurante. Inténtalo de nuevo.',
+            ? 'register.err_slug_taken'
+            : 'register.err_unknown',
       );
     } finally {
       this.loading.set(false);

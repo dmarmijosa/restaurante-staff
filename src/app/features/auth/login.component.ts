@@ -8,12 +8,13 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
 import { AuthService } from '../../core/auth/auth.service';
 import { isSupabaseConfigured } from '../../core/data/supabase/supabase-client.service';
 
 @Component({
   selector: 'app-login',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex min-h-dvh flex-col items-center justify-center bg-crema px-6">
@@ -25,7 +26,7 @@ import { isSupabaseConfigured } from '../../core/data/supabase/supabase-client.s
         </div>
         <div>
           <div class="font-serif text-xl leading-tight font-semibold text-tinta">Restaurante Staff</div>
-          <div class="text-[11px] text-tinta-media">Plataforma open source para restaurantes</div>
+          <div class="text-[11px] text-tinta-media">{{ 'topbar.platform' | translate }}</div>
         </div>
       </a>
 
@@ -34,13 +35,11 @@ import { isSupabaseConfigured } from '../../core/data/supabase/supabase-client.s
         (ngSubmit)="submit()"
         class="w-full max-w-[400px] rounded-2xl border border-borde bg-papel p-7"
       >
-        <h1 class="m-0 font-serif text-[23px] font-semibold text-tinta">Acceso del personal</h1>
-        <p class="mt-1 mb-5 text-[13px] text-tinta-media">
-          Meseros, cocina y administración. El administrador asigna el rol de cada cuenta.
-        </p>
+        <h1 class="m-0 font-serif text-[23px] font-semibold text-tinta" data-testid="login-heading">{{ 'login.title' | translate }}</h1>
+        <p class="mt-1 mb-5 text-[13px] text-tinta-media">{{ 'login.subtitle' | translate }}</p>
 
         <label class="mb-1.5 block text-[11.5px] font-semibold text-tinta-media" for="email">
-          CORREO <span class="text-rojizo" aria-hidden="true">*</span>
+          {{ 'login.email' | translate }} <span class="text-rojizo" aria-hidden="true">*</span>
         </label>
         <input
           id="email"
@@ -59,14 +58,14 @@ import { isSupabaseConfigured } from '../../core/data/supabase/supabase-client.s
         />
         @if (emailInvalid()) {
           <p id="email-error" class="mt-1.5 mb-2.5 text-[11.5px] font-semibold text-rojizo">
-            Escribe un correo válido.
+            {{ 'login.email_invalid' | translate }}
           </p>
         } @else {
           <div class="mb-4"></div>
         }
 
         <label class="mb-1.5 block text-[11.5px] font-semibold text-tinta-media" for="password">
-          CONTRASEÑA <span class="text-rojizo" aria-hidden="true">*</span>
+          {{ 'login.password' | translate }} <span class="text-rojizo" aria-hidden="true">*</span>
         </label>
         <div class="relative">
           <input
@@ -86,16 +85,16 @@ import { isSupabaseConfigured } from '../../core/data/supabase/supabase-client.s
           <button
             type="button"
             (click)="showPassword.set(!showPassword())"
-            [attr.aria-label]="showPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+            [attr.aria-label]="(showPassword() ? 'login.hide_password' : 'login.show_password') | translate"
             [attr.aria-pressed]="showPassword()"
             class="absolute top-1/2 right-2 -translate-y-1/2 cursor-pointer rounded-md border-none bg-transparent px-2 py-1 text-[11px] font-bold text-terracota-profundo hover:bg-crema"
           >
-            {{ showPassword() ? 'Ocultar' : 'Mostrar' }}
+            {{ (showPassword() ? 'login.hide_password' : 'login.show_password') | translate }}
           </button>
         </div>
         @if (passwordInvalid()) {
           <p id="password-error" class="mt-1.5 mb-3.5 text-[11.5px] font-semibold text-rojizo">
-            Introduce tu contraseña.
+            {{ 'login.password_required' | translate }}
           </p>
         } @else {
           <div class="mb-5"></div>
@@ -107,7 +106,7 @@ import { isSupabaseConfigured } from '../../core/data/supabase/supabase-client.s
             role="alert"
             aria-live="assertive"
           >
-            {{ error() }}
+            {{ error()! | translate }}
           </div>
         }
 
@@ -116,7 +115,7 @@ import { isSupabaseConfigured } from '../../core/data/supabase/supabase-client.s
           [disabled]="form.invalid || loading()"
           class="w-full cursor-pointer rounded-[10px] border-none bg-terracota py-[11px] text-[13.5px] font-bold text-lino-calido hover:bg-terracota-hover disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {{ loading() ? 'Entrando…' : 'Iniciar sesión' }}
+          {{ (loading() ? 'login.submitting' : 'login.submit') | translate }}
         </button>
 
         @if (demoMode) {
@@ -128,7 +127,7 @@ import { isSupabaseConfigured } from '../../core/data/supabase/supabase-client.s
       </form>
 
       <a routerLink="/" class="mt-6 text-[12.5px] font-semibold text-terracota-profundo hover:underline">
-        ← Volver al menú del restaurante
+        {{ 'login.back_to_menu' | translate }}
       </a>
     </div>
   `,
@@ -200,7 +199,7 @@ export class LoginComponent implements OnInit {
       };
       await this.router.navigateByUrl(redirect ?? homeByRole[user.role] ?? '/');
     } catch {
-      this.error.set('Credenciales incorrectas. Verifica tu correo y contraseña.');
+      this.error.set('login.error_invalid');
     } finally {
       this.loading.set(false);
     }

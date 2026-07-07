@@ -4,6 +4,8 @@
  * del menú QR del cliente y los pedidos se avanzan desde aquí o desde cocina.
  */
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject } from '@angular/core';
+import { TranslatePipe } from '@ngx-translate/core';
+import { TranslateService } from '@ngx-translate/core';
 import { RestaurantStore } from '../../core/application/restaurant.store';
 import { AuthService } from '../../core/auth/auth.service';
 import { StaffTopbarComponent } from '../../shared/staff-topbar/staff-topbar.component';
@@ -13,7 +15,7 @@ import { orderTotal } from '../../core/domain/entities/entities';
 
 @Component({
   selector: 'app-waiter',
-  imports: [StaffTopbarComponent, MoneyPipe],
+  imports: [StaffTopbarComponent, MoneyPipe, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex min-h-dvh flex-col">
@@ -30,20 +32,18 @@ import { orderTotal } from '../../core/domain/entities/entities';
               </div>
               <div>
                 <div class="text-sm font-bold">{{ waiterName() }}</div>
-                <div class="text-[11px] text-tinta-media">Turno de tarde · 14:00–20:00</div>
+                <div class="text-[11px] text-tinta-media">{{ 'shift.tarde' | translate }} · 14:00–20:00</div>
               </div>
               <div class="flex-1"></div>
               <div class="font-serif text-[15px] font-semibold">{{ store.settings().name }}</div>
-              <div class="flex items-center gap-1.5 text-[11.5px] text-tinta-suave">
-                <span class="h-2 w-2 rounded-full bg-oliva"></span><span>En línea</span>
-              </div>
+                <div class="text-[11px] text-tinta-media">{{ 'waiter.online' | translate }}</div>
             </header>
 
             <div class="grid min-h-0 flex-1 grid-cols-[300px_1fr]">
               <!-- Llamadas + mesas -->
               <aside class="overflow-y-auto border-r border-borde p-[18px]">
                 <div class="mb-3 flex items-center gap-2">
-                  <span class="text-xs font-bold tracking-[.05em] text-tinta-media">LLAMADAS DE MESA</span>
+                  <span class="text-xs font-bold tracking-[.05em] text-tinta-media">{{ 'waiter.calls_title' | translate }}</span>
                   @if (store.pendingCalls().length > 0) {
                     <span class="rounded-full bg-rojizo px-[7px] py-px text-[10.5px] font-bold text-lino-calido">
                       {{ store.pendingCalls().length }}
@@ -57,7 +57,7 @@ import { orderTotal } from '../../core/domain/entities/entities';
                       <div class="rounded-xl border border-rojizo-borde bg-rojizo-bg px-3.5 py-3">
                         <div class="mb-[9px] flex items-center gap-2">
                           <span class="animate-pulse-dot h-[9px] w-[9px] rounded-full bg-rojizo"></span>
-                          <span class="text-[13.5px] font-bold">Mesa {{ call.tableNumber }} llama</span>
+                    <span class="text-[13.5px] font-bold">{{ 'waiter.table_calls' | translate: { n: call.tableNumber } }}</span>
                           <span class="flex-1"></span>
                           <span class="text-[11px] text-tinta-media">{{ call.createdAt }}</span>
                         </div>
@@ -66,7 +66,7 @@ import { orderTotal } from '../../core/domain/entities/entities';
                           (click)="store.attendCall(call.id)"
                           class="w-full cursor-pointer rounded-[9px] border-none bg-rojizo py-2 text-xs font-bold text-lino-calido hover:bg-rojizo-hover"
                         >
-                          Atender mesa
+                          {{ 'waiter.attend_btn' | translate }}
                         </button>
                       </div>
                     }
@@ -75,11 +75,11 @@ import { orderTotal } from '../../core/domain/entities/entities';
                   <div
                     class="mb-5 rounded-xl border-[1.5px] border-dashed border-borde-punteado p-4 text-center text-xs text-tinta-media"
                   >
-                    Sin llamadas pendientes
+                    {{ 'waiter.no_calls' | translate }}
                   </div>
                 }
 
-                <div class="mb-3 text-xs font-bold tracking-[.05em] text-tinta-media">MESAS DEL SALÓN</div>
+                <div class="mb-3 text-xs font-bold tracking-[.05em] text-tinta-media">{{ 'waiter.tables_title' | translate }}</div>
                 <div class="grid grid-cols-2 gap-2">
                   @for (table of store.tables(); track table.id) {
                     <div
@@ -89,9 +89,9 @@ import { orderTotal } from '../../core/domain/entities/entities';
                       <span class="h-2 w-2 rounded-full" [style.background]="tableUi[table.status].border"></span>
                       <span class="flex-1 text-xs font-semibold">{{ tableLabel(table.number, table.mergedNumbers) }}</span>
                       @if (table.waiterId === currentId()) {
-                        <span class="rounded-full bg-terracota px-1.5 py-px text-[9px] font-bold text-lino-calido">Tuya</span>
+                        <span class="rounded-full bg-terracota px-1.5 py-px text-[9px] font-bold text-lino-calido">{{ 'waiter.your_table' | translate }}</span>
                       } @else {
-                        <span class="text-[10px] text-tinta-media">{{ tableUi[table.status].label }}</span>
+                        <span class="text-[10px] text-tinta-media">{{ ('table_status.' + table.status) | translate }}</span>
                       }
                     </div>
                   }
@@ -100,12 +100,12 @@ import { orderTotal } from '../../core/domain/entities/entities';
 
               <!-- Pedidos activos -->
               <section class="overflow-y-auto px-[22px] py-[18px]">
-                <div class="mb-3 text-xs font-bold tracking-[.05em] text-tinta-media">PEDIDOS ACTIVOS</div>
+                <div class="mb-3 text-xs font-bold tracking-[.05em] text-tinta-media">{{ 'waiter.orders_title' | translate }}</div>
                 <div class="grid grid-cols-2 items-start gap-3">
                   @for (order of store.activeOrders(); track order.id) {
                     <article class="rounded-xl border border-borde bg-papel px-4 py-3.5">
                       <div class="mb-[9px] flex items-center gap-2">
-                        <span class="text-sm font-bold">Mesa {{ order.tableNumber }}</span>
+                        <span class="text-sm font-bold">{{ 'admin.orders.mesa' | translate }} {{ order.tableNumber }}</span>
                         <span class="font-mono text-[11px] text-tinta-media">#{{ order.id }}</span>
                         <span class="flex-1"></span>
                         <span
@@ -113,7 +113,7 @@ import { orderTotal } from '../../core/domain/entities/entities';
                           [style.background]="orderUi[order.status].bg"
                           [style.color]="orderUi[order.status].color"
                         >
-                          {{ orderUi[order.status].label }}
+                          {{ ('order.status.' + order.status) | translate }}
                         </span>
                       </div>
                       <ul class="mb-2.5 flex list-none flex-col gap-1 p-0">
@@ -133,7 +133,7 @@ import { orderTotal } from '../../core/domain/entities/entities';
                             (click)="store.advanceOrder(order.id)"
                             class="cursor-pointer rounded-[9px] border-none bg-tinta px-3.5 py-2 text-xs font-semibold text-lino hover:bg-cacao-hover"
                           >
-                            {{ nextLabel }}
+                            {{ ('order.status.' + order.status + '_next') | translate }}
                           </button>
                         }
                       </div>
@@ -151,18 +151,21 @@ import { orderTotal } from '../../core/domain/entities/entities';
 export class WaiterComponent implements OnInit {
   protected readonly store = inject(RestaurantStore);
   private auth = inject(AuthService);
+  private translate = inject(TranslateService);
 
   protected readonly tableUi = TABLE_STATUS_UI;
   protected readonly orderUi = ORDER_STATUS_UI;
   protected readonly total = orderTotal;
 
-  protected readonly waiterName = computed(() => this.auth.user()?.fullName ?? 'Mesero');
+  protected readonly waiterName = computed(() => this.auth.user()?.fullName ?? this.translate.instant('topbar.area.waiter'));
   protected readonly initials = computed(() => initialsOf(this.waiterName()));
   /** Id del mesero en sesión, para resaltar sus mesas asignadas. */
   protected readonly currentId = computed(() => this.auth.user()?.id ?? null);
 
   protected tableLabel(num: number, merged: number[] | null): string {
-    return merged?.length ? 'Mesas ' + merged.join('+') : 'Mesa ' + num;
+    return merged?.length
+      ? `${this.translate.instant('admin.floor_plan.tables')} ${merged.join('+')}`
+      : `${this.translate.instant('admin.orders.mesa')} ${num}`;
   }
 
   ngOnInit(): void {

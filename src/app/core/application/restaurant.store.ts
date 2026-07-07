@@ -178,7 +178,7 @@ export class RestaurantStore {
       mergedNumbers: null,
     });
     this.tables.update((list) => [...list, created]);
-    this.toast.show('Mesa agregada al salón');
+    this.toast.show('toast.table_added');
   }
 
   /** Asigna (o quita) el mesero responsable de una mesa. */
@@ -191,7 +191,7 @@ export class RestaurantStore {
   async removeTable(id: number): Promise<void> {
     await this.tablesRepo.deleteTable(id);
     this.tables.update((ts) => ts.filter((t) => t.id !== id));
-    this.toast.show('Mesa eliminada');
+    this.toast.show('toast.table_deleted');
   }
 
   async updateTable(id: number, patch: Partial<Pick<RestaurantTable, 'seats' | 'shape' | 'status'>>): Promise<void> {
@@ -232,7 +232,7 @@ export class RestaurantStore {
     this.tables.update((ts) => ts.filter((t) => t.id !== bId).map((t) => (t.id === aId ? merged : t)));
     await this.tablesRepo.deleteTable(bId);
     await this.tablesRepo.saveTable(merged);
-    this.toast.show('Mesas fusionadas');
+    this.toast.show('toast.tables_merged');
     return merged;
   }
 
@@ -247,7 +247,7 @@ export class RestaurantStore {
     const { id: _dropped, ...bInput } = bDraft;
     const b = await this.tablesRepo.addTable(bInput);
     this.tables.update((ts) => [...ts, b]);
-    this.toast.show('Mesas separadas');
+    this.toast.show('toast.table_split');
   }
 
   // ────────────────────────── Pedidos ──────────────────────────
@@ -266,7 +266,7 @@ export class RestaurantStore {
       ),
     );
     await this.ordersRepo.setStatus(id, next);
-    this.toast.show(`Pedido #${id} → ${ORDER_LABELS[next]}`);
+    this.toast.show('toast.order_advanced', { id, status: next });
   }
 
   /** Registra el cobro de un pedido (lo hace el cajero) con el método elegido. */
@@ -275,7 +275,7 @@ export class RestaurantStore {
       os.map((o) => (o.id === orderId ? { ...o, paid: true, paymentMethod, paidAt: 'ahora' } : o)),
     );
     await this.ordersRepo.chargeOrder(orderId, paymentMethod);
-    this.toast.show(`Cobro registrado · ${paymentMethod}`);
+    this.toast.show('toast.order_charged', { id: orderId });
   }
 
   // ────────────────────────── Métodos de pago (admin) ──────────────────────────
@@ -284,12 +284,12 @@ export class RestaurantStore {
     const clean = name.trim();
     if (!clean) return false;
     if (this.paymentMethods().some((m) => m.name.toLowerCase() === clean.toLowerCase())) {
-      this.toast.show('Ese método de pago ya existe');
+      this.toast.show('toast.payment_name_required');
       return false;
     }
     const created = await this.paymentsRepo.addMethod(clean);
     this.paymentMethods.update((ms) => [...ms, created]);
-    this.toast.show('Método de pago agregado');
+    this.toast.show('toast.payment_added');
     return true;
   }
 
@@ -304,14 +304,14 @@ export class RestaurantStore {
   async deletePaymentMethod(id: number): Promise<void> {
     await this.paymentsRepo.deleteMethod(id);
     this.paymentMethods.update((ms) => ms.filter((m) => m.id !== id));
-    this.toast.show('Método de pago eliminado');
+    this.toast.show('toast.payment_added');
   }
 
   /** Crea el pedido del cliente QR y lo marca como "mío" para su seguimiento. */
   async placeOrder(tableNumber: number, items: OrderItem[]): Promise<Order> {
     const order = await this.ordersRepo.placeOrder(tableNumber, items);
     this.orders.update((os) => [{ ...order, mine: true }, ...os.filter((o) => o.id !== order.id)]);
-    this.toast.show('Pedido enviado a cocina y a tu mesero');
+    this.toast.show('toast.order_placed');
     return order;
   }
 
@@ -320,13 +320,13 @@ export class RestaurantStore {
   async callWaiter(tableNumber: number): Promise<void> {
     const call = await this.callsRepo.createCall(tableNumber);
     this.calls.update((cs) => [...cs, call]);
-    this.toast.show('Avisamos a tu mesero');
+    this.toast.show('toast.waiter_called');
   }
 
   async attendCall(id: number): Promise<void> {
     await this.callsRepo.attendCall(id);
     this.calls.update((cs) => cs.map((c) => (c.id === id ? { ...c, attended: true } : c)));
-    this.toast.show('Llamada atendida — mesero en camino');
+    this.toast.show('toast.call_attended');
   }
 
   // ────────────────────────── Menú ──────────────────────────
@@ -338,14 +338,15 @@ export class RestaurantStore {
     this.products.update((ps) => ps.map((p) => (p.id === id ? { ...p, available } : p)));
     await this.menuRepo.setProductAvailability(id, available);
     this.toast.show(
-      available ? `“${product.name}” disponible en el menú` : `“${product.name}” marcado como agotado`,
+      available ? 'toast.product_available' : 'toast.product_sold_out',
+      { name: product.name },
     );
   }
 
   async addProduct(input: { name: string; price: number; categoryId: number | null }): Promise<void> {
     const created = await this.menuRepo.addProduct(input);
     this.products.update((ps) => [...ps, created]);
-    this.toast.show('Producto agregado al menú');
+    this.toast.show('toast.product_added');
   }
 
   /**
@@ -357,20 +358,20 @@ export class RestaurantStore {
       const url = await this.storageRepo.uploadImage(await compressImage(file), 'productos');
       await this.menuRepo.setProductImage(id, url);
       this.products.update((ps) => ps.map((p) => (p.id === id ? { ...p, imageUrl: url } : p)));
-      this.toast.show('Foto del producto actualizada');
+      this.toast.show('toast.product_image_updated');
     } catch {
-      this.toast.show('No se pudo subir la imagen');
+      this.toast.show('toast.product_image_error');
     }
   }
 
   async addCategory(name: string): Promise<boolean> {
     if (this.categories().some((c) => c.name.toLowerCase() === name.toLowerCase())) {
-      this.toast.show('Esa categoría ya existe');
+      this.toast.show('toast.category_exists');
       return false;
     }
     const created = await this.menuRepo.addCategory(name);
     this.categories.update((cs) => [...cs, created]);
-    this.toast.show('Categoría agregada');
+    this.toast.show('toast.category_added');
     return true;
   }
 
@@ -378,12 +379,12 @@ export class RestaurantStore {
   async deleteCategory(id: number): Promise<void> {
     const hasProducts = this.products().some((p) => p.categoryId === id);
     if (hasProducts) {
-      this.toast.show('Mueve sus productos a otra categoría primero');
+      this.toast.show('toast.category_has_products');
       return;
     }
     await this.menuRepo.deleteCategory(id);
     this.categories.update((cs) => cs.filter((c) => c.id !== id));
-    this.toast.show('Categoría eliminada');
+    this.toast.show('toast.category_deleted');
   }
 
   // ────────────────────────── Personal ──────────────────────────
@@ -399,14 +400,14 @@ export class RestaurantStore {
   async addTeamMember(fullName: string, role: 'mesero' | 'cocina' | 'cajero', shift: Shift): Promise<void> {
     const created = await this.staffRepo.addStaff({ fullName, email: '', role, shift });
     this.staff.update((ss) => [...ss, created]);
-    const label = role === 'mesero' ? 'Mesero' : role === 'cocina' ? 'Personal de cocina' : 'Cajero';
-    this.toast.show(`${label} dado de alta`);
+    const key = role === 'mesero' ? 'toast.staff_waiter_added' : role === 'cocina' ? 'toast.staff_cook_added' : 'toast.staff_cashier_added';
+    this.toast.show(key);
   }
 
   async addAdmin(fullName: string, email: string): Promise<void> {
     const created = await this.staffRepo.addStaff({ fullName, email, role: 'admin' });
     this.staff.update((ss) => [...ss, created]);
-    this.toast.show('Administrador agregado');
+    this.toast.show('toast.staff_admin_added');
   }
 
   async rotateShift(id: string): Promise<void> {
@@ -415,8 +416,7 @@ export class RestaurantStore {
     const next = SHIFT_ORDER[(SHIFT_ORDER.indexOf(member.shift) + 1) % SHIFT_ORDER.length];
     this.staff.update((ss) => ss.map((s) => (s.id === id ? { ...s, shift: next } : s)));
     await this.staffRepo.updateStaff(id, { shift: next });
-    const shiftLabel = next === 'manana' ? 'mañana' : next;
-    this.toast.show(`${member.fullName.split(' ')[0]} rota al turno de ${shiftLabel}`);
+    this.toast.show('toast.shift_rotated', { name: member.fullName.split(' ')[0], shift: next });
   }
 
   async toggleVacation(id: string): Promise<void> {
@@ -430,7 +430,7 @@ export class RestaurantStore {
   async setRole(id: string, role: StaffMember['role']): Promise<void> {
     this.staff.update((ss) => ss.map((s) => (s.id === id ? { ...s, role } : s)));
     await this.staffRepo.updateStaff(id, { role });
-    this.toast.show('Rol actualizado');
+    this.toast.show('toast.role_updated');
   }
 
   /**
@@ -442,12 +442,12 @@ export class RestaurantStore {
     const member = this.staff().find((s) => s.id === id);
     if (!member) return;
     if (member.isOwner) {
-      this.toast.show('La cuenta propietaria no puede eliminarse');
+      this.toast.show('toast.owner_protected');
       return;
     }
     await this.staffRepo.deleteStaffPermanently(id);
     this.staff.update((ss) => ss.filter((s) => s.id !== id));
-    this.toast.show(`${member.fullName} eliminado permanentemente`);
+    this.toast.show('toast.staff_deleted', { name: member.fullName });
   }
 
   // ────────────────────────── Ajustes ──────────────────────────
@@ -456,7 +456,7 @@ export class RestaurantStore {
     const isOpen = !this.settings().isOpen;
     this.settings.update((s) => ({ ...s, isOpen }));
     await this.settingsRepo.updateSettings({ isOpen });
-    this.toast.show(isOpen ? 'Restaurante abierto de nuevo' : 'Restaurante cerrado al público');
+    this.toast.show(isOpen ? 'toast.restaurant_open' : 'toast.restaurant_closed');
   }
 
   async setSeason(season: Season): Promise<void> {
@@ -482,9 +482,9 @@ export class RestaurantStore {
       const url = await this.storageRepo.uploadImage(await compressImage(file, 512), 'logo');
       this.settings.update((s) => ({ ...s, logoUrl: url }));
       await this.settingsRepo.updateSettings({ logoUrl: url });
-      this.toast.show('Logo actualizado');
+      this.toast.show('toast.logo_updated');
     } catch {
-      this.toast.show('No se pudo subir el logo');
+      this.toast.show('toast.logo_error');
     }
   }
 }

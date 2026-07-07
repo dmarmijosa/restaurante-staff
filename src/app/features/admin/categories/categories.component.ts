@@ -4,23 +4,24 @@
  */
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { TranslatePipe } from '@ngx-translate/core';
 import { RestaurantStore } from '../../../core/application/restaurant.store';
 
 @Component({
   selector: 'app-categories',
-  imports: [FormsModule],
+  imports: [FormsModule, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="max-w-[600px]" data-testid="admin-categorias">
       <div class="mb-[18px]">
-        <h1 class="m-0 font-serif text-[27px] font-semibold">Categorías</h1>
-        <p class="mt-1 mb-0 text-[13px] text-tinta-media">Organizan el menú público y los filtros del panel.</p>
+        <h1 class="m-0 font-serif text-[27px] font-semibold">{{ 'admin.categories.title' | translate }}</h1>
+        <p class="mt-1 mb-0 text-[13px] text-tinta-media">{{ 'admin.categories.subtitle' | translate }}</p>
       </div>
       <form class="mb-4 flex gap-2.5" (submit)="add($event)">
         <input
           [(ngModel)]="draft"
           name="categoria"
-          placeholder="Nueva categoría, p. ej. Especiales"
+          [placeholder]="'admin.categories.placeholder' | translate"
           class="flex-1 rounded-[10px] border-[1.5px] border-borde bg-papel px-3.5 py-2.5 text-[13px] text-tinta outline-none focus:border-terracota"
         />
         <button
@@ -35,14 +36,14 @@ import { RestaurantStore } from '../../../core/application/restaurant.store';
           <div class="flex items-center gap-3 border-b border-panal px-[18px] py-[13px]">
             <span class="flex-1 text-sm font-semibold">{{ row.name }}</span>
             <span class="text-xs text-tinta-media">
-              {{ row.count }} {{ row.count === 1 ? 'producto' : 'productos' }}
+              {{ row.count === 1 ? ('admin.categories.product_one' | translate: { count: row.count }) : ('admin.categories.product_many' | translate: { count: row.count }) }}
             </span>
             <button
               type="button"
               (click)="store.deleteCategory(row.id)"
               class="cursor-pointer border-none bg-transparent text-xs font-semibold text-rojizo hover:underline"
             >
-              Eliminar
+              {{ 'admin.categories.delete' | translate }}
             </button>
           </div>
         }

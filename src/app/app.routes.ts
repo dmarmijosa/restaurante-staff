@@ -5,21 +5,12 @@ import { bootstrapGuard } from './core/auth/bootstrap.guard';
 /**
  * Mapa de rutas:
  *  - `/` y `/mesa/:numero` — cliente del restaurante demo (o el único en mono-tenant).
- *  - `/r/:slug` y `/r/:slug/mesa/:numero` — cliente multi-tenant; el slug identifica al restaurante.
+ *  - `/:slug` y `/:slug/mesa/:numero` — cliente multi-tenant; el slug identifica al restaurante.
  *  - `/nuevo-restaurante` — bootstrap de un nuevo tenant (siempre accesible).
  *  - `/registro-inicial` — alias legacy; redirige al nuevo bootstrap multi-tenant.
  *  - `/admin`, `/mesero`, `/cocina`, `/cajero` — protegidos por rol.
  */
 export const routes: Routes = [
-  // ── Cliente (rutas multi-tenant) ──────────────────────────────────────────
-  {
-    path: 'r/:slug',
-    loadComponent: () => import('./features/client/client-home.component').then((m) => m.ClientHomeComponent),
-  },
-  {
-    path: 'r/:slug/mesa/:numero',
-    loadComponent: () => import('./features/client/client-home.component').then((m) => m.ClientHomeComponent),
-  },
   // ── Cliente (ruta raíz, compatible con demo y mono-tenant) ────────────────
   {
     path: '',
@@ -35,14 +26,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/auth/login.component').then((m) => m.LoginComponent),
   },
   {
-    // Crea un nuevo restaurante + primer admin; siempre accesible para permitir
-    // múltiples tenants en el mismo despliegue.
     path: 'nuevo-restaurante',
     loadComponent: () =>
       import('./features/auth/register-admin.component').then((m) => m.RegisterAdminComponent),
   },
   {
-    // Alias legado; el guard redirige si ya hay un admin para evitar re-registro.
     path: 'registro-inicial',
     canActivate: [bootstrapGuard],
     loadComponent: () =>
@@ -68,6 +56,15 @@ export const routes: Routes = [
     path: 'cajero',
     canActivate: [roleGuard('cajero')],
     loadComponent: () => import('./features/cashier/cashier.component').then((m) => m.CashierComponent),
+  },
+  // ── Cliente multi-tenant (slug al final para no colisionar con rutas fijas) ─
+  {
+    path: ':slug/mesa/:numero',
+    loadComponent: () => import('./features/client/client-home.component').then((m) => m.ClientHomeComponent),
+  },
+  {
+    path: ':slug',
+    loadComponent: () => import('./features/client/client-home.component').then((m) => m.ClientHomeComponent),
   },
   { path: '**', redirectTo: '' },
 ];

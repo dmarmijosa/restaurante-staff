@@ -10,10 +10,16 @@
  *  4. El trigger `handle_new_user` crea el perfil admin+propietario.
  */
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { AuthService } from '../../core/auth/auth.service';
+
+function passwordsMatch(control: AbstractControl): ValidationErrors | null {
+  const password = control.get('password')?.value;
+  const confirm = control.get('confirmPassword')?.value;
+  return password && confirm && password !== confirm ? { passwordsMismatch: true } : null;
+}
 
 @Component({
   selector: 'app-register-admin',
@@ -91,7 +97,7 @@ import { AuthService } from '../../core/auth/auth.service';
             URL DEL MENÚ (slug) <span class="text-rojizo" aria-hidden="true">*</span>
           </label>
           <div class="flex items-center gap-2 mb-1.5">
-            <span class="text-[12px] text-tinta-media whitespace-nowrap">/r/</span>
+            <span class="text-[12px] text-tinta-media whitespace-nowrap">/</span>
             <input
               id="slug"
               type="text"
@@ -200,6 +206,34 @@ import { AuthService } from '../../core/auth/auth.service';
               La contraseña debe tener al menos 8 caracteres.
             </p>
           } @else {
+            <div class="mb-4"></div>
+          }
+
+          <!-- Confirmar contraseña -->
+          <label class="mb-1.5 block text-[11.5px] font-semibold text-tinta-media" for="confirmPassword">
+            CONFIRMAR CONTRASEÑA <span class="text-rojizo" aria-hidden="true">*</span>
+          </label>
+          <div class="relative">
+            <input
+              id="confirmPassword"
+              [type]="showPassword() ? 'text' : 'password'"
+              formControlName="confirmPassword"
+              autocomplete="new-password"
+              required
+              placeholder="Repite tu contraseña"
+              (blur)="confirmPasswordTouched.set(true)"
+              [attr.aria-invalid]="confirmPasswordInvalid()"
+              [attr.aria-describedby]="confirmPasswordInvalid() ? 'confirm-error' : null"
+              class="min-h-11 w-full rounded-[9px] border-[1.5px] bg-papel py-[9px] pr-16 pl-3 text-[13px] text-tinta outline-none focus:border-terracota"
+              [class.border-borde]="!confirmPasswordInvalid()"
+              [class.border-rojizo]="confirmPasswordInvalid()"
+            />
+          </div>
+          @if (confirmPasswordInvalid()) {
+            <p id="confirm-error" class="mt-1.5 mb-3.5 text-[11.5px] font-semibold text-rojizo">
+              Las contraseñas no coinciden.
+            </p>
+          } @else {
             <div class="mb-5"></div>
           }
 
@@ -244,6 +278,7 @@ export class RegisterAdminComponent {
   protected readonly nameTouched = signal(false);
   protected readonly emailTouched = signal(false);
   protected readonly passwordTouched = signal(false);
+  protected readonly confirmPasswordTouched = signal(false);
 
   protected readonly form = this.fb.nonNullable.group({
     restaurantName: ['', [Validators.required, Validators.minLength(2)]],
@@ -251,7 +286,8 @@ export class RegisterAdminComponent {
     fullName: ['', [Validators.required, Validators.minLength(2)]],
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(8)]],
-  });
+    confirmPassword: ['', [Validators.required]],
+  }, { validators: passwordsMatch });
 
   protected restaurantNameInvalid = computed(
     () => this.restaurantNameTouched() && this.form.controls.restaurantName.invalid,
@@ -260,6 +296,11 @@ export class RegisterAdminComponent {
   protected nameInvalid = computed(() => this.nameTouched() && this.form.controls.fullName.invalid);
   protected emailInvalid = computed(() => this.emailTouched() && this.form.controls.email.invalid);
   protected passwordInvalid = computed(() => this.passwordTouched() && this.form.controls.password.invalid);
+  protected confirmPasswordInvalid = computed(
+    () =>
+      this.confirmPasswordTouched() &&
+      (this.form.controls.confirmPassword.invalid || this.form.hasError('passwordsMismatch')),
+  );
 
   /** Genera automáticamente el slug desde el nombre del restaurante. */
   protected autoSlug(): void {
@@ -279,6 +320,7 @@ export class RegisterAdminComponent {
     this.nameTouched.set(true);
     this.emailTouched.set(true);
     this.passwordTouched.set(true);
+    this.confirmPasswordTouched.set(true);
 
     if (this.form.invalid) {
       const firstInvalid = (['restaurantName', 'slug', 'fullName', 'email', 'password'] as const).find(

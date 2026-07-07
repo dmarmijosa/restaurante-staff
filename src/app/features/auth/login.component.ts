@@ -147,6 +147,13 @@ import { isSupabaseConfigured } from '../../core/data/supabase/supabase-client.s
           >
             {{ (loading() ? 'login.submitting' : 'login.submit') | translate }}
           </button>
+
+          @if (noAdmin()) {
+            <p class="mt-5 text-center text-[12px] text-tinta-media">
+              ¿Aún no tienes restaurante?
+              <a routerLink="/nuevo-restaurante" class="font-semibold text-terracota-profundo hover:underline">Crear restaurante</a>
+            </p>
+          }
         </form>
       }
 
@@ -163,20 +170,19 @@ export class LoginComponent implements OnInit {
   private fb = inject(FormBuilder);
 
   ngOnInit(): void {
-    // Solo con Supabase: si no hay admin, redirigir al registro
+    // Con Supabase: comprueba si hay admin para mostrar el enlace de registro
     if (this.demoMode) return;
     void this.auth
       .adminExists()
-      .then((exists) => {
-        if (!exists) void this.router.navigateByUrl('/registro-inicial');
-      })
-      .catch(() => { /* si falla la comprobación, se queda en el login */ });
+      .then((exists) => { this.noAdmin.set(!exists); })
+      .catch(() => { /* si falla, no mostramos nada extra */ });
   }
 
   protected readonly demoMode = !isSupabaseConfigured();
   protected readonly loading = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly showPassword = signal(false);
+  protected readonly noAdmin = signal(false);
 
   protected readonly demoAccounts = [
     { role: 'admin',  label: 'Administrador', initial: 'A',  email: 'admin@demo.dev',  password: 'admin123'  },

@@ -105,3 +105,36 @@ Angular 22 (standalone + signals) · Tailwind CSS 4 · Supabase (Postgres, Auth,
 ## Licencia
 
 [MIT](LICENSE) — proyecto open source, úsalo y modifícalo libremente.
+
+---
+
+## Changelog
+
+### 2026-07-08
+- `89aaeac` **feat:** mock API demo, login rápido, salir de demo, horarios, responsive e i18n
+
+### 2026-07-07
+- `5c629e1` **fix:** login demo, confirm password, quitar `/r/` de rutas cliente
+- `a564164` **fix:** no redirigir al registro desde login, mostrar enlace si no hay admin
+- `234929d` **fix:** login muestra form + credenciales demo, "Crear restaurante" en el dashboard
+- `349213e` **feat:** i18n con @ngx-translate (6 idiomas, 334 claves)
+
+### 2026-07-04
+- `88696d2` agrega paso `/nuevo-restaurante` al tour de driver.js
+- `5baa2e1` implementa multi-restaurante (multi-tenant)
+- `d07189f` actualiza tablero iteración 9
+
+### 2026-07-03
+- `8295109` agrega recorte manual de imagen con pruebas
+- `853ffdf` deshabilita registro público tras bootstrap con trigger en `auth.users`
+- `5083103` **feat:** aviso sonoro en cocina, asignación de meseros, historial de caja y reinicio diario
+- `3ad256c` **feat:** filtros por fecha en el Resumen del admin
+- `6225a6d` actualiza tablero y versión a v0.5
+
+### 2026-07-02
+- `3540a81` **feat:** MoneyPipe para formatear moneda con dos decimales
+- `28812670` **feat:** registro inicial de admin, Storage de imágenes, QR por mesa y pulido de UX
+- `fd41497` **feat:** fechas de temporada editables y compresión de imágenes al subir
+- `a845ba6` **feat:** registro inicial automático, onboarding con driver.js y rol Cajero
+- `6bddf06` **feat:** sección Resumen con métricas del admin
+- `cdb9d94` **feat:** tiempo de cocina (temporizador en vivo + tiempo medio de preparación)

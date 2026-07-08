@@ -136,6 +136,8 @@ Angular 22 (standalone + signals) · Tailwind CSS 4 · Supabase (Postgres, Auth,
 ## Changelog
 
 ### 2026-07-08
+- **fix:** bugs multi-tenant descubiertos en la prueba funcional end-to-end · policies legacy pre-multi-tenant en `orders`/`order_items`/`waiter_calls` invocando `is_staff()` sin `EXECUTE` para anon · singleton `restaurant_settings.id = 1` bloqueando la creación de settings del segundo tenant · `revoke execute` de `my_restaurant_id()` que rompía las lecturas del panel autenticado · cliente sin slug no resolvía el tenant → `getFirstAvailable()` en `RestaurantRepository` · 3 migraciones nuevas (`12_fix_rls_and_settings`, `13_reapply_signup_triggers`, `14_grant_my_restaurant_id`)
+- **test:** script `scripts/functional-test.mjs` — prueba end-to-end contra Supabase real (Playwright) que crea un tenant nuevo por corrida, cubre el flujo del cliente (menú → carrito → pedido → llamar mesero), registra al admin propietario, recorre las 11 secciones del panel, crea cuentas de mesero/cocina/cajero por API y captura la vista de cada rol logueado (22 capturas en `Playwright/`)
 - `33b7102` **feat:** moneda configurable por el admin (12 símbolos, `CurrencyService` + `MoneyPipe` reactivo, migración SQL 11, selector en Ajustes, i18n) · **refactor:** `ChipBtnDirective` (7 componentes), `OrderCardComponent` (admin kanban + mesero), `waiterName` real en demo
 - `8fce1ef` **feat:** wizard de instalación guiada `/instalacion` (6 pasos, sin código, schema.sql descargable, banner "Configurar mi restaurante" en la home demo, enlace desde el diálogo de conexión del admin)
 - `310ba5b` **feat:** notificación sonora automática en cocina — detección por ID de comanda, beep encolado si `AudioContext` está suspendido, indicador visual pulsante e i18n

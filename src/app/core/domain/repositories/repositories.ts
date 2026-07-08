@@ -132,6 +132,11 @@ export abstract class RestaurantRepository {
   abstract create(name: string, slug: string): Promise<string>;
   /** Resuelve el slug de la URL a los datos del restaurante. */
   abstract getBySlug(slug: string): Promise<Restaurant | null>;
+  /**
+   * Devuelve el primer restaurante disponible (útil para el cliente cuando
+   * accede sin slug — despliegues mono-tenant o setups iniciales).
+   */
+  abstract getFirstAvailable(): Promise<Restaurant | null>;
 }
 
 /**

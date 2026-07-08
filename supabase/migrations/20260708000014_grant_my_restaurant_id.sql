@@ -1,0 +1,12 @@
+-- ============================================================================
+-- Otorgar EXECUTE de my_restaurant_id() al rol authenticated.
+--
+-- La migración multi-tenant revocó EXECUTE de todos los roles pero las
+-- policies RLS de profiles, orders, tables, etc. invocan esta función cuando
+-- el usuario autenticado hace queries. Sin EXECUTE Postgres devuelve
+-- "permission denied for function my_restaurant_id" y todas las lecturas
+-- del panel (profiles, work_schedules, etc.) fallan con 401.
+--
+-- anon NO necesita ejecutarla (usa filtros explícitos por restaurant_id).
+-- ============================================================================
+grant execute on function public.my_restaurant_id() to authenticated;

@@ -186,6 +186,9 @@ export class DemoRestaurantRepository extends RestaurantRepository {
   async getBySlug(_slug: string): Promise<{ id: string; name: string; slug: string }> {
     return { id: DEMO_RESTAURANT_ID, name: 'Casa Nogal (demo)', slug: 'demo' };
   }
+  async getFirstAvailable(): Promise<{ id: string; name: string; slug: string }> {
+    return { id: DEMO_RESTAURANT_ID, name: 'Casa Nogal (demo)', slug: 'demo' };
+  }
 }
 
 @Injectable()

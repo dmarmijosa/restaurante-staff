@@ -545,6 +545,21 @@ export class SupabaseRestaurantRepository extends RestaurantRepository {
     const row = (data as Array<{ id: string; name: string; slug: string }> | null)?.[0];
     return row ?? null;
   }
+
+  /**
+   * Cliente sin slug (`/` o `/mesa/:numero`): resuelve el primer restaurante
+   * disponible. Usa la policy pública `select` de `restaurants`.
+   */
+  async getFirstAvailable(): Promise<{ id: string; name: string; slug: string } | null> {
+    const { data, error } = await this.supabase.client
+      .from('restaurants')
+      .select('id, name, slug')
+      .order('created_at', { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    if (error) throw error;
+    return data ?? null;
+  }
 }
 
 @Injectable()

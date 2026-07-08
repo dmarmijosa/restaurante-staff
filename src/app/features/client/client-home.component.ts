@@ -452,10 +452,13 @@ export class ClientHomeComponent implements OnInit {
   });
 
   async ngOnInit(): Promise<void> {
-    // En rutas /r/:slug resuelve el slug al restaurant_id antes de cargar datos.
-    const slug = this.route.snapshot.paramMap.get('slug');
-    if (slug && !this.context.restaurantId()) {
-      const restaurant = await this.restaurantRepo.getBySlug(slug);
+    if (!this.context.restaurantId()) {
+      const slug = this.route.snapshot.paramMap.get('slug');
+      // Ruta /r/:slug/mesa/... → resuelve el slug al restaurant_id
+      // Ruta / o /mesa/... → cae en el primer restaurante disponible (mono-tenant).
+      const restaurant = slug
+        ? await this.restaurantRepo.getBySlug(slug)
+        : await this.restaurantRepo.getFirstAvailable();
       if (restaurant) this.context.set(restaurant.id);
     }
     void this.store.init();

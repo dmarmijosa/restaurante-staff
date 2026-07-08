@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <!-- Fondo -->
+  <rect width="192" height="192" rx="40" fill="#241a11"/>
+  <!-- Plato estilizado -->
+  <circle cx="96" cy="88" r="44" fill="none" stroke="#c1683c" stroke-width="5"/>
+  <circle cx="96" cy="88" r="30" fill="none" stroke="#c1683c" stroke-width="2.5" stroke-dasharray="6 4"/>
+  <!-- Tenedor izquierdo -->
+  <line x1="60" y1="52" x2="60" y2="76" stroke="#f5efe6" stroke-width="4" stroke-linecap="round"/>
+  <line x1="54" y1="52" x2="54" y2="65" stroke="#f5efe6" stroke-width="3" stroke-linecap="round"/>
+  <line x1="66" y1="52" x2="66" y2="65" stroke="#f5efe6" stroke-width="3" stroke-linecap="round"/>
+  <line x1="60" y1="76" x2="60" y2="128" stroke="#f5efe6" stroke-width="4" stroke-linecap="round"/>
+  <!-- Cuchillo derecho -->
+  <path d="M132,52 Q140,68 132,76 L132,128" fill="none" stroke="#f5efe6" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Texto RS -->
+  <text x="96" y="164" font-family="Georgia, serif" font-size="22" font-weight="700" fill="#c1683c" text-anchor="middle" letter-spacing="3">RS</text>
+</svg>

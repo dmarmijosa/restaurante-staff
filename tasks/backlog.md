@@ -31,7 +31,7 @@
 
 - [ ] Rediseño visual más profundo estilo 21st.dev (la base responsiva ya está; falta pulido de profundidad/jerarquía).
 - [x] ~~i18n~~ — hecho (6 idiomas: es/en/ca/pt/fr/it; 334 claves; `@ngx-translate/core` + HttpLoader; detector automático del idioma del navegador; selector en el topbar)
-- [ ] PWA/offline para la tablet del mesero
+- [x] ~~PWA/offline para la tablet del mesero~~ — hecho (`@angular/service-worker`, `ngsw-config.json`, `manifest.webmanifest`, `OfflineService` + `WaiterCacheService`; banner offline/reconexión en la tablet; caché localStorage de turno activo)
 - [ ] Notificación sonora en cocina al entrar comanda nueva
 - [ ] Página de instalación guiada (wizard) para restaurantes sin equipo técnico
 

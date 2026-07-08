@@ -33,7 +33,7 @@
 - [x] ~~i18n~~ — hecho (6 idiomas: es/en/ca/pt/fr/it; 334 claves; `@ngx-translate/core` + HttpLoader; detector automático del idioma del navegador; selector en el topbar)
 - [x] ~~PWA/offline para la tablet del mesero~~ — hecho (`@angular/service-worker`, `ngsw-config.json`, `manifest.webmanifest`, `OfflineService` + `WaiterCacheService`; banner offline/reconexión en la tablet; caché localStorage de turno activo)
 - [ ] Notificación sonora en cocina al entrar comanda nueva
-- [ ] Página de instalación guiada (wizard) para restaurantes sin equipo técnico
+- [x] ~~Página de instalación guiada (wizard) para restaurantes sin equipo técnico~~ — hecho (`/instalacion`, 6 pasos: bienvenida → Supabase → claves → esquema SQL → crear admin → listo; detección automática de progreso, descarga de `schema.sql`, botón "Configurar mi restaurante" en la home demo)
 
 ## Bugs conocidos
 

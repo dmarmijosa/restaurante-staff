@@ -14,6 +14,7 @@ import { RestaurantStore } from '../../core/application/restaurant.store';
 import { RestaurantContextService } from '../../core/application/restaurant-context.service';
 import { RestaurantRepository } from '../../core/domain/repositories/repositories';
 import { MoneyPipe } from '../../shared/money.pipe';
+import { isSupabaseConfigured } from '../../core/data/supabase/runtime-config';
 import type { OrderStatus, Product } from '../../core/domain/entities/entities';
 
 type ClientScreen = 'menu' | 'cart' | 'status';
@@ -297,6 +298,19 @@ const STEP_DEFS: Array<{ key: OrderStatus; label: string; desc: string }> = [
 
         <!-- Footer con acceso del personal (requisito del producto) -->
         <footer class="mt-auto flex-none border-t border-borde-suave bg-crema px-[18px] py-4">
+          @if (isDemoMode) {
+            <div class="mb-3 flex items-center gap-2 rounded-xl border border-ocre-bg bg-ocre-bg px-3 py-2.5">
+              <span class="text-[11px] leading-snug text-ocre-texto">
+                <strong>Modo demo</strong> — los datos no se guardan.
+              </span>
+              <a
+                routerLink="/instalacion"
+                class="ml-auto whitespace-nowrap rounded-[8px] border-none bg-terracota px-3 py-1.5 text-[11px] font-bold text-lino-calido hover:bg-terracota-hover"
+              >
+                Configurar mi restaurante →
+              </a>
+            </div>
+          }
           <div class="flex items-center gap-2.5">
             <div class="flex-1 text-[10.5px] leading-relaxed text-tinta-media">
               Restaurante Staff · plataforma open source ·
@@ -324,6 +338,9 @@ export class ClientHomeComponent implements OnInit {
 
   /** Número de mesa que codifica el QR (`/mesa/:numero` o `/r/:slug/mesa/:numero`); 4 por defecto. */
   readonly numero = input(4, { transform: numberAttribute });
+
+  /** true cuando la app no está conectada a Supabase (modo demo en memoria). */
+  protected readonly isDemoMode = !isSupabaseConfigured();
 
   protected readonly screen = signal<ClientScreen>('menu');
   protected readonly activeCat = signal('__all__');

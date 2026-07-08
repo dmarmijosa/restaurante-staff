@@ -4,7 +4,7 @@
 
 ## Estado de la aplicación
 
-**v0.8 · Notificación sonora automática en cocina** — actualizado el 2026-07-08
+**v0.9 · Wizard de instalación + PWA** — actualizado el 2026-07-08
 
 | Módulo                                                                                     | Estado                               |
 | ------------------------------------------------------------------------------------------ | ------------------------------------ |
@@ -38,6 +38,7 @@
 | Salir del modo demo con credenciales Supabase en runtime (sin recompilar)                  | ✅ Completo                          |
 | Módulo Horario de trabajo (editor semanal por empleado; visible al trabajador)             | ✅ Completo                          |
 | PWA / offline para la tablet del mesero (SW, manifest, banner, caché localStorage)         | ✅ Completo                          |
+| Wizard de instalación guiada `/instalacion` (6 pasos, sin código, schema.sql descargable)  | ✅ Completo                          |
 | Panel 100% responsivo (drawer móvil, sin scroll horizontal)                                | ✅ Completo                          |
 | Internacionalización (6 idiomas, paridad de claves; dashboard e historial incluidos)       | ✅ Completo                          |
 
@@ -112,6 +113,7 @@ Angular 22 (standalone + signals) · Tailwind CSS 4 · Supabase (Postgres, Auth,
 ## Changelog
 
 ### 2026-07-08
+- **feat:** wizard de instalación guiada `/instalacion` (6 pasos, sin código, schema.sql descargable, banner en home demo)
 - **feat:** notificación sonora automática en cocina: detección por ID de comanda, beep encolado si AudioContext suspendido, indicador visual pulsante e i18n
 - **feat:** PWA/offline para la tablet del mesero (service worker, manifest, OfflineService, WaiterCacheService, banner offline/reconexión)
 - `89aaeac` **feat:** mock API demo, login rápido, salir de demo, horarios, responsive e i18n

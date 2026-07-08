@@ -30,6 +30,21 @@ la mock API con latencia cargue los datos antes de contar.
 - ✅ **E2E arreglados**: `locale: es-ES` determinista en Playwright y esperas al primer elemento antes
   de contar (por la latencia de la mock API). Toast de disponibilidad con matcher tolerante a comillas.
 
+## Hecho en la iteración 13 (Wizard de instalación guiada)
+
+- ✅ **Ruta `/instalacion`** — wizard de 6 pasos completamente funcional, sin login, accesible desde la home en modo demo.
+- ✅ **Paso 1 — Bienvenida**: descripción de la plataforma, requisitos ("qué necesitas": solo correo, internet y 15 min) y vista previa de funcionalidades.
+- ✅ **Paso 2 — Crear proyecto Supabase**: instrucciones paso a paso (crear cuenta, nuevo proyecto, elegir región), enlace a supabase.com.
+- ✅ **Paso 3 — Conectar claves**: instrucciones de dónde copiar URL y anon key + formulario inline que guarda en localStorage (mismo mecanismo que "salir del modo demo"). Validación con mensaje claro.
+- ✅ **Paso 4 — Aplicar el esquema SQL**: botón de descarga del `schema.sql` combinado (10 migraciones + seed), enlace directo al SQL Editor del proyecto Supabase del usuario, instrucciones para pegar y ejecutar.
+- ✅ **Paso 5 — Crear cuenta de administrador**: explicación de qué ocurrirá, enlace a `/nuevo-restaurante`. Si ya existe admin → avanza directamente.
+- ✅ **Paso 6 — ¡Todo listo!**: checklist de primeros pasos con enlaces directos a cada sección del panel (ajustes, categorías, menú, plano, personal).
+- ✅ **Progreso persistido** en localStorage (`rs_setup_step`) — el usuario puede cerrar el navegador y continuar.
+- ✅ **Detección automática**: si Supabase ya está configurado → salta a paso 3; si el admin ya existe → salta a paso 6.
+- ✅ **Banner "Configurar mi restaurante"** en la home del cliente (solo en modo demo) — entrada directa al wizard.
+- ✅ **`public/setup/schema.sql`** generado (concat de los 10 archivos de migración + seed.sql, 895 líneas).
+- ✅ TypeScript sin errores, lints limpios.
+
 ## Hecho en la iteración 12 (PWA / offline para la tablet del mesero)
 
 - ✅ **`@angular/service-worker`** instalado y configurado.

@@ -4,7 +4,7 @@ Guía pensada para una **persona no técnica** que quiere poner en marcha su pro
 restaurante con esta plataforma libre. Está escrita paso a paso. Si te atascas en
 algún punto, cada sección indica qué hacer.
 
-> Este manual se irá ampliando conforme el proyecto crece. Última actualización: 2026-07-08 (v0.10).
+> Este manual se irá ampliando conforme el proyecto crece. Última actualización: 2026-07-08 (v0.12).
 
 ---
 
@@ -249,6 +249,12 @@ Este es un proyecto **open source** (licencia MIT). Puedes abrir una incidencia 
 el repositorio de GitHub del proyecto describiendo tu problema.
 
 ---
+
+## Novedades de v0.12
+
+- **Cocina con PIN** — la tablet de cocina ya no es pública: en **Admin → Ajustes → Tablet de cocina** defines un PIN de 6 dígitos. La pantalla de acceso está en `/cocina/acceso`.
+- **26 migraciones** en `schema.sql`; parches incrementales en `public/setup/patch-kitchen-*.sql` para bases ya desplegadas.
+- **Node 24.16.0** y **npm 11.13.0** fijados (`.nvmrc` + `corepack enable`).
 
 ## Novedades de v0.10
 

@@ -1,12 +1,12 @@
 # Trabajo actual
 
-_Última actualización: 2026-07-08 (iteración 16)_
+_Última actualización: 2026-07-08 (iteración 17)_
 
 ## Estado actual
 
-Plataforma **v0.10** publicada en `main`.
+Plataforma **v0.12** publicada en `main`.
 
-- **19 migraciones SQL** — v0.9 traía 11 (init, RLS, bootstrap, Storage, cajero, ready_at, reinicio, disable signup, multi-restaurante, horarios, currency); en v0.10 se añaden 8 fixes multi-tenant descubiertos por la prueba E2E contra Supabase real: RLS+singleton settings+grants (12), triggers signup (13), grant `my_restaurant_id` (14), `UNIQUE(restaurant_id, name)` en categorías + `(restaurant_id, number)` en mesas (15), reapply anon INSERT policies (16), anon SELECT en `waiter_calls` (17), `UNIQUE(restaurant_id, name)` en `payment_methods` (18) y `create_restaurant()` con seed automático (19).
+- **26 migraciones SQL** — v0.11 añadió staff passwords (21) y kiosk cocina (22); v0.12 añade PIN de cocina (23), fix `auth.identities` (24), URLs canónicas (25) y resolución/validación de PIN (26).
 - **43 pruebas unitarias** (Vitest) en verde.
 - **1 prueba funcional E2E** (`scripts/functional-test.mjs`, Playwright) que cubre el **ciclo de vida completo del pedido** contra Supabase real: 28 capturas, 28 asserts, 0 fallos.
 - **Build limpio** (`ng build`).
@@ -16,7 +16,8 @@ Plataforma **v0.10** publicada en `main`.
 
 | Commit | Descripción |
 |--------|-------------|
-| `41cc887` | test(e2e): ciclo de vida completo del pedido + fix `payment_methods` UNIQUE multi-tenant |
+| `5a63f15` | feat(kitchen): acceso por PIN de 6 dígitos con cuenta interna por restaurante |
+| `658304e` | feat(ops): cocina kiosk, contraseñas de staff y fixes QR/móvil |
 | `bf24e17` | fix(rls): policy anon SELECT en `waiter_calls` — root cause del `42501` al llamar al mesero |
 | `ef7dc30` | test: flujo cruzado entre roles — cliente/admin/cocina/mesero/cajero ven el mismo pedido |
 | `f51fa9f` | fix(multi-tenant): `UNIQUE(restaurant_id, name)` en categorías + reapply anon RLS + i18n `kitchen.min_label` |

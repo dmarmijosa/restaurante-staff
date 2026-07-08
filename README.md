@@ -35,14 +35,14 @@ Arranca en **modo demo** (sin cuenta, sin configurar nada) en menos de un minuto
 
 ---
 
-## Estado — v0.11 · 2026-07-08
+## Estado — v0.12 · 2026-07-08
 
 **43 unitarias** (Vitest) · **29 E2E de UI** (Playwright, escritorio + móvil) · **1 E2E funcional contra Supabase real** (28 asserts, 0 fallos) · Build limpio
 
 | Área | Estado |
 | ---- | ------ |
 | Menú QR del cliente (carrito, seguimiento, llamar mesero) | ✅ |
-| Pantalla de cocina (tiempo real, aviso sonoro, temporizador) | ✅ |
+| Pantalla de cocina (tiempo real, aviso sonoro, temporizador, acceso por PIN) | ✅ |
 | Tablet del mesero con PWA/offline | ✅ |
 | Caja (cobro, historial, arqueo por método) | ✅ |
 | Panel admin completo (plano, kanban, menú, personal, ajustes, métricas) | ✅ |
@@ -52,13 +52,15 @@ Arranca en **modo demo** (sin cuenta, sin configurar nada) en menos de un minuto
 | Moneda configurable (12 símbolos, propagación automática) | ✅ |
 | Internacionalización (6 idiomas, paridad de claves) | ✅ |
 | Wizard de instalación guiada (6 pasos, sin código) | ✅ |
-| Migraciones Supabase (19 SQL + RLS + seed) | ✅ |
+| Migraciones Supabase (26 SQL + RLS + seed) | ✅ |
 | Prueba E2E que recorre el ciclo de vida del pedido (cliente → cocina → mesero → cajero → historial) contra Supabase real | ✅ |
 | CI (GitHub Actions: build + unit + E2E en modo demo) | ✅ |
 
 ## Arranque rápido (modo demo, sin configurar nada)
 
 ```bash
+nvm use            # Node 24.16.0 (lee .nvmrc)
+corepack enable    # npm 11.13.0 (lee packageManager en package.json)
 npm install
 npm start          # http://localhost:4200
 ```
@@ -122,6 +124,7 @@ Sin credenciales de Supabase la app usa **datos de ejemplo en memoria** (los del
 
 ## Documentación
 
+- **[CHANGELOG.md](CHANGELOG.md)** — historial de versiones
 - **[manual.md](manual.md)** — guía de instalación paso a paso (no técnica); también en `/manual.md` con la app en marcha
 - [docs/architecture.md](docs/architecture.md) — arquitectura, flujo de datos, diagramas
 - [docs/api.md](docs/api.md) — endpoints, DTOs, servicios, ejemplos
@@ -140,6 +143,14 @@ Angular 22 (standalone + signals) · Tailwind CSS 4 · Supabase (Postgres, Auth,
 ---
 
 ## Changelog
+
+Historial completo en **[CHANGELOG.md](CHANGELOG.md)**.
+
+### 2026-07-08 — v0.12
+- **feat(cocina):** acceso protegido por **PIN de 6 dígitos** (`/cocina/acceso`); cuenta interna por restaurante; admin configura PIN en Ajustes
+- **fix(cocina):** resolución del tenant correcto y validación de PIN en servidor (`resolve_kitchen_restaurant`, `kitchen_pin_is_valid`)
+- **fix(auth):** cuentas cocina sin `auth.identities` no podían hacer login (migración 24)
+- **chore:** `schema.sql` con 26 migraciones; Node 24.16.0 + npm 11.13.0 en `.nvmrc` / `.npmrc`
 
 ### 2026-07-08 — v0.11
 - **feat(cocina):** pantalla `/cocina` y `/cocina/:slug` **sin login** — kiosk abierto para la tablet de cocina; migración `22_kitchen_kiosk` (`anon avanza pedidos cocina`); parche `public/setup/patch-kitchen-kiosk.sql`

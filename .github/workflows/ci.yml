@@ -15,10 +15,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Configurar Node.js 24
+      - name: Configurar Node.js (.nvmrc)
         uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version-file: '.nvmrc'
           cache: 'npm'
 
       - name: Instalar dependencias

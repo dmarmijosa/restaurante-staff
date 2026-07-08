@@ -1,34 +1,49 @@
 # Trabajo actual
 
-_Última actualización: 2026-07-08 (iteración 14)_
+_Última actualización: 2026-07-08 (iteración 15)_
 
 ## Estado actual
 
-Plataforma **v0.9**: 11 migraciones SQL aplicadas. **Build limpio**, **43 unitarias** y **29 E2E en verde**.
-Los E2E ahora fijan `locale: es-ES` en Playwright (la app detecta idioma del navegador) y esperan a que
-la mock API con latencia cargue los datos antes de contar.
+Plataforma **v0.9** publicada en `main`.
 
-## Hecho en la iteración 11 (mock API, login demo, salir de demo, horarios, responsive, i18n)
+- **11 migraciones SQL** aplicadas (init, RLS, bootstrap admin, Storage, cajero + payments, ready_at, reinicio diario, disable public signup, multi-restaurante, work_schedules, **currency**).
+- **43 pruebas unitarias** (Vitest) y **29 E2E** (Playwright, escritorio + móvil) en verde.
+- **Build limpio** (`ng build` + `tsc --noEmit`).
+- **Modo demo por defecto** (`.env` vacío → mock en memoria). El usuario decide cuándo conectar su propio Supabase (wizard visual o `.env` clásico).
 
-- ✅ **Mock API única** (`core/data/demo/mock-api.service.ts`): un solo backend en memoria con
-  latencia simulada que sirve a todos los roles (incluido cliente). Los repositorios demo pasan a
-  ser adaptadores finos sobre ella.
-- ✅ **Login demo con accesos rápidos**: se elimina el `div` con credenciales en texto; ahora hay
-  botones "Entrar como Administrador/Mesero/Cocina/Cajero" que autentican y redirigen al área del rol.
-- ✅ **Salir del modo demo en runtime** (`runtime-config.ts` + diálogo `connect-supabase`): el admin
-  pega la URL y la clave publishable de su proyecto; se guardan en localStorage y, al recargar, la app
-  trabaja contra su base (vacía, desde cero) sin recompilar. Botón visible solo en modo demo.
-- ✅ **Módulo Horario de trabajo** (`/admin/horarios`): editor semanal por empleado (día/franja/libre),
-  tabla `work_schedules` (migración 10 con RLS multi-tenant), y el horario de hoy se muestra al
-  trabajador en la barra superior.
-- ✅ **Panel responsivo**: sidebar convertido en cajón deslizante con hamburguesa en móvil; topbar sin
-  scroll horizontal; grids adaptativos. Verificado a 375 px sin overflow.
-- ✅ **i18n ampliada**: dashboard e historial totalmente traducidos; nuevas claves (horarios, días de la
-  semana, connect, login demo, rangos). Los 6 idiomas mantienen **paridad exacta de claves**.
-- ✅ El tour de driver.js ya cubre cada sección del panel, incluida Horarios.
+### Últimos commits en `main`
 
-- ✅ **E2E arreglados**: `locale: es-ES` determinista en Playwright y esperas al primer elemento antes
-  de contar (por la latencia de la mock API). Toast de disponibilidad con matcher tolerante a comillas.
+| Commit | Descripción |
+|--------|-------------|
+| `33b7102` | feat: moneda configurable + refactors (ChipBtnDirective, OrderCardComponent, waiterName real) |
+| `8fce1ef` | feat: wizard de instalación guiada `/instalacion` (6 pasos, sin código) |
+| `310ba5b` | feat: notificación sonora automática al entrar comanda en cocina |
+| `745bbdd` | feat: PWA/offline para la tablet del mesero |
+| `89aaeac` | feat: mock API demo, login rápido, salir de demo, horarios, responsive e i18n |
+
+## Hecho en la iteración 15 (endurecer modo demo + puente al wizard)
+
+- ✅ **`.env` vaciado** localmente y `env.generated.ts` regenerado → la app arranca por defecto en modo demo.
+- ✅ **`.env.example`** rehecho con placeholders (`YOUR_PROJECT_REF.supabase.co`, `YOUR_PUBLISHABLE_ANON_KEY`) y comentarios que apuntan al wizard `/instalacion` como alternativa sin tocar archivos.
+- ✅ **Diálogo "Salir del modo demo"** en el sidebar del admin: nuevo banner destacado enlaza al wizard `/instalacion` para quien necesite la guía completa.
+- ✅ **README** con nueva sección **"Conectar tu propio Supabase"** — aviso explícito: las credenciales del sandbox privado histórico (`vtkdvxrocemdyybynegs`) no son back-end público; cada quien debe usar su proyecto. Dos opciones documentadas: wizard visual (recomendado) y `.env` clásico.
+
+## Hecho en la iteración 14 (moneda configurable + refactors)
+
+- ✅ **Moneda configurable por el admin** (`features/admin/settings/settings.component.ts`): selector visual con 12 símbolos ($, €, £, ¥, R$, S/, ₹, ₩, CHF, CLP$, COP$, ARS$). Chips con estilo `outlined` activo/inactivo en terracota; vista previa "los importes se verán como €12.50".
+- ✅ **`CurrencyService`** (`shared/currency.service.ts`): signal `symbol` (default `'$'`), inyectable en `MoneyPipe` sin crear dependencias circulares con el store.
+- ✅ **`MoneyPipe` reactivo** (`shared/money.pipe.ts`): `pure: false`, lee `CurrencyService.symbol()` — todos los precios del panel, caja, historial y menú del cliente se actualizan en tiempo real al cambiar la moneda.
+- ✅ **`RestaurantStore.setCurrency()`**: actualiza `settings().currency` + `CurrencyService.symbol` + llama a `settingsRepo.updateSettings()` para persistir. Toast de confirmación con clave i18n `toast.currency_updated`.
+- ✅ **Migración SQL** (`20260708000011_add_currency.sql`): columna `currency TEXT NOT NULL DEFAULT '$'` en `public.restaurant_settings`; `public/setup/schema.sql` regenerado.
+- ✅ **Repos Supabase y Demo**: `getSettings()` / `updateSettings()` mapean la nueva columna; `DEMO_SETTINGS` incluye `currency: '$'`.
+- ✅ **i18n**: clave `toast.currency_updated` en 6 idiomas.
+- ✅ **Tests actualizados**: `money.pipe.spec.ts` usa `TestBed.runInInjectionContext` + `CurrencyService`. **43 unitarias en verde**.
+
+### Refactors incluidos
+
+- ✅ **`ChipBtnDirective`** (`shared/chip-btn.directive.ts`): directiva `button[chipBtn]` con inputs `active` y `variant` (`tinta | terracota | outlined | cacao`). Aplicada en 7 componentes: dashboard, history, menu-products, season, schedule, staff-page, client-home. Elimina decenas de líneas de clases Tailwind duplicadas.
+- ✅ **`OrderCardComponent`** (`shared/order-card/order-card.component.ts`): componente reutilizable con inputs `order`, `showStatus`, `showMeta`, `actionLabel`, `actionFull`, `disabled` y output `advance`. Usado en `orders-board` (admin) y `waiter` (mesero).
+- ✅ **`waiterName` real en demo**: `mock-api.service.ts` resuelve el nombre del mesero desde la asignación de mesa en lugar del hardcoded `'Carlos M.'`.
 
 ## Hecho en la iteración 13 (Wizard de instalación guiada)
 
@@ -42,8 +57,14 @@ la mock API con latencia cargue los datos antes de contar.
 - ✅ **Progreso persistido** en localStorage (`rs_setup_step`) — el usuario puede cerrar el navegador y continuar.
 - ✅ **Detección automática**: si Supabase ya está configurado → salta a paso 3; si el admin ya existe → salta a paso 6.
 - ✅ **Banner "Configurar mi restaurante"** en la home del cliente (solo en modo demo) — entrada directa al wizard.
-- ✅ **`public/setup/schema.sql`** generado (concat de los 10 archivos de migración + seed.sql, 895 líneas).
-- ✅ TypeScript sin errores, lints limpios.
+- ✅ **`public/setup/schema.sql`** generado (concat de los archivos de migración + seed.sql).
+
+## Hecho en la iteración 12b (notificación sonora automática en cocina)
+
+- ✅ **`BeepService` mejorado** (`shared/beep.service.ts`): se extrae `_play()` como método privado; `beep()` ya no descarta el tono silenciosamente si el AudioContext está suspendido (política de autoplay): marca `pendingBeep = true` e intenta `ctx.resume()` en background. `prime()` (llamado en cada `pointerdown` de la pantalla de cocina) reanuda el contexto y dispara el tono pendiente de inmediato. Nueva señal pública `pendingBeep` para que la UI pueda reaccionar.
+- ✅ **`KitchenComponent` mejorado** (`features/kitchen/kitchen.component.ts`): el `effect` de detección pasa de comparar `.length` a rastrear un `Set<number>` de IDs conocidas. La primera evaluación marca los pedidos existentes como conocidos (sin sonar); las siguientes solo beepean cuando aparece un ID nuevo — robusto ante añadir+quitar en el mismo ciclo reactivo.
+- ✅ **Indicador visual pulsante**: punto terracota con `animate-ping` en la cabecera de cocina cuando `beep.pendingBeep() && !beep.muted()`. Accesible con `role="status"` + `aria-label` (`kitchen.tap_for_sound`).
+- ✅ **i18n**: clave `kitchen.tap_for_sound` añadida en los 6 idiomas.
 
 ## Hecho en la iteración 12 (PWA / offline para la tablet del mesero)
 
@@ -58,168 +79,83 @@ la mock API con latencia cargue los datos antes de contar.
 - ✅ **`OfflineBannerComponent`** (`shared/offline-banner/`): banner amarillo al perder red (con indicador de "datos en caché") y banner verde 3 segundos al reconectarse. `aria-live="polite"` para accesibilidad.
 - ✅ **`WaiterComponent`** actualizado: carga caché al abrir sin red, deshabilita botones de acción offline, guarda snapshot automáticamente al recibir datos nuevos, refresca el store al reconectarse.
 - ✅ **`app.config.ts`**: `provideServiceWorker('ngsw-worker.js', { enabled: !isDevMode() })`.
-- ✅ **Claves i18n** `pwa.*` añadidas en 6 idiomas (es/en/ca/pt/fr/it).
+- ✅ **Claves i18n** `pwa.*` añadidas en 6 idiomas.
 - ✅ **8 pruebas unitarias** (jsdom) para `OfflineService` y `WaiterCacheService` en verde.
-- ✅ TypeScript compila sin errores (`tsc --noEmit`).
 
-## Hecho en la iteración 13 (notificación sonora automática en cocina)
+## Hecho en la iteración 11 (mock API, login demo, salir de demo, horarios, responsive, i18n)
 
-- ✅ **`BeepService` mejorado** (`shared/beep.service.ts`): se extrae `_play()` como método privado;
-  `beep()` ya no descarta el tono silenciosamente si el AudioContext está suspendido (política de
-  autoplay): marca `pendingBeep = true` e intenta `ctx.resume()` en background. `prime()` (llamado en
-  cada `pointerdown` de la pantalla de cocina) reanuda el contexto y dispara el tono pendiente de
-  inmediato. Nueva señal pública `pendingBeep` para que la UI pueda reaccionar.
-- ✅ **`KitchenComponent` mejorado** (`features/kitchen/kitchen.component.ts`): el `effect` de
-  detección pasa de comparar `.length` a rastrear un `Set<number>` de IDs conocidas. La primera
-  evaluación marca los pedidos existentes como conocidos (sin sonar); las siguientes solo beepean
-  cuando aparece un ID nuevo — robusto ante añadir+quitar en el mismo ciclo reactivo.
-- ✅ **Indicador visual pulsante**: punto terracota con `animate-ping` en la cabecera de cocina
-  cuando `beep.pendingBeep() && !beep.muted()`. Accesible con `role="status"` + `aria-label`
-  (`kitchen.tap_for_sound`).
-- ✅ **i18n**: clave `kitchen.tap_for_sound` añadida en los 6 idiomas (es/en/ca/pt/fr/it).
-- ✅ **33 unitarias en verde**; sin errores de lint.
-
-## Hecho en la iteración 14 (moneda configurable + refactors)
-
-- ✅ **Moneda configurable por el admin** (`features/admin/settings/settings.component.ts`): selector
-  visual con 12 símbolos ($, €, £, ¥, R$, S/, ₹, ₩, CHF, CLP$, COP$, ARS$). Chips con estilo `outlined`
-  activo/inactivo en terracota; vista previa "los importes se verán como €12.50".
-- ✅ **`CurrencyService`** (`shared/currency.service.ts`): signal `symbol` (default `'$'`), inyectable
-  en `MoneyPipe` sin crear dependencias circulares con el store.
-- ✅ **`MoneyPipe` reactivo** (`shared/money.pipe.ts`): `pure: false`, lee `CurrencyService.symbol()` —
-  todos los precios del panel, caja, historial y menú del cliente se actualizan en tiempo real al cambiar
-  la moneda.
-- ✅ **`RestaurantStore.setCurrency()`**: actualiza `settings().currency` + `CurrencyService.symbol` +
-  llama a `settingsRepo.updateSettings()` para persistir. Toast de confirmación con clave i18n
-  `toast.currency_updated`.
-- ✅ **Migración SQL** (`20260708000011_add_currency.sql`): columna `currency TEXT NOT NULL DEFAULT '$'`
-  en `public.restaurant_settings`; `public/setup/schema.sql` actualizado.
-- ✅ **Repos Supabase y Demo**: `getSettings()`/`updateSettings()` mapean la nueva columna;
-  `DEMO_SETTINGS` incluye `currency: '$'`.
-- ✅ **i18n**: clave `toast.currency_updated` en 6 idiomas.
-- ✅ **Tests actualizados**: `money.pipe.spec.ts` usa `TestBed.runInInjectionContext` + `CurrencyService`.
-  43 unitarias en verde.
-
-### Refactors incluidos en esta iteración
-
-- ✅ **`ChipBtnDirective`** (`shared/chip-btn.directive.ts`): directiva `button[chipBtn]` con inputs
-  `active` y `variant` (`tinta | terracota | outlined | cacao`). Aplicada en 7 componentes: dashboard,
-  history, menu-products, season, schedule, staff-page, client-home. Elimina decenas de líneas de
-  clases Tailwind duplicadas.
-- ✅ **`OrderCardComponent`** (`shared/order-card/order-card.component.ts`): componente reutilizable
-  con inputs `order`, `showStatus`, `showMeta`, `actionLabel`, `actionFull`, `disabled` y output
-  `advance`. Usado en `orders-board` (admin) y `waiter` (mesero).
-- ✅ **`waiterName` real en demo**: `mock-api.service.ts` resuelve el nombre del mesero desde la
-  asignación de mesa en lugar del hardcoded `'Carlos M.'`.
+- ✅ **Mock API única** (`core/data/demo/mock-api.service.ts`): un solo backend en memoria con latencia simulada que sirve a todos los roles (incluido cliente). Los repositorios demo pasan a ser adaptadores finos sobre ella.
+- ✅ **Login demo con accesos rápidos**: botones "Entrar como Administrador/Mesero/Cocina/Cajero" que autentican y redirigen al área del rol.
+- ✅ **Salir del modo demo en runtime** (`runtime-config.ts` + diálogo `connect-supabase`): el admin pega la URL y la clave publishable de su proyecto; se guardan en localStorage y, al recargar, la app trabaja contra su base sin recompilar.
+- ✅ **Módulo Horario de trabajo** (`/admin/horarios`): editor semanal por empleado (día/franja/libre), tabla `work_schedules` (migración 10 con RLS multi-tenant), y el horario de hoy se muestra al trabajador en la barra superior.
+- ✅ **Panel responsivo**: sidebar convertido en cajón deslizante con hamburguesa en móvil; topbar sin scroll horizontal; grids adaptativos. Verificado a 375 px sin overflow.
+- ✅ **i18n ampliada**: dashboard e historial totalmente traducidos; 6 idiomas con paridad exacta de claves.
+- ✅ El tour de driver.js cubre cada sección del panel, incluida Horarios.
+- ✅ **E2E arreglados**: `locale: es-ES` determinista en Playwright y esperas al primer elemento antes de contar (por la latencia de la mock API). Toast de disponibilidad con matcher tolerante a comillas.
 
 ## Pendiente inmediato
 
-- Commit + push (con confirmación del usuario).
-- Opcional: rediseño visual más profundo estilo 21st.dev (la base responsiva ya está).
-
-## Estado anterior
-
-Plataforma v0.6 — multi-restaurante: 9 migraciones SQL aplicadas, 33 unit y 29 E2E en verde.
-
-## Hecho tras conectar Supabase (2026-07-02, iteración 2)
-
-- ✅ MCP de Supabase autorizado; proyecto `vtkdvxrocemdyybynegs` ("Restaurante Staff") accesible
-- ✅ Migraciones aplicadas: esquema (8 tablas), RLS en todas, seed (4 categorías, 11 productos, 8 mesas, ajustes)
-- ✅ Advisors de seguridad revisados: revocado EXECUTE de las funciones SECURITY DEFINER e INSERT anónimos endurecidos (order_items/waiter_calls contra registros existentes). Solo queda el aviso de `rls_auto_enable`, función interna de Supabase.
-- ✅ `.env` con la clave publishable (gitignorado); app compila y corre en modo Supabase
-- ✅ Corregido 401 del cliente anónimo: `getOrders` ya no incrusta `profiles` (privacidad); `refreshAll` usa `allSettled`; nombre de mesero resuelto en el store
-- ✅ Verificado en preview: la home carga los 11 productos reales desde la base
-
-## Hecho tras el pulido de diseño (2026-07-02, iteración 3)
-
-- ✅ Pulido de accesibilidad/UX global con **ui-ux-pro-max** (identidad intacta): `:focus-visible` terracota, `prefers-reduced-motion`, transiciones 150–300 ms, `touch-action: manipulation`, `min-h-dvh` en todas las vistas
-- ✅ Login mejorado: validación inline tras _touched_, indicadores requeridos, toggle mostrar/ocultar contraseña, `aria-invalid`/`aria-describedby`, focus al primer campo inválido, `aria-live` en el error
-- ✅ **QR real por mesa** (`app-table-qr`): generación local con `qrcode` (sin llamadas externas), apunta a `/mesa/:numero`, botón de impresión. Reemplaza el placeholder del diseño
-- ✅ **LICENSE MIT** y **CI** (`.github/workflows/ci.yml`): build + unit + e2e en cada push/PR, en modo demo
-- ✅ E2E herméticas: `RS_FORCE_DEMO=1` fuerza modo demo en Playwright (no muta la base real). 25/25 verde
-- ✅ Verificado en preview: login pulido y QR generándose
-
-## Hecho en la iteración 4 (registro inicial + Storage)
-
-- ✅ **Registro inicial del admin** (`/registro-inicial` + `bootstrapGuard`): formulario público que solo funciona la primera vez; el trigger `handle_new_user` hace admin+propietario al primer perfil; `admin_exists()` (RPC) gobierna la visibilidad. Enlace en `/login` cuando no hay cuentas.
-- ✅ **Supabase Storage** (bucket `imagenes`, público-lectura / admin-escritura): subida de fotos de producto (desde cada tarjeta) y logo (en Ajustes); render en tarjetas admin, menú del cliente y cabecera. `restaurant_settings.logo_url` añadido.
-- ✅ Contrato `StorageRepository` + `AuthRepository.signUpFirstAdmin/adminExists`; modo demo con data URL local.
-- ✅ `.gitignore` corregido (una regla ignoraba las migraciones; ahora migraciones y seed se versionan).
-- ✅ 21 unit + 26 e2e verde; build limpio; advisors sin problemas reales (admin_exists es público a propósito).
-
-## Hecho en la iteración 5 (registro auto + onboarding + rol cajero)
-
-- ✅ **Login redirige** automáticamente a `/registro-inicial` cuando no hay admin; tras crear la cuenta y verificar, el login funciona normal.
-- ✅ **Onboarding con driver.js** en el panel admin: tour guiado (9 pasos) automático la primera vez + botón "Ver guía del panel".
-- ✅ **Rol Cajero**: DB (rol en profiles, tabla `payment_methods`, `orders.paid/payment_method/paid_at`), vista `/cajero` (cobro por método), sección admin "Métodos de pago", alta de cajeros en "Meseros y turnos" (con selección de rol mesero/cocina/cajero).
-- ✅ **manual.md**: guía de instalación no técnica (Supabase, claves, primer admin, día a día), que se irá actualizando.
-- ✅ 24 unit + 27 e2e verde; build limpio.
-
-## Hecho en la iteración 6 (recorte manual de imágenes)
-
-- ✅ **Recorte manual antes de subir** en imágenes de producto y logo: modal reutilizable con preview, zoom y desplazamiento horizontal/vertical
-- ✅ Nueva utilidad `cropImageSquare` en `shared/image-utils.ts` para generar un recorte cuadrado controlado por el usuario
-- ✅ Cobertura de pruebas: unitaria para la utilidad de recorte + E2E Playwright del flujo real en admin (subir → recortar → aplicar)
-- ✅ Suite validada en verde: **33 unitarias** y **28 E2E**
-
-## Hecho en la iteración 9 (tour onboarding: paso multi-restaurante)
-
-- ✅ **Nuevo paso en el tour de driver.js**: al final de la guía interactiva del panel aparece el paso "¿Tienes más locales?" que explica la URL `/nuevo-restaurante` para crear nuevos tenants.
-- ✅ E2E actualizado: prueba que navega por todos los pasos del tour y verifica que el último menciona `/nuevo-restaurante`.
-- ✅ Suite en verde: **33 unitarias + 29 E2E**.
-
-## Qué falta por terminar
-
-- Ninguno — ver backlog para próximas funcionalidades opcionales.
+- Ninguno — `main` está actualizado y publicado. Ver [backlog.md](backlog.md) para próximas funcionalidades opcionales.
 
 ## Próximos pasos
 
-1. Completar el formulario de registro en `http://localhost:4200/nuevo-restaurante` (acción del usuario)
-2. Dar de alta al equipo desde el panel de Supabase (Authentication → Users → **Invite user**)
-3. Publicar el repositorio (ya tiene licencia MIT y CI)
-
-- ✅ **Tabla `restaurants`** como raíz de cada tenant; `restaurant_id` FK en todas las tablas de negocio (profiles, settings, categories, products, tables, orders, waiter_calls, payment_methods). Datos existentes migrados al restaurante por defecto.
-- ✅ **RLS actualizado**: autenticados ven solo su restaurante (`my_restaurant_id()`); anon (cliente QR) filtra por `restaurant_id` en la query.
-- ✅ **RPCs públicos**: `create_restaurant(name, slug)` (crea tenant + settings iniciales), `restaurant_by_slug(slug)` (resuelve URL → UUID), `admin_exists(restaurant_id?)` (por tenant).
-- ✅ **Triggers actualizados**: `handle_new_user` usa `restaurant_id` del metadata; `check_signup_allowed` exige restaurant_id válido o `invited_at`.
-- ✅ **Angular — dominio**: entidad `Restaurant`, `RestaurantRepository`, `restaurantId` en `SessionUser`.
-- ✅ **Angular — datos**: `RestaurantContextService` (signal compartido del tenant activo); todos los repos Supabase inyectan el contexto y filtran por `restaurant_id`; `DemoRestaurantRepository` con UUID fijo.
-- ✅ **Angular — auth**: `AuthService.restaurantId` signal; `createRestaurant()` + `signUpFirstAdmin({..., restaurantId})`.
-- ✅ **Angular — routing**: rutas `/r/:slug` y `/r/:slug/mesa/:numero` para clientes multi-tenant; `/nuevo-restaurante` siempre disponible; `/registro-inicial` como alias legacy con guard.
-- ✅ **Angular — bootstrap**: formulario `RegisterAdminComponent` con campos de nombre de restaurante + slug (auto-generado) + admin; flujo: `createRestaurant` → `signUpFirstAdmin`.
-- ✅ **Angular — cliente QR**: `ClientHomeComponent` lee el `:slug` del param de ruta, lo resuelve a `restaurant_id` vía `RestaurantRepository` y lo fija en el contexto antes de cargar datos.
-- ✅ Migración SQL aplicada en Supabase; slug corregido a `casa-nogal`.
-- ✅ **33 unitarias + 28 E2E** en verde.
-
-## Qué falta por terminar
-
-- Ninguno — el stack multi-tenant está completo. Los próximos pasos son operativos.
-
-- ✅ **Registro del administrador propietario**: servidor arrancado apuntando a Supabase real; el admin entra en `http://localhost:4200/registro-inicial` y crea su cuenta
-- ✅ **Registro público desactivado a nivel base de datos**: nueva función `check_signup_allowed()` + trigger `on_auth_signup_check` en `auth.users BEFORE INSERT` — bloquea cualquier registro una vez que existe un propietario; las invitaciones del dashboard Supabase (`invited_at`) se siguen permitiendo
-- ✅ Migración `20260703000008_disable_public_signup.sql` creada y aplicada al proyecto Supabase
-
-## Hecho en la iteración 10 (i18n)
-
-- ✅ **`@ngx-translate/core` + `@ngx-translate/http-loader`** integrados en el proyecto
-- ✅ **6 archivos de traducción** en `public/assets/i18n/` (es, en, ca, pt, fr, it) con **334 claves** organizadas en namespaces: `topbar`, `client`, `order`, `table_status`, `shift`, `login`, `register`, `kitchen`, `waiter`, `cashier`, `admin`, `toast`
-- ✅ **Detector automático de idioma** vía `navigator.languages`; fallback a español; persistencia en `localStorage`
-- ✅ **18 componentes actualizados** con `TranslatePipe` y/o `TranslateService`: cliente, login, registro, mesero, cajero, cocina, admin-layout, historial, categorías, órdenes, pagos, personal, ajustes, temporada, topbar, toast...
-- ✅ **`data-testid`** añadidos a todos los elementos interactivos del cliente (add-to-cart, call-waiter-button, cart-bar-button, cart-heading, submit-order-button, order-sent-heading, login-heading, staff-login-link)
-- ✅ **E2E del cliente corregidos** para no depender de texto visible sino de `data-testid`; 12/12 pasan (chromium + mobile)
-- ✅ **Bug de configuración resuelto**: `provideTranslateHttpLoader()` debe ir **después** de `provideTranslateService()` en el array de providers; de lo contrario el `TranslateNoOpLoader` por defecto sobrescribe el HttpLoader
-- ✅ **33 unitarias + 12 E2E cliente** en verde; build limpio
-
-## Qué falta por terminar
-
-- Ninguno — el stack está completo. Los próximos pasos son operativos (dar de alta al equipo, publicar).
-
-## Próximos pasos
-
-1. Completar el formulario de registro en `http://localhost:4200/registro-inicial` (acción del usuario)
-2. Dar de alta al equipo: en el panel de Supabase (Authentication → Users → **Invite user**) y luego asignar rol/turno desde el panel admin
-3. Publicar el repositorio (ya tiene licencia MIT y CI)
+1. Opcional: rediseño visual más profundo estilo 21st.dev (la base responsiva ya está).
+2. Backlog abierto — ver [backlog.md](backlog.md).
 
 ## Bloqueadores
 
 - Ninguno.
+
+---
+
+## Historial de estados anteriores
+
+<details>
+<summary>Iteraciones 2–10 (histórico completo)</summary>
+
+### Iteración 2 · Conectar Supabase (2026-07-02)
+- MCP de Supabase autorizado; proyecto de desarrollo accesible.
+- Migraciones aplicadas: esquema (8 tablas), RLS en todas, seed (4 categorías, 11 productos, 8 mesas, ajustes).
+- Advisors de seguridad revisados: revocado EXECUTE de las funciones SECURITY DEFINER e INSERT anónimos endurecidos.
+- Corregido 401 del cliente anónimo: `getOrders` ya no incrusta `profiles`; `refreshAll` usa `allSettled`.
+
+### Iteración 3 · Pulido de diseño (2026-07-02)
+- Pulido de accesibilidad/UX global con **ui-ux-pro-max** (identidad intacta): `:focus-visible` terracota, `prefers-reduced-motion`, transiciones 150–300 ms, `min-h-dvh`.
+- Login mejorado con validación inline, indicadores requeridos, toggle mostrar/ocultar contraseña, `aria-invalid`/`aria-describedby`.
+- **QR real por mesa** con generación local (`qrcode`) y botón de impresión.
+- **LICENSE MIT** y **CI** (`.github/workflows/ci.yml`).
+- E2E herméticas: `RS_FORCE_DEMO=1` fuerza modo demo en Playwright.
+
+### Iteración 4 · Registro inicial + Storage
+- Registro inicial del admin (`/registro-inicial` + `bootstrapGuard`); trigger `handle_new_user` hace admin+propietario al primer perfil; `admin_exists()` gobierna la visibilidad.
+- Supabase Storage (bucket `imagenes`, público-lectura / admin-escritura): subida de fotos de producto y logo.
+- Contrato `StorageRepository` con implementación demo (data URL local).
+
+### Iteración 5 · Registro automático + onboarding + rol cajero
+- Login redirige automáticamente a `/registro-inicial` cuando no hay admin.
+- Onboarding con driver.js en el panel admin (tour guiado + botón "Ver guía del panel").
+- **Rol Cajero**: DB, vista `/cajero` (cobro por método), sección admin "Métodos de pago", alta de cajeros en Personal.
+- `manual.md`: guía de instalación no técnica.
+
+### Iteración 6 · Recorte manual de imágenes
+- Modal reutilizable con preview, zoom y desplazamiento.
+- Utilidad `cropImageSquare` en `shared/image-utils.ts`.
+- Cobertura de pruebas: unitaria + E2E Playwright.
+
+### Iteración 7–8 · Multi-restaurante
+- Tabla `restaurants` como raíz de cada tenant; `restaurant_id` FK en todas las tablas.
+- RLS actualizado: autenticados ven solo su restaurante (`my_restaurant_id()`).
+- RPCs públicos: `create_restaurant`, `restaurant_by_slug`, `admin_exists(restaurant_id?)`.
+- Angular: entidad `Restaurant`, `RestaurantRepository`, `RestaurantContextService`, rutas `/r/:slug` y `/r/:slug/mesa/:numero`.
+
+### Iteración 9 · Tour onboarding (paso multi-restaurante)
+- Nuevo paso en el tour de driver.js: al final aparece "¿Tienes más locales?" que explica `/nuevo-restaurante`.
+- E2E actualizado.
+
+### Iteración 10 · i18n
+- `@ngx-translate/core` + `@ngx-translate/http-loader` integrados.
+- 6 archivos de traducción en `public/assets/i18n/` (es, en, ca, pt, fr, it) con 334 claves organizadas por namespace.
+- Detector automático de idioma vía `navigator.languages`; fallback a español; persistencia en `localStorage`.
+- 18 componentes actualizados con `TranslatePipe`/`TranslateService`.
+
+</details>

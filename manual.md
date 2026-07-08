@@ -4,7 +4,7 @@ Guía pensada para una **persona no técnica** que quiere poner en marcha su pro
 restaurante con esta plataforma libre. Está escrita paso a paso. Si te atascas en
 algún punto, cada sección indica qué hacer.
 
-> Este manual se irá ampliando conforme el proyecto crece. Última actualización: 2026-07-02 (v0.5).
+> Este manual se irá ampliando conforme el proyecto crece. Última actualización: 2026-07-08 (v0.9).
 
 ---
 
@@ -54,6 +54,11 @@ real sigue el resto del manual.
 
 ## 3. Crear tu base de datos en Supabase
 
+> **Atajo recomendado:** abre <http://localhost:4200/instalacion> — el **wizard** te lleva
+> de la mano paso a paso (6 pantallas) y elimina el 90 % de este manual. Descargas
+> **un solo archivo** (`schema.sql`) y lo pegas de una vez en Supabase. Si prefieres
+> el método manual, sigue leyendo.
+
 1. Entra en **https://supabase.com** y crea una cuenta (con tu correo o con Google).
 2. Pulsa **New project** (Nuevo proyecto).
    - Ponle un nombre, por ejemplo `mi-restaurante`.
@@ -63,19 +68,30 @@ real sigue el resto del manual.
 
 ### 3.1. Cargar la estructura (tablas)
 
-1. En el menú lateral de Supabase entra en **SQL Editor**.
-2. Abre, uno por uno y **en orden**, los archivos de la carpeta `supabase/migrations/`
-   del proyecto, copia su contenido, pégalo en el editor y pulsa **Run**:
-   1. `..._init.sql`
-   2. `..._rls.sql`
-   3. `..._bootstrap_admin_and_storage.sql`
-   4. `..._add_logo_url.sql`
-   5. `..._cajero_role_and_payments.sql`
-3. (Opcional) Si quieres empezar con datos de ejemplo (mesas y platillos), pega
-   también `supabase/seed.sql` y pulsa **Run**.
+**Opción rápida (recomendada):** descarga `schema.sql` desde el wizard `/instalacion`
+(paso 4) o desde `public/setup/schema.sql` del repositorio. Pégalo entero en el
+**SQL Editor** de Supabase y pulsa **Run**. Con eso ya tienes esquema, seguridad
+(RLS), migraciones y datos de ejemplo.
 
-Con esto tu base ya tiene las tablas, la seguridad y los métodos de pago iniciales
-(Efectivo, Tarjeta, Transferencia).
+**Opción manual:** abre uno por uno los archivos de `supabase/migrations/` **en
+orden** y pega cada contenido en el SQL Editor:
+
+1. `..._init.sql`
+2. `..._rls.sql`
+3. `..._bootstrap_admin_and_storage.sql`
+4. `..._add_logo_url.sql`
+5. `..._cajero_role_and_payments.sql`
+6. `..._order_ready_at.sql`
+7. `..._daily_demo_reset.sql` (opcional, ver §9)
+8. `..._disable_public_signup.sql`
+9. `..._multi_restaurante.sql`
+10. `..._work_schedules.sql`
+11. `..._add_currency.sql`
+
+Y al final `supabase/seed.sql` si quieres datos de ejemplo (mesas y platillos).
+
+Con esto tu base ya tiene las tablas, la seguridad, los métodos de pago iniciales
+(Efectivo, Tarjeta, Transferencia) y soporte multi-restaurante.
 
 ### 3.2. Copiar tus claves
 
@@ -91,18 +107,30 @@ contraseña de la base de datos ni la clave `service_role`.
 
 ## 4. Conectar la app con tu base de datos
 
-En la carpeta del proyecto hay un archivo `.env.example`. La persona que ejecute
-la app debe:
+Dos formas, elige la que te resulte más cómoda:
 
-1. Hacer una copia llamada `.env`.
-2. Rellenarla con tus dos claves:
+### 4.a · Desde la app (sin tocar archivos, **recomendado**)
+
+1. Arranca la app en modo demo (`npm install` y luego `npm start`).
+2. Abre <http://localhost:4200/instalacion>.
+3. En el paso 3 pega la **Project URL** y la clave **anon**. La app las guarda en
+   `localStorage` y recarga por sí sola contra tu Supabase.
+4. Alternativa: desde el panel de administración (sidebar) hay un botón
+   **«Salir del modo demo»** que abre el mismo formulario.
+
+### 4.b · Vía archivo `.env` (para despliegues)
+
+En la carpeta del proyecto hay un archivo `.env.example`:
+
+1. Cópialo como `.env`.
+2. Rellénalo con tus dos claves:
 
    ```
    SUPABASE_URL=https://xxxx.supabase.co
    SUPABASE_ANON_KEY=sb_publishable_xxxxxxxx
    ```
 
-3. Arrancar la app (`npm install` y luego `npm start`).
+3. Arranca la app (`npm install` y luego `npm start`).
 
 > El archivo `.env` no se sube a internet ni al repositorio: tus claves quedan solo en tu ordenador/servidor.
 
@@ -143,19 +171,27 @@ sección (puedes repetirla con el botón **"Ver guía del panel"**). Un recorrid
 - **Horarios**: define el horario semanal de cada empleado (día, franja y descansos). Cada trabajador ve su horario de hoy en la barra superior al iniciar sesión.
 - **Métodos de pago**: define cómo cobra la caja (efectivo, tarjeta, transferencia o los que añadas).
 - **Temporada y horario**: abre o cierra el restaurante y fija las fechas de temporada.
-- **Ajustes**: nombre y logo del restaurante y cuentas de administración.
+- **Ajustes**: nombre, logo, **moneda** del restaurante (12 símbolos: `$`, `€`, `£`, `¥`, `R$`, `S/`, `₹`, `₩`, `CHF`, `CLP$`, `COP$`, `ARS$`) y cuentas de administración. Al cambiar la moneda, todos los precios de la app (menú, caja, historial…) se actualizan al instante.
 
 ---
 
 ## 7. El día a día
 
 - **Cliente**: pega el QR de cada mesa. Al escanearlo, el cliente ve el menú, pide y sigue su pedido.
-- **Cocina**: abre la pantalla de Cocina; toca "Empezar a preparar" y "Platillo listo".
-- **Mesero**: abre la tablet de Mesero; atiende llamadas y avanza los pedidos.
+- **Cocina**: abre la pantalla de Cocina; toca "Empezar a preparar" y "Platillo listo". Un **pitido** suena automáticamente al entrar una comanda nueva (silenciable desde el mismo botón).
+- **Mesero**: abre la tablet de Mesero; atiende llamadas y avanza los pedidos. Si pierdes conexión, la tablet sigue mostrando los últimos datos (**modo offline** con caché de 4 h) y avisa cuando vuelve la red.
 - **Cajero**: abre la pantalla de Cajero; elige el método de pago de cada pedido y registra el cobro.
 
 Cada empleado inicia sesión con su correo y contraseña, y solo ve la pantalla de su rol
 (tú, como administrador, ves todas).
+
+### Instalar la tablet del mesero como aplicación (PWA)
+
+En **Chrome/Edge/Safari** abre la app en la tablet, ve al menú del navegador y
+selecciona **"Instalar aplicación"** (o "Añadir a pantalla de inicio"). Se creará
+un icono en el escritorio con nombre **"Staff"** que abre la vista del mesero
+en pantalla completa, sin barra de dirección, e incluso funciona si el WiFi
+falla un rato.
 
 ---
 
@@ -188,3 +224,14 @@ limpia.
 
 Este es un proyecto **open source** (licencia MIT). Puedes abrir una incidencia en
 el repositorio de GitHub del proyecto describiendo tu problema.
+
+---
+
+## Novedades de v0.9
+
+- **Wizard `/instalacion`** — asistente de 6 pantallas que te guía desde cero. Descarga `schema.sql` para pegarlo de una vez y conecta tus claves sin editar archivos.
+- **Modo demo por defecto** — la app arranca sin credenciales; los datos son de ejemplo y el estado vive en memoria (recargar = restaurar). Ideal para probar antes de configurar tu Supabase.
+- **Moneda configurable** — selector visual con 12 símbolos ($, €, £, ¥, R$, S/, ₹, ₩, CHF, CLP$, COP$, ARS$) en Ajustes; todos los precios se actualizan al instante.
+- **PWA para la tablet del mesero** — instalable, funciona sin conexión gracias a la caché local.
+- **Notificación sonora en cocina** — beep automático al entrar una comanda, con indicador visual si el navegador aún no permitió reproducir sonido (basta tocar la pantalla una vez).
+- **Panel 100 % responsivo** e **internacionalización en 6 idiomas** (español, inglés, catalán, portugués, francés, italiano).

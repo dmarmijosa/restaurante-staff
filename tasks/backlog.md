@@ -23,17 +23,22 @@
 - [x] ~~Salir del modo demo con credenciales Supabase en runtime~~ — hecho (`runtime-config.ts` + diálogo; localStorage + recarga)
 - [x] ~~Módulo Horario de trabajo~~ — hecho (`/admin/horarios`, tabla `work_schedules`, visible al trabajador en la topbar)
 - [x] ~~Panel 100% responsivo (drawer móvil)~~ — hecho (sidebar deslizante, sin scroll horizontal, grids adaptativos)
-- [x] ~~i18n de dashboard e historial~~ — hecho (6 idiomas con paridad de claves)
-
+- [x] ~~i18n~~ — hecho (6 idiomas: es/en/ca/pt/fr/it; 334 claves; `@ngx-translate/core` + HttpLoader; detector automático del idioma del navegador; selector en el topbar; dashboard e historial incluidos)
 - [x] ~~Arreglar E2E tras i18n/mock~~ — hecho (`locale: es-ES` en Playwright + esperas por la latencia de la mock API; 29 E2E en verde)
+
+### Publicado el 2026-07-08 (v0.9)
+
+- [x] ~~PWA/offline para la tablet del mesero~~ — hecho (`@angular/service-worker`, `ngsw-config.json`, `manifest.webmanifest`, `OfflineService` + `WaiterCacheService`; banner offline/reconexión en la tablet; caché localStorage de turno activo)
+- [x] ~~Notificación sonora en cocina al entrar comanda nueva~~ — hecho (detección por ID, beep encolado si AudioContext suspendido, indicador visual pulsante)
+- [x] ~~Página de instalación guiada (wizard) para restaurantes sin equipo técnico~~ — hecho (`/instalacion`, 6 pasos: bienvenida → Supabase → claves → esquema SQL → crear admin → listo; detección automática de progreso, descarga de `schema.sql`, banner "Configurar mi restaurante" en la home demo, enlace desde el diálogo de conexión del admin)
+- [x] ~~Moneda configurable por el admin~~ — hecho (12 símbolos: $, €, £, ¥, R$, S/, ₹, ₩, CHF, CLP$, COP$, ARS$; `CurrencyService` + `MoneyPipe` reactivo con `pure: false`; migración SQL 11 con columna `currency` en `restaurant_settings`; selector visual en Ajustes; toast i18n)
+- [x] ~~Refactor de chip buttons~~ — hecho (`ChipBtnDirective` en `shared/chip-btn.directive.ts`, 7 componentes)
+- [x] ~~Refactor de tarjetas de comanda~~ — hecho (`OrderCardComponent` compartido admin + mesero)
+- [x] ~~Modo demo por defecto, credenciales del sandbox privado no son back-end público~~ — hecho (`.env.example` con placeholders, README con sección "Conectar tu propio Supabase")
 
 ## Pendiente / en curso
 
 - [ ] Rediseño visual más profundo estilo 21st.dev (la base responsiva ya está; falta pulido de profundidad/jerarquía).
-- [x] ~~i18n~~ — hecho (6 idiomas: es/en/ca/pt/fr/it; 334 claves; `@ngx-translate/core` + HttpLoader; detector automático del idioma del navegador; selector en el topbar)
-- [x] ~~PWA/offline para la tablet del mesero~~ — hecho (`@angular/service-worker`, `ngsw-config.json`, `manifest.webmanifest`, `OfflineService` + `WaiterCacheService`; banner offline/reconexión en la tablet; caché localStorage de turno activo)
-- [x] ~~Notificación sonora en cocina al entrar comanda nueva~~ — hecho (detección por ID, beep encolado si AudioContext suspendido, indicador visual pulsante)
-- [x] ~~Página de instalación guiada (wizard) para restaurantes sin equipo técnico~~ — hecho (`/instalacion`, 6 pasos: bienvenida → Supabase → claves → esquema SQL → crear admin → listo; detección automática de progreso, descarga de `schema.sql`, botón "Configurar mi restaurante" en la home demo)
 
 ## Bugs conocidos
 

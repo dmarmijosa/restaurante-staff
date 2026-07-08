@@ -130,11 +130,10 @@ Angular 22 (standalone + signals) · Tailwind CSS 4 · Supabase (Postgres, Auth,
 ## Changelog
 
 ### 2026-07-08
-- **feat:** moneda configurable por el admin (12 símbolos, `CurrencyService` + `MoneyPipe` reactivo, migración SQL, selector en Ajustes, i18n)
-- **refactor:** `ChipBtnDirective` (7 componentes), `OrderCardComponent` (admin kanban + mesero), `waiterName` real en demo
-- **feat:** wizard de instalación guiada `/instalacion` (6 pasos, sin código, schema.sql descargable, banner en home demo)
-- **feat:** notificación sonora automática en cocina: detección por ID de comanda, beep encolado si AudioContext suspendido, indicador visual pulsante e i18n
-- **feat:** PWA/offline para la tablet del mesero (service worker, manifest, OfflineService, WaiterCacheService, banner offline/reconexión)
+- `33b7102` **feat:** moneda configurable por el admin (12 símbolos, `CurrencyService` + `MoneyPipe` reactivo, migración SQL 11, selector en Ajustes, i18n) · **refactor:** `ChipBtnDirective` (7 componentes), `OrderCardComponent` (admin kanban + mesero), `waiterName` real en demo
+- `8fce1ef` **feat:** wizard de instalación guiada `/instalacion` (6 pasos, sin código, schema.sql descargable, banner "Configurar mi restaurante" en la home demo, enlace desde el diálogo de conexión del admin)
+- `310ba5b` **feat:** notificación sonora automática en cocina — detección por ID de comanda, beep encolado si `AudioContext` está suspendido, indicador visual pulsante e i18n
+- `745bbdd` **feat:** PWA/offline para la tablet del mesero — service worker, manifest instalable, `OfflineService` + `WaiterCacheService` (localStorage con TTL 4h), banner offline/reconexión con `aria-live`
 - `89aaeac` **feat:** mock API demo, login rápido, salir de demo, horarios, responsive e i18n
 
 ### 2026-07-07

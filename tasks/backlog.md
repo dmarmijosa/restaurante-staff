@@ -42,9 +42,9 @@
 
 ## Refactors pendientes
 
-- [ ] Extraer un componente `chip-button` compartido (patrón repetido en 5 vistas)
-- [ ] `orderView`-style helper para las tarjetas de comanda (admin/mesero repiten estructura)
-- [ ] Mover `waiterName: 'Carlos M.'` hardcodeado del pedido demo a asignación real por mesa
+- [x] ~~Extraer un componente `chip-button` compartido~~ — hecho (`ChipBtnDirective`, 7 componentes)
+- [x] ~~`orderView`-style helper para las tarjetas de comanda~~ — hecho (`OrderCardComponent`, admin + mesero)
+- [x] ~~Mover `waiterName: 'Carlos M.'` hardcodeado a asignación real por mesa~~ — hecho (`mock-api.service.ts`)
 - [ ] Revisar advisors de Supabase (seguridad/rendimiento) al aplicar migraciones
 
 ## Ideas para nuevas funcionalidades

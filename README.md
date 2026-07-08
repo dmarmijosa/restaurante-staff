@@ -1,52 +1,58 @@
-# Restaurante Staff 🍽️
+# Restaurante Staff
 
-**Plataforma open source para restaurantes**: menú QR para clientes, comandas en tiempo real para cocina, tablet para meseros y panel de administración completo. Réplica funcional del diseño "Restaurante Staff" construida con Angular 22 + Supabase.
+Sistema de gestión para restaurantes construido con **Angular 22 + Supabase**. Cubre el ciclo completo de una operación: el cliente escanea el QR de su mesa, hace el pedido desde el móvil, la cocina lo recibe en tiempo real, el mesero lo gestiona desde la tablet y el administrador supervisa todo desde el panel.
 
-## Estado de la aplicación
+Arranca en **modo demo** (sin cuenta, sin configurar nada) en menos de un minuto. Cuando quieras usarlo en tu local, un wizard de 6 pasos te conecta a tu propio Supabase.
 
-**v0.9 · Moneda configurable + refactors** — actualizado el 2026-07-08
+---
 
-| Módulo                                                                                     | Estado                               |
-| ------------------------------------------------------------------------------------------ | ------------------------------------ |
-| Cliente (home pública, menú QR, carrito, seguimiento de pedido, llamar mesero)             | ✅ Completo                          |
-| Login del personal (email + contraseña, desde el footer de la home)                        | ✅ Completo                          |
-| Admin · Plano del salón (drag & drop, sillas, fusión/separación de mesas)                  | ✅ Completo                          |
-| Admin · Pedidos (kanban 4 estados), Menú, Categorías, Meseros y turnos, Temporada, Ajustes | ✅ Completo                          |
-| Roles (admin/mesero/cocina) asignables por el admin + guards por área                      | ✅ Completo                          |
-| Eliminación permanente de datos del personal (protección de datos)                         | ✅ Completo                          |
-| Mesero (tablet: llamadas de mesa, mesas del salón, pedidos activos)                        | ✅ Completo                          |
-| Cocina (pantalla de comandas: preparar → listo)                                            | ✅ Completo                          |
-| Esquema Supabase (migraciones + RLS + seed)                                                | ✅ Aplicado al proyecto y verificado |
-| QR real por mesa (generación local + impresión)                                            | ✅ Completo                          |
-| Accesibilidad y microinteracciones (focus-visible, reduced-motion, validación inline)      | ✅ Completo                          |
-| Licencia MIT + CI (GitHub Actions)                                                         | ✅ Completo                          |
-| Registro inicial del administrador (una sola vez, con redirección automática)              | ✅ Completo                          |
-| Imágenes de productos y logo (Supabase Storage, con compresión)                            | ✅ Completo                          |
-| Onboarding del panel con driver.js (guía interactiva)                                      | ✅ Completo                          |
-| Rol Cajero + cobro por método de pago configurable                                         | ✅ Completo                          |
-| Resumen/métricas del admin (ingresos, ticket medio, ventas por método, top productos)      | ✅ Completo                          |
-| Tiempo de cocina (temporizador en vivo + tiempo medio de preparación)                      | ✅ Completo                          |
-| Filtros por fecha en el Resumen (Hoy / 7 días / 30 días / Todo)                            | ✅ Completo                          |
-| Aviso sonoro en cocina: disparo automático al llegar comanda (detección por ID, beep pendiente si AudioContext suspendido + indicador visual) | ✅ Completo |
-| Historial de caja y pedidos (arqueo por método)                                            | ✅ Completo                          |
-| Reinicio diario de demo en Supabase (pg_cron)                                              | ✅ Completo                          |
-| Recorte manual de imagen antes de subir (logo y productos)                                 | ✅ Completo                          |
-| Bloqueo de registro público tras bootstrap (trigger en `auth.users`)                       | ✅ Completo                          |
-| Manual de instalación para persona natural ([manual.md](manual.md))                        | ✅ Completo                          |
-| Mock API única para el modo demo (todos los roles, con latencia simulada)                  | ✅ Completo                          |
-| Login demo con accesos rápidos por rol (sin credenciales en texto)                         | ✅ Completo                          |
-| Salir del modo demo con credenciales Supabase en runtime (sin recompilar)                  | ✅ Completo                          |
-| Módulo Horario de trabajo (editor semanal por empleado; visible al trabajador)             | ✅ Completo                          |
-| PWA / offline para la tablet del mesero (SW, manifest, banner, caché localStorage)         | ✅ Completo                          |
-| Wizard de instalación guiada `/instalacion` (6 pasos, sin código, schema.sql descargable)  | ✅ Completo                          |
-| Moneda configurable por el admin: 12 símbolos ($, €, £, ¥, R$, S/, ₹, ₩, CHF, CLP$, COP$, ARS$); propagación automática en toda la UI | ✅ Completo |
-| Refactors: `ChipBtnDirective` (7 componentes), `OrderCardComponent` (admin + mesero), `waiterName` real en demo | ✅ Completo |
-| Panel 100% responsivo (drawer móvil, sin scroll horizontal)                                | ✅ Completo                          |
-| Internacionalización (6 idiomas, paridad de claves; dashboard e historial incluidos)       | ✅ Completo                          |
+## Qué incluye
 
-Pruebas: **43 unitarias** (Vitest) y **29 E2E** (Playwright, escritorio + móvil, `locale: es-ES`) en verde. Build limpio.
+### Para el cliente
+- **Menú QR por mesa** — acceso desde el móvil sin instalar nada, carrito, seguimiento del pedido en vivo y botón para llamar al mesero.
 
-> Diseño mejorado con la skill **ui-ux-pro-max** aplicando sus principios (foco visible, `prefers-reduced-motion`, transiciones 150–300 ms, touch targets ≥44px, `min-h-dvh`, validación inline) **sin alterar la identidad visual** (paleta terracota/crema, Instrument Sans + Source Serif 4).
+### Para la cocina
+- **Pantalla de comandas en tiempo real** — las nuevas comandas aparecen solas (Supabase Realtime), con aviso sonoro automático y temporizador por plato.
+
+### Para el mesero (tablet)
+- **Vista de mesas y pedidos activos** — gestión de llamadas, estado de las mesas y pedidos propios. Funciona **offline** gracias al service worker (PWA): si la tablet pierde señal, los datos del turno siguen disponibles.
+
+### Para el cajero
+- **Cobro por método de pago** — efectivo, tarjeta u otros métodos configurables. Historial y arqueo de caja por método.
+
+### Para el administrador
+- **Panel completo**: plano del salón interactivo (drag & drop, fusión/separación de mesas), kanban de pedidos, menú y categorías con imágenes, gestión del personal (roles, turnos, horarios), temporada activa, ajustes del restaurante y métricas.
+- **Métricas y resumen**: ingresos totales, ticket medio, top de productos, ventas por método de pago, con filtros por periodo (Hoy / 7 días / 30 días / Todo).
+- **Moneda configurable**: elige entre 12 símbolos ($, €, £, ¥, R$, S/, ₹, ₩, CHF, CLP$, COP$, ARS$) — se propaga automáticamente a toda la UI.
+- **Multi-restaurante**: un solo despliegue puede servir a varios locales.
+
+### Operación y despliegue
+- **Wizard de instalación** `/instalacion` — 6 pasos guiados para conectar Supabase desde cero, sin tocar código.
+- **Modo demo completo** — mock API en memoria con latencia simulada para todos los roles; ideal para demostrar o desarrollar sin base de datos.
+- **Internacionalización** — 6 idiomas (es / en / ca / pt / fr / it), detección automática del navegador.
+- **QR por mesa** — generación local e impresión desde el panel.
+- **Seguridad** — RLS en todas las tablas, registro público bloqueado tras el bootstrap, roles y guards por área.
+
+---
+
+## Estado — v0.9 · 2026-07-08
+
+**43 unitarias** (Vitest) · **29 E2E** (Playwright, escritorio + móvil) · Build limpio
+
+| Área | Estado |
+| ---- | ------ |
+| Menú QR del cliente (carrito, seguimiento, llamar mesero) | ✅ |
+| Pantalla de cocina (tiempo real, aviso sonoro, temporizador) | ✅ |
+| Tablet del mesero con PWA/offline | ✅ |
+| Caja (cobro, historial, arqueo por método) | ✅ |
+| Panel admin completo (plano, kanban, menú, personal, ajustes, métricas) | ✅ |
+| Autenticación y roles (admin / mesero / cocina / cajero) | ✅ |
+| Multi-restaurante (multi-tenant, RLS scoped) | ✅ |
+| Moneda configurable (12 símbolos, propagación automática) | ✅ |
+| Internacionalización (6 idiomas, paridad de claves) | ✅ |
+| Wizard de instalación guiada (6 pasos, sin código) | ✅ |
+| Migraciones Supabase (11 SQL + RLS + seed) | ✅ |
+| CI (GitHub Actions: build + unit + E2E en modo demo) | ✅ |
 
 ## Arranque rápido (modo demo, sin configurar nada)
 

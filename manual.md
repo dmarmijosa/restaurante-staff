@@ -4,7 +4,7 @@ Guía pensada para una **persona no técnica** que quiere poner en marcha su pro
 restaurante con esta plataforma libre. Está escrita paso a paso. Si te atascas en
 algún punto, cada sección indica qué hacer.
 
-> Este manual se irá ampliando conforme el proyecto crece. Última actualización: 2026-07-08 (v0.9).
+> Este manual se irá ampliando conforme el proyecto crece. Última actualización: 2026-07-08 (v0.10).
 
 ---
 
@@ -30,9 +30,11 @@ No necesitas saber programar: solo copiar y pegar en los sitios que te indico.
 
 ## 2. Probar la app sin instalar nada (modo demostración)
 
-> **Atajo:** en la pantalla de acceso, en modo demo, hay **botones de entrada rápida**
+> **Atajo:** en la pantalla de acceso (`/login`), en modo demo, hay **botones de entrada rápida**
 > (Administrador, Mesero, Cocina, Cajero): un clic y entras con ese rol, sin escribir nada.
-> Y desde el panel de administración, el botón **«Salir del modo demo»** te pide la URL y la
+> Si la app está conectada a Supabase (`.env` o wizard), verás el enlace
+> **«Probar modo demo (sin Supabase)»** para volver al mock en memoria.
+> Desde el panel de administración, el botón **«Salir del modo demo»** te pide la URL y la
 > clave publishable de tu Supabase para pasar a trabajar con tu propia base (ver §4).
 
 
@@ -55,9 +57,11 @@ real sigue el resto del manual.
 ## 3. Crear tu base de datos en Supabase
 
 > **Atajo recomendado:** abre <http://localhost:4200/instalacion> — el **wizard** te lleva
-> de la mano paso a paso (6 pantallas) y elimina el 90 % de este manual. Descargas
-> **un solo archivo** (`schema.sql`) y lo pegas de una vez en Supabase. Si prefieres
-> el método manual, sigue leyendo.
+> de la mano paso a paso (6 pantallas). Descargas **un solo archivo** (`schema.sql`) y lo
+> pegas de una vez en Supabase. **Importante:** pegar las claves en el wizard (paso 3) solo
+> conecta **este navegador de forma temporal**; para una instalación completa y permanente
+> sigue **todo** este manual (§3–§5), sobre todo §4.b (`.env` + build). Si prefieres
+> el método manual sin wizard, sigue leyendo.
 
 1. Entra en **https://supabase.com** y crea una cuenta (con tu correo o con Google).
 2. Pulsa **New project** (Nuevo proyecto).
@@ -66,32 +70,33 @@ real sigue el resto del manual.
    - Elige la región más cercana a tu país.
 3. Espera 1–2 minutos a que el proyecto se cree.
 
+### 3.0. Desactivar la confirmación de correo (recomendado)
+
+Antes de crear tu cuenta de administrador:
+
+1. En Supabase → **Authentication** → **Providers** → **Email**.
+2. **Desactiva «Confirm email»** (confirmación de correo).
+
+Así el primer administrador entra al panel de inmediato, sin revisar el buzón.
+
 ### 3.1. Cargar la estructura (tablas)
 
 **Opción rápida (recomendada):** descarga `schema.sql` desde el wizard `/instalacion`
-(paso 4) o desde `public/setup/schema.sql` del repositorio. Pégalo entero en el
-**SQL Editor** de Supabase y pulsa **Run**. Con eso ya tienes esquema, seguridad
-(RLS), migraciones y datos de ejemplo.
+(paso 4) o desde `public/setup/schema.sql` del repositorio (19 migraciones + seed unificados).
+Pégalo entero en el **SQL Editor** de Supabase y pulsa **Run**. Debes ver
+`Success. No rows returned.` (o similar).
 
-**Opción manual:** abre uno por uno los archivos de `supabase/migrations/` **en
-orden** y pega cada contenido en el SQL Editor:
+**¿Base de prueba ya usada y quieres empezar de cero?** Usa `public/setup/reset-and-schema.sql`
+(generado con `node scripts/build-reset-schema.mjs`): borra el esquema `public`, limpia usuarios
+de Auth y vuelve a aplicar el esquema completo.
 
-1. `..._init.sql`
-2. `..._rls.sql`
-3. `..._bootstrap_admin_and_storage.sql`
-4. `..._add_logo_url.sql`
-5. `..._cajero_role_and_payments.sql`
-6. `..._order_ready_at.sql`
-7. `..._daily_demo_reset.sql` (opcional, ver §9)
-8. `..._disable_public_signup.sql`
-9. `..._multi_restaurante.sql`
-10. `..._work_schedules.sql`
-11. `..._add_currency.sql`
+**Opción manual (avanzada):** aplica los archivos de `supabase/migrations/` **en orden
+alfabético** (19 archivos) y al final `supabase/seed.sql` si quieres datos de ejemplo
+de la demo «Casa Nogal». El wizard y `schema.sql` ya incluyen todo esto en un solo paso.
 
-Y al final `supabase/seed.sql` si quieres datos de ejemplo (mesas y platillos).
-
-Con esto tu base ya tiene las tablas, la seguridad, los métodos de pago iniciales
-(Efectivo, Tarjeta, Transferencia) y soporte multi-restaurante.
+Con esto tu base ya tiene las tablas, la seguridad (RLS), multi-restaurante, moneda,
+`create_restaurant()` con catálogo sembrado automáticamente y métodos de pago por defecto
+(Efectivo, Tarjeta, Transferencia).
 
 ### 3.2. Copiar tus claves
 
@@ -107,18 +112,27 @@ contraseña de la base de datos ni la clave `service_role`.
 
 ## 4. Conectar la app con tu base de datos
 
-Dos formas, elige la que te resulte más cómoda:
+Dos formas. El wizard sirve para **probar rápido**; el `.env` + build es para **dejarlo fijo**.
 
-### 4.a · Desde la app (sin tocar archivos, **recomendado**)
+### 4.a · Desde el wizard (prueba en este navegador)
 
 1. Arranca la app en modo demo (`npm install` y luego `npm start`).
 2. Abre <http://localhost:4200/instalacion>.
-3. En el paso 3 pega la **Project URL** y la clave **anon**. La app las guarda en
-   `localStorage` y recarga por sí sola contra tu Supabase.
-4. Alternativa: desde el panel de administración (sidebar) hay un botón
-   **«Salir del modo demo»** que abre el mismo formulario.
+3. En el paso 3 pega la **Project URL** y la clave **anon/publishable**. La app las guarda en
+   el navegador (`localStorage`) y se recarga sola contra tu Supabase.
 
-### 4.b · Vía archivo `.env` (para despliegues)
+**Limitaciones del wizard:**
+
+- Las claves **no** se escriben en `.env`.
+- La conexión es **solo en este navegador**: si cierras el navegador, borras datos del sitio
+  o abres la app en otro dispositivo, tendrás que volver a pegar las claves o seguir §4.b.
+- Para publicar en un servidor, tablets del personal o uso diario estable, **no basta el wizard**:
+  completa §3 (schema + confirmación de correo) y §4.b.
+
+Alternativa: desde el panel de administración (sidebar) hay un botón
+**«Salir del modo demo»** con el mismo formulario de conexión.
+
+### 4.b · Vía archivo `.env` (instalación completa, recomendada para producción)
 
 En la carpeta del proyecto hay un archivo `.env.example`:
 
@@ -130,25 +144,31 @@ En la carpeta del proyecto hay un archivo `.env.example`:
    SUPABASE_ANON_KEY=sb_publishable_xxxxxxxx
    ```
 
-3. Arranca la app (`npm install` y luego `npm start`).
+3. Arranca en desarrollo: `npm start` (el script `scripts/set-env.mjs` genera
+   `src/environments/env.generated.ts`, gitignorado).
+4. Para publicar: `npm run build` — las claves del `.env` quedan embebidas en `dist/`
+   en el momento del build. Sube esa carpeta a tu hosting (Netlify, Vercel, servidor propio…).
 
-> El archivo `.env` no se sube a internet ni al repositorio: tus claves quedan solo en tu ordenador/servidor.
+> El archivo `.env` no se sube al repositorio: tus claves quedan solo en tu ordenador/servidor.
+> El wizard **nunca** modifica `.env`; si usaste el wizard antes, las claves del navegador
+> tienen prioridad hasta que borres el almacenamiento local o uses «Probar modo demo» en `/login`.
 
 ---
 
 ## 5. Crear tu cuenta de administrador (¡solo la primera vez!)
 
-1. Abre la app en el navegador.
-2. Como todavía no existe ninguna cuenta, la app te llevará **automáticamente** a
-   la pantalla **"Crea tu cuenta de administrador"**.
-3. Escribe tu nombre, tu correo y una contraseña (mínimo 8 caracteres) y pulsa
-   **Crear administrador**.
-4. Según la configuración de Supabase, puede que recibas un **correo para
-   confirmar** tu cuenta: ábrelo y pulsa el enlace.
-5. Vuelve a la app e inicia sesión. ¡Listo! Esa primera cuenta es la **propietaria**
-   y no se puede borrar.
+1. Asegúrate de haber ejecutado `schema.sql` (§3.1) y de haber desactivado la confirmación
+   de correo (§3.0).
+2. Abre la app en el navegador.
+3. Ve a **`/nuevo-restaurante`** (el wizard del paso 5 te lleva allí) o sigue el enlace
+   desde `/login` si aún no hay administrador.
+4. Escribe el nombre del restaurante, tu nombre, correo y contraseña (mínimo 8 caracteres)
+   y pulsa **Crear restaurante y cuenta**.
+5. Si la confirmación de correo sigue activa en Supabase, revisa tu buzón antes de entrar.
+6. Inicia sesión. ¡Listo! Esa primera cuenta es la **propietaria** de ese restaurante.
 
-> A partir de aquí, esa pantalla de registro desaparece: las demás cuentas las creas tú desde el panel.
+> Puedes crear **varios restaurantes** (tenants) en el mismo proyecto Supabase con
+> `/nuevo-restaurante`. El wizard salta al paso final si ya existe algún admin global.
 
 ### 5.1. (Recomendado) Cerrar el registro público
 
@@ -197,10 +217,13 @@ falla un rato.
 
 ## 8. Problemas frecuentes
 
-- **"No aparece la pantalla de registro"**: ya existe un administrador. Usa **Iniciar sesión**. Si olvidaste la contraseña, restablécela desde Supabase → Authentication → Users.
-- **"El menú sale vacío"**: revisa que cargaste las migraciones (paso 3.1) y, si quieres datos de ejemplo, el `seed.sql`.
-- **"No puedo cobrar / no hay métodos de pago"**: ve a **Métodos de pago** en el panel y añade al menos uno activo.
-- **"Las fotos no se ven"**: comprueba que ejecutaste la migración que crea el almacén de imágenes (paso 3.1, archivo de *storage*).
+- **"No aparece la pantalla de registro"**: ya existe un administrador. Usa **Iniciar sesión** o `/nuevo-restaurante` para otro tenant. Si olvidaste la contraseña, restablécela desde Supabase → Authentication → Users.
+- **"No veo los botones de demo en /login"**: la app detecta credenciales (`.env` o wizard en el navegador). Pulsa **«Probar modo demo (sin Supabase)»** o vacía `.env`, reinicia `npm start` y borra `rs-supabase-url` / `rs-supabase-anon-key` del almacenamiento local.
+- **"Conecté Supabase en el wizard pero al cerrar el navegador ya no funciona"**: el wizard es temporal en ese navegador; para fijarlo usa §4.b (`.env` + `npm run build`).
+- **"El menú sale vacío"**: revisa que cargaste `schema.sql` (§3.1). Los tenants nuevos reciben catálogo mínimo automáticamente vía `create_restaurant()`.
+- **"No puedo cobrar / no hay métodos de pago"**: ve a **Métodos de pago** en el panel; los tenants nuevos ya traen Efectivo, Tarjeta y Transferencia por defecto.
+- **"Error al ejecutar schema.sql: column restaurant_id does not exist"**: descarga de nuevo `public/setup/schema.sql` (regenerado con `node scripts/build-schema.mjs`) o usa `reset-and-schema.sql` en una base limpia.
+- **"Las fotos no se ven"**: comprueba que ejecutaste `schema.sql` completo (incluye el bucket de Storage).
 
 ---
 
@@ -226,6 +249,14 @@ Este es un proyecto **open source** (licencia MIT). Puedes abrir una incidencia 
 el repositorio de GitHub del proyecto describiendo tu problema.
 
 ---
+
+## Novedades de v0.10
+
+- **Wizard `/instalacion` mejorado** — avisos obligatorios de `schema.sql` y desactivar confirmación de correo; aclara que pegar claves es **temporal en el navegador** y remite al manual para instalación completa (`.env` + build).
+- **`schema.sql` unificado** — 19 migraciones + seed; generado con `scripts/build-schema.mjs`. `reset-and-schema.sql` para reiniciar una base de prueba.
+- **Seed automático en `create_restaurant()`** — cada tenant nuevo trae menú, mesas y métodos de pago listos.
+- **Modo demo recuperable** — enlace «Probar modo demo» en `/login` aunque exista `.env`.
+- **Moneda configurable**, **PWA mesero**, **beep automático en cocina**, **6 idiomas**, panel responsivo.
 
 ## Novedades de v0.9
 

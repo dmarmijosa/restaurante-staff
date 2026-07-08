@@ -279,9 +279,25 @@ const TOTAL_STEPS = 6;
               </div>
             }
 
+            <div class="mb-5 rounded-xl border border-ocre-bg bg-ocre-bg px-4 py-3 text-[12.5px] leading-relaxed text-ocre-texto">
+              <strong>Conexión de prueba en este navegador.</strong>
+              Las claves se guardan aquí de forma temporal: funcionan mientras uses esta app
+              en <strong>esta pestaña/navegador</strong>. Si cierras el navegador, borras los datos
+              del sitio o abres la app en otro dispositivo, tendrás que volver a pegarlas.
+              <strong>No modifica el archivo <code class="rounded bg-panal px-1 py-px font-mono text-[11px]">.env</code>.</strong>
+            </div>
+
+            <div class="mb-5 rounded-xl border border-borde-suave bg-crema px-4 py-3 text-[12.5px] leading-relaxed text-tinta-media">
+              <strong class="text-tinta">¿Instalación completa y permanente?</strong>
+              Lee el <a href="/manual.md" target="_blank" rel="noopener" class="font-semibold text-terracota-profundo hover:underline">manual de instalación</a>
+              (secciones 3–5): ejecutar <code class="rounded bg-panal px-1 py-px font-mono text-[11px]">schema.sql</code>,
+              desactivar la confirmación de correo en Supabase, crear el <code class="rounded bg-panal px-1 py-px font-mono text-[11px]">.env</code>
+              y hacer <code class="rounded bg-panal px-1 py-px font-mono text-[11px]">npm run build</code> para publicar.
+            </div>
+
             <div class="mb-5 rounded-xl border border-borde-suave bg-crema px-4 py-3 text-[12.5px] leading-relaxed text-tinta-media">
               <strong class="text-tinta">¿Se guarda en un archivo .env?</strong> No.
-              Las claves quedan en <strong>este navegador</strong> (almacenamiento local) y la app
+              Las claves quedan en el almacenamiento local de <strong>este navegador</strong> y la app
               se recargará conectada a tu proyecto. Si eres desarrollador y tienes un
               <code class="rounded bg-panal px-1 py-px font-mono text-[11px]">.env</code>
               local con otras credenciales, no se modifica: las del wizard tienen prioridad aquí.
@@ -473,10 +489,18 @@ const TOTAL_STEPS = 6;
               </svg>
             </div>
             <h1 class="m-0 font-serif text-3xl font-semibold text-tinta">¡Tu restaurante está listo!</h1>
-            <p class="mt-2 mb-8 text-[14px] leading-relaxed text-tinta-media">
+            <p class="mt-2 mb-6 text-[14px] leading-relaxed text-tinta-media">
               La plataforma está conectada a tu base de datos. Ahora configura los detalles
               de tu local desde el panel de administración.
             </p>
+
+            <div class="mb-6 rounded-xl border border-ocre-bg bg-ocre-bg px-4 py-3 text-left text-[12.5px] leading-relaxed text-ocre-texto">
+              <strong>¿Vas a usarlo en serio o en otro ordenador?</strong>
+              La conexión del wizard es temporal (solo este navegador). Para dejarlo fijo,
+              sigue el <a href="/manual.md" target="_blank" rel="noopener" class="font-semibold text-terracota-profundo hover:underline">manual de instalación</a>:
+              <code class="rounded bg-panal px-1 py-px font-mono text-[11px]">.env</code>,
+              <code class="rounded bg-panal px-1 py-px font-mono text-[11px]">npm run build</code> y despliegue.
+            </div>
 
             <!-- Checklist de próximos pasos -->
             <div class="mb-8 rounded-xl border border-borde-suave bg-crema p-5 text-left">

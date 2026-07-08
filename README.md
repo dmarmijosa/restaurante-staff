@@ -78,22 +78,24 @@ Sin credenciales de Supabase la app usa **datos de ejemplo en memoria** (los del
 
 > Cada quien debe usar **su propio proyecto**. Si ves credenciales `vtkdvxrocemdyybynegs` en algún commit histórico, era un sandbox privado de desarrollo — **no está pensado para producción ni funcionará como back-end de nadie más**. Este repositorio arranca por defecto en **modo demo** (mock en memoria) y tú decides cuándo/cómo conectarlo a tu Supabase.
 
-### Opción A · Wizard visual (recomendado, sin tocar archivos)
+### Opción A · Wizard visual (prueba rápida en el navegador)
 
-1. `npm start` (arranca en modo demo, sin credenciales).
-2. Abre <http://localhost:4200/instalacion> — un asistente de 6 pasos te guía:
-   - Cómo crear tu proyecto gratuito en Supabase
-   - Dónde encontrar la URL y la clave `anon` / `public`
-   - Descargas `schema.sql` (las 10 migraciones + seed unificadas) y lo pegas en el SQL Editor
-   - Creas tu cuenta de administrador propietario
-3. Las claves se guardan en `localStorage` — persisten entre reinicios sin recompilar.
-4. Desde el propio panel puedes volver a cambiarlas o volver al modo demo en cualquier momento (**Salir del modo demo** en la barra lateral del admin).
+1. `npm start` (arranca en modo demo si no hay `.env`).
+2. Abre <http://localhost:4200/instalacion> — asistente de 6 pasos:
+   - Crear proyecto en Supabase
+   - **Desactivar «Confirm email»** en Authentication → Providers → Email
+   - Pegar URL + clave publishable (solo en **este navegador**, no modifica `.env`)
+   - Descargar y ejecutar `schema.sql` en el SQL Editor (19 migraciones unificadas)
+   - Crear restaurante + cuenta en `/nuevo-restaurante`
+3. **Limitación:** las claves del wizard son temporales (almacenamiento local del navegador). Si cierras el navegador, borras datos del sitio o usas otro dispositivo, debes volver a conectar.
+4. **Instalación completa y permanente:** sigue [manual.md](manual.md) (§3–§5): `schema.sql`, confirmación de correo, `.env` y `npm run build`.
 
-### Opción B · `.env` clásico
+### Opción B · `.env` + build (recomendado para producción)
 
-1. Crea un proyecto en [supabase.com](https://supabase.com).
-2. Aplica `supabase/migrations/*.sql` y `supabase/seed.sql` (SQL Editor o `supabase db push`).
-3. Copia las variables — **nunca se versionan claves**:
+1. Lee el **[manual de instalación](manual.md)** paso a paso (pensado para personas no técnicas).
+2. Crea un proyecto en [supabase.com](https://supabase.com).
+3. Ejecuta `public/setup/schema.sql` en el SQL Editor (o `reset-and-schema.sql` para empezar de cero).
+4. Copia las variables — **nunca se versionan claves**:
 
    ```bash
    cp .env.example .env
@@ -102,10 +104,9 @@ Sin credenciales de Supabase la app usa **datos de ejemplo en memoria** (los del
    # SUPABASE_ANON_KEY=<tu clave publishable/anon>
    ```
 
-4. `npm start`. El script `scripts/set-env.mjs` genera `src/environments/env.generated.ts` (gitignorado) antes de compilar.
-5. **Registro inicial del administrador**: abre la app y ve a **`/registro-inicial`** (o pulsa el aviso que aparece en `/login` cuando aún no hay cuentas). El **primer** usuario registrado se convierte automáticamente en **administrador propietario**; a partir de ahí esa ruta se cierra sola y el resto del equipo se da de alta desde el panel.
-   - Recomendado: en Supabase → Authentication → Providers, **desactiva el registro público** tras crear al propietario, para que solo el admin dé de alta cuentas.
-6. El QR físico de cada mesa apunta a `https://tu-dominio/mesa/<numero>` (el panel del plano genera e imprime cada QR).
+5. `npm start` (desarrollo) o `npm run build` (producción). `scripts/set-env.mjs` genera `env.generated.ts` (gitignorado) antes de compilar.
+6. **Registro:** `/nuevo-restaurante` crea el tenant + admin propietario. Desactiva el registro público en Supabase tras el bootstrap (ver manual §5.1).
+7. El QR de cada mesa apunta a `https://tu-dominio/r/<slug>/mesa/<numero>` (generable desde el plano del salón).
 
 ## Scripts
 
@@ -116,9 +117,12 @@ Sin credenciales de Supabase la app usa **datos de ejemplo en memoria** (los del
 | `npm test`        | Unitarias (Vitest)                  |
 | `npm run e2e`     | Playwright (levanta el server solo) |
 | `npm run set-env` | Regenera `env.generated.ts`         |
+| `node scripts/build-schema.mjs` | Regenera `public/setup/schema.sql` |
+| `node scripts/build-reset-schema.mjs` | Genera `reset-and-schema.sql` (borrar + schema) |
 
 ## Documentación
 
+- **[manual.md](manual.md)** — guía de instalación paso a paso (no técnica); también en `/manual.md` con la app en marcha
 - [docs/architecture.md](docs/architecture.md) — arquitectura, flujo de datos, diagramas
 - [docs/api.md](docs/api.md) — endpoints, DTOs, servicios, ejemplos
 - [docs/decisions.md](docs/decisions.md) — decisiones (ADRs) y patrones
@@ -136,6 +140,12 @@ Angular 22 (standalone + signals) · Tailwind CSS 4 · Supabase (Postgres, Auth,
 ---
 
 ## Changelog
+
+### 2026-07-08 — v0.10 (continuación)
+- **docs:** wizard aclara que pegar credenciales es **temporal en el navegador** y remite al [manual.md](manual.md) para instalación completa (`.env` + `npm run build`); manual actualizado a v0.10 (19 migraciones, confirmación de correo, `reset-and-schema.sql`, modo demo recuperable)
+- **feat(login):** enlace «Probar modo demo» cuando hay credenciales en `.env` o localStorage (`rs-force-demo`)
+- **fix(wizard):** `schema.sql` regenerado (19 migraciones), reload tras conectar credenciales, política RLS `restaurant_id` corregida
+- **chore:** `.mcp.json` en `.gitignore`; scripts `build-schema.mjs`, `build-reset-schema.mjs`, `wizard-test.mjs`
 
 ### 2026-07-08 — v0.10
 - **feat:** `create_restaurant()` con **seed automático** — al crear un tenant nuevo se insertan 4 categorías (Entradas, Principales, Postres, Bebidas), 6 productos de ejemplo, 4 mesas en cuadrícula 2×2 y 3 métodos de pago (Efectivo, Tarjeta, Transferencia). Antes un tenant recién creado quedaba vacío: el cliente veía la home sin menú y el cajero no podía cobrar hasta configurar todo a mano. Migración `19_create_restaurant_seed`

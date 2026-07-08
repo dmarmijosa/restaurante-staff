@@ -385,7 +385,8 @@
     "role_updated": "Rol actualizado",
     "call_attended": "Llamada atendida — mesero en camino",
     "admin_name_required": "Escribe el nombre del administrador",
-    "category_name_required": "Ponle nombre al producto"
+    "category_name_required": "Ponle nombre al producto",
+    "currency_updated": "Moneda actualizada"
   },
   "weekday": {
     "0": "Lunes",

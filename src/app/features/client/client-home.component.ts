@@ -14,6 +14,7 @@ import { RestaurantStore } from '../../core/application/restaurant.store';
 import { RestaurantContextService } from '../../core/application/restaurant-context.service';
 import { RestaurantRepository } from '../../core/domain/repositories/repositories';
 import { MoneyPipe } from '../../shared/money.pipe';
+import { ChipBtnDirective } from '../../shared/chip-btn.directive';
 import { isSupabaseConfigured } from '../../core/data/supabase/runtime-config';
 import type { OrderStatus, Product } from '../../core/domain/entities/entities';
 
@@ -33,7 +34,7 @@ const STEP_DEFS: Array<{ key: OrderStatus; label: string; desc: string }> = [
 
 @Component({
   selector: 'app-client-home',
-  imports: [MoneyPipe, RouterLink, TranslatePipe],
+  imports: [MoneyPipe, RouterLink, TranslatePipe, ChipBtnDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex min-h-dvh flex-col items-center bg-crema">
@@ -88,12 +89,8 @@ const STEP_DEFS: Array<{ key: OrderStatus; label: string; desc: string }> = [
               <!-- Chips de categorías -->
               <div class="flex flex-none gap-1.5 overflow-x-auto px-[18px] pt-1.5 pb-2.5">
                 @for (cat of catChips(); track cat) {
-                  <button
-                    type="button"
-                    (click)="activeCat.set(cat)"
-                    class="cursor-pointer rounded-full border-none px-3.5 py-[7px] text-xs font-semibold whitespace-nowrap"
-                    [class]="activeCat() === cat ? 'bg-cacao text-lino' : 'bg-arena text-tinta-suave'"
-                  >
+                  <button chipBtn variant="cacao" [active]="activeCat() === cat" type="button"
+                    (click)="activeCat.set(cat)" class="px-3.5 py-[7px] text-xs whitespace-nowrap">
                     {{ cat === '__all__' ? ('client.category_all' | translate) : cat }}
                   </button>
                 }

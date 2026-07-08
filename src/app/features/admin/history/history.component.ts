@@ -11,6 +11,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { TranslatePipe } from '@ngx-translate/core';
 import { RestaurantStore } from '../../../core/application/restaurant.store';
 import { MoneyPipe } from '../../../shared/money.pipe';
+import { ChipBtnDirective } from '../../../shared/chip-btn.directive';
 import { ORDER_STATUS_UI } from '../../../shared/ui-maps';
 import { orderTotal } from '../../../core/domain/entities/entities';
 import { ordersInRange, salesByMethod, totalRevenue } from '../../../core/domain/metrics';
@@ -20,7 +21,7 @@ type Tab = 'pedidos' | 'caja';
 
 @Component({
   selector: 'app-history',
-  imports: [MoneyPipe, TranslatePipe],
+  imports: [MoneyPipe, TranslatePipe, ChipBtnDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div data-testid="admin-historial">
@@ -31,12 +32,8 @@ type Tab = 'pedidos' | 'caja';
         </div>
         <div class="flex gap-1.5" role="group" aria-label="Periodo">
           @for (r of rangeChips; track r.key) {
-            <button
-              type="button"
-              (click)="range.set(r.key)"
-              class="cursor-pointer rounded-full border-none px-3.5 py-2 text-[12px] font-semibold"
-              [class]="range() === r.key ? 'bg-tinta text-lino' : 'bg-panal text-tinta-suave'"
-            >
+            <button chipBtn [active]="range() === r.key" type="button"
+              (click)="range.set(r.key)" class="px-3.5 py-2 text-[12px]">
               {{ r.label | translate }}
             </button>
           }

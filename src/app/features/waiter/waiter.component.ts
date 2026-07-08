@@ -25,13 +25,12 @@ import { OfflineService } from '../../core/pwa/offline.service';
 import { WaiterCacheService } from '../../core/pwa/waiter-cache.service';
 import { StaffTopbarComponent } from '../../shared/staff-topbar/staff-topbar.component';
 import { OfflineBannerComponent } from '../../shared/offline-banner/offline-banner.component';
-import { MoneyPipe } from '../../shared/money.pipe';
 import { ORDER_STATUS_UI, TABLE_STATUS_UI, initialsOf } from '../../shared/ui-maps';
-import { orderTotal } from '../../core/domain/entities/entities';
+import { OrderCardComponent } from '../../shared/order-card/order-card.component';
 
 @Component({
   selector: 'app-waiter',
-  imports: [StaffTopbarComponent, OfflineBannerComponent, MoneyPipe, TranslatePipe],
+  imports: [StaffTopbarComponent, OfflineBannerComponent, OrderCardComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex min-h-dvh flex-col">
@@ -130,42 +129,15 @@ import { orderTotal } from '../../core/domain/entities/entities';
                 <div class="mb-3 text-xs font-bold tracking-[.05em] text-tinta-media">{{ 'waiter.orders_title' | translate }}</div>
                 <div class="grid grid-cols-2 items-start gap-3">
                   @for (order of store.activeOrders(); track order.id) {
-                    <article class="rounded-xl border border-borde bg-papel px-4 py-3.5">
-                      <div class="mb-[9px] flex items-center gap-2">
-                        <span class="text-sm font-bold">{{ 'admin.orders.mesa' | translate }} {{ order.tableNumber }}</span>
-                        <span class="font-mono text-[11px] text-tinta-media">#{{ order.id }}</span>
-                        <span class="flex-1"></span>
-                        <span
-                          class="rounded-full px-2.5 py-[3px] text-[10.5px] font-bold"
-                          [style.background]="orderUi[order.status].bg"
-                          [style.color]="orderUi[order.status].color"
-                        >
-                          {{ ('order.status.' + order.status) | translate }}
-                        </span>
-                      </div>
-                      <ul class="mb-2.5 flex list-none flex-col gap-1 p-0">
-                        @for (item of order.items; track item.productName) {
-                          <li class="flex gap-1.5 text-[12.5px] text-tinta-suave">
-                            <span class="font-semibold">{{ item.quantity }}×</span>
-                            <span class="flex-1">{{ item.productName }}</span>
-                            <span>{{ item.unitPrice * item.quantity | money }}</span>
-                          </li>
-                        }
-                      </ul>
-                      <div class="flex items-center gap-2.5">
-                        <span class="flex-1 text-[13px] font-bold">{{ total(order) | money }}</span>
-                        @if (orderUi[order.status].next; as nextLabel) {
-                          <button
-                            type="button"
-                            (click)="store.advanceOrder(order.id)"
-                            [disabled]="!offline.isOnline()"
-                            class="cursor-pointer rounded-[9px] border-none bg-tinta px-3.5 py-2 text-xs font-semibold text-lino hover:bg-cacao-hover disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            {{ ('order.status.' + order.status + '_next') | translate }}
-                          </button>
-                        }
-                      </div>
-                    </article>
+                    <app-order-card
+                      [order]="order"
+                      [showStatus]="true"
+                      [disabled]="!offline.isOnline()"
+                      [actionLabel]="orderUi[order.status].next
+                        ? (('order.status.' + order.status + '_next') | translate)
+                        : null"
+                      (advance)="store.advanceOrder(order.id)"
+                    />
                   }
                 </div>
               </section>
@@ -185,7 +157,6 @@ export class WaiterComponent implements OnInit, OnDestroy {
 
   protected readonly tableUi = TABLE_STATUS_UI;
   protected readonly orderUi = ORDER_STATUS_UI;
-  protected readonly total = orderTotal;
 
   protected readonly waiterName = computed(() => this.auth.user()?.fullName ?? this.translate.instant('topbar.area.waiter'));
   protected readonly initials = computed(() => initialsOf(this.waiterName()));

@@ -10,6 +10,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { FormsModule } from '@angular/forms';
 import { RestaurantStore } from '../../../core/application/restaurant.store';
 import { ToastService } from '../../../shared/toast/toast.service';
+import { ChipBtnDirective } from '../../../shared/chip-btn.directive';
 import { AVATAR_PALETTE, SHIFT_HOURS, SHIFT_LABELS, initialsOf } from '../../../shared/ui-maps';
 import type { Shift, StaffRole } from '../../../core/domain/entities/entities';
 
@@ -24,7 +25,7 @@ const TEAM_ROLES: Array<{ key: 'mesero' | 'cocina' | 'cajero'; label: string }> 
 
 @Component({
   selector: 'app-staff-page',
-  imports: [FormsModule],
+  imports: [FormsModule, ChipBtnDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="max-w-[880px]" data-testid="admin-meseros">
@@ -54,24 +55,16 @@ const TEAM_ROLES: Array<{ key: 'mesero' | 'cocina' | 'cajero'; label: string }> 
           />
           <div class="flex gap-[5px]" role="group" aria-label="Rol del empleado">
             @for (role of teamRoles; track role.key) {
-              <button
-                type="button"
-                (click)="draftRole.set(role.key)"
-                class="cursor-pointer rounded-full border-none px-3.5 py-2 text-[11.5px] font-semibold"
-                [class]="draftRole() === role.key ? 'bg-terracota text-lino-calido' : 'bg-panal text-tinta-suave'"
-              >
+              <button chipBtn variant="terracota" [active]="draftRole() === role.key" type="button"
+                (click)="draftRole.set(role.key)" class="px-3.5 py-2 text-[11.5px]">
                 {{ role.label }}
               </button>
             }
           </div>
           <div class="flex gap-[5px]" role="group" aria-label="Turno">
             @for (shift of shifts; track shift) {
-              <button
-                type="button"
-                (click)="draftShift.set(shift)"
-                class="cursor-pointer rounded-full border-none px-3.5 py-2 text-[11.5px] font-semibold"
-                [class]="draftShift() === shift ? 'bg-tinta text-lino' : 'bg-panal text-tinta-suave'"
-              >
+              <button chipBtn [active]="draftShift() === shift" type="button"
+                (click)="draftShift.set(shift)" class="px-3.5 py-2 text-[11.5px]">
                 {{ shiftLabels[shift] }}
               </button>
             }

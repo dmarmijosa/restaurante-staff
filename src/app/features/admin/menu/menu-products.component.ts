@@ -10,11 +10,12 @@ import { RestaurantStore } from '../../../core/application/restaurant.store';
 import { ImageCropperModalComponent, type CropSelection } from '../../../shared/image-cropper-modal.component';
 import { cropImageSquare } from '../../../shared/image-utils';
 import { MoneyPipe } from '../../../shared/money.pipe';
+import { ChipBtnDirective } from '../../../shared/chip-btn.directive';
 import { ToastService } from '../../../shared/toast/toast.service';
 
 @Component({
   selector: 'app-menu-products',
-  imports: [MoneyPipe, FormsModule, ImageCropperModalComponent],
+  imports: [MoneyPipe, FormsModule, ImageCropperModalComponent, ChipBtnDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div data-testid="admin-menu">
@@ -50,12 +51,8 @@ import { ToastService } from '../../../shared/toast/toast.service';
           />
           <div class="flex gap-[5px]">
             @for (cat of store.categories(); track cat.id) {
-              <button
-                type="button"
-                (click)="draftCategoryId.set(cat.id)"
-                class="cursor-pointer rounded-full border-none px-3 py-2 text-[11.5px] font-semibold"
-                [class]="draftCategoryId() === cat.id ? 'bg-tinta text-lino' : 'bg-panal text-tinta-suave'"
-              >
+              <button chipBtn [active]="draftCategoryId() === cat.id" type="button"
+                (click)="draftCategoryId.set(cat.id)" class="px-3 py-2 text-[11.5px]">
                 {{ cat.name }}
               </button>
             }
@@ -73,12 +70,8 @@ import { ToastService } from '../../../shared/toast/toast.service';
       <!-- Filtros -->
       <div class="mb-4 flex flex-wrap gap-1.5">
         @for (chip of filterChips(); track chip.id) {
-          <button
-            type="button"
-            (click)="filterId.set(chip.id)"
-            class="cursor-pointer rounded-full border-none px-[15px] py-2 text-xs font-semibold"
-            [class]="filterId() === chip.id ? 'bg-tinta text-lino' : 'bg-panal text-tinta-suave'"
-          >
+          <button chipBtn [active]="filterId() === chip.id" type="button"
+            (click)="filterId.set(chip.id)" class="px-[15px] py-2 text-xs">
             {{ chip.name }}
           </button>
         }

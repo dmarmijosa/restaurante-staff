@@ -151,6 +151,11 @@ export interface RestaurantSettings {
   seasonEnd: string | null;
   /** Logo del restaurante (URL pública en Storage), o null si no hay. */
   logoUrl: string | null;
+  /**
+   * Símbolo de moneda que se muestra en precios (p. ej. '$', '€', '£').
+   * Lo configura el admin en Ajustes; el MoneyPipe lo lee automáticamente.
+   */
+  currency: string;
 }
 
 /** Restaurante registrado en la plataforma (tenant). */

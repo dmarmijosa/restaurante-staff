@@ -1,15 +1,22 @@
 /**
- * Formatea importes como en el diseño original: `$6.50`.
+ * Formatea importes con el símbolo de moneda configurado por el admin.
  *
  * ¿Por qué un pipe propio y no CurrencyPipe? El diseño usa siempre dos
  * decimales y símbolo pegado, sin depender del locale del navegador; un pipe
- * puro de una línea es más barato y determinista para las pruebas.
+ * ligero es más barato y determinista para las pruebas.
+ *
+ * La moneda activa viene de CurrencyService (signal global actualizado por el
+ * RestaurantStore). El pipe es `pure: false` para reaccionar al cambio de
+ * símbolo sin que los templates tengan que pasar el valor explícitamente.
  */
-import { Pipe, PipeTransform } from '@angular/core';
+import { inject, Pipe, PipeTransform } from '@angular/core';
+import { CurrencyService } from './currency.service';
 
-@Pipe({ name: 'money' })
+@Pipe({ name: 'money', pure: false })
 export class MoneyPipe implements PipeTransform {
+  private readonly currency = inject(CurrencyService);
+
   transform(value: number): string {
-    return '$' + value.toFixed(2);
+    return this.currency.symbol() + value.toFixed(2);
   }
 }

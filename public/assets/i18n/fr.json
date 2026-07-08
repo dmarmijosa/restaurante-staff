@@ -385,7 +385,8 @@
     "role_updated": "Rôle mis à jour",
     "call_attended": "Appel pris en charge — serveur en route",
     "admin_name_required": "Entrez le nom de l'administrateur",
-    "category_name_required": "Donnez un nom au produit"
+    "category_name_required": "Donnez un nom au produit",
+    "currency_updated": "Devise mise à jour"
   },
   "weekday": {
     "0": "Lundi",

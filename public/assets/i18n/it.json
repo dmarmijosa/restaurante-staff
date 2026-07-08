@@ -385,7 +385,8 @@
     "role_updated": "Ruolo aggiornato",
     "call_attended": "Chiamata gestita — cameriere in arrivo",
     "admin_name_required": "Inserisci il nome dell'amministratore",
-    "category_name_required": "Dai un nome al prodotto"
+    "category_name_required": "Dai un nome al prodotto",
+    "currency_updated": "Valuta aggiornata"
   },
   "weekday": {
     "0": "Lunedì",

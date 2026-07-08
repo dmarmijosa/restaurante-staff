@@ -64,6 +64,34 @@ import { AVATAR_PALETTE, initialsOf } from '../../../shared/ui-maps';
         </div>
       </div>
 
+      <!-- Moneda -->
+      <div class="mb-3.5 rounded-[14px] border border-borde bg-papel px-5 py-[18px]">
+        <div class="mb-3 text-[13px] font-semibold">Moneda</div>
+        <div class="mb-1.5 text-[11px] text-tinta-media">
+          Símbolo que aparece en todos los precios del panel, caja y menú del cliente.
+        </div>
+        <div class="flex flex-wrap gap-2">
+          @for (c of currencies; track c.symbol) {
+            <button
+              type="button"
+              (click)="store.setCurrency(c.symbol)"
+              class="flex cursor-pointer items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[12px] font-semibold transition-colors"
+              [class]="store.settings().currency === c.symbol
+                ? 'border-terracota bg-terracota text-lino-calido'
+                : 'border-borde bg-papel text-tinta-suave hover:border-terracota'"
+              [attr.aria-pressed]="store.settings().currency === c.symbol"
+            >
+              <span class="font-mono text-[13px]">{{ c.symbol }}</span>
+              <span class="text-[11px]">{{ c.name }}</span>
+            </button>
+          }
+        </div>
+        <div class="mt-2 text-[11px] text-tinta-media">
+          Seleccionada: <span class="font-bold text-tinta">{{ store.settings().currency }}</span>
+          — los importes se verán como <span class="font-bold text-tinta">{{ store.settings().currency }}12.50</span>
+        </div>
+      </div>
+
       <!-- Administradores -->
       <div class="rounded-[14px] border border-borde bg-papel px-5 py-[18px]">
         <div class="mb-3.5 flex items-center gap-3">
@@ -148,6 +176,22 @@ import { AVATAR_PALETTE, initialsOf } from '../../../shared/ui-maps';
 export class SettingsComponent {
   protected readonly store = inject(RestaurantStore);
   private toast = inject(ToastService);
+
+  /** Monedas disponibles: símbolo + nombre corto. */
+  protected readonly currencies = [
+    { symbol: '$',    name: 'Dólar'    },
+    { symbol: '€',    name: 'Euro'     },
+    { symbol: '£',    name: 'Libra'    },
+    { symbol: '¥',    name: 'Yen'      },
+    { symbol: 'R$',   name: 'Real'     },
+    { symbol: 'S/',   name: 'Sol'      },
+    { symbol: '₹',    name: 'Rupia'    },
+    { symbol: '₩',    name: 'Won'      },
+    { symbol: 'CHF',  name: 'Franco'   },
+    { symbol: 'CLP$', name: 'Peso CL'  },
+    { symbol: 'COP$', name: 'Peso CO'  },
+    { symbol: 'ARS$', name: 'Peso AR'  },
+  ] as const;
 
   protected readonly showForm = signal(false);
   protected readonly cropOpen = signal(false);

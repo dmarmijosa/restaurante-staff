@@ -8,12 +8,13 @@
  */
 import { ChangeDetectionStrategy, Component, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { saveSupabaseConfig } from '../../../core/data/supabase/runtime-config';
 
 @Component({
   selector: 'app-connect-supabase-dialog',
-  imports: [FormsModule, TranslatePipe],
+  imports: [FormsModule, RouterLink, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div
@@ -24,7 +25,21 @@ import { saveSupabaseConfig } from '../../../core/data/supabase/runtime-config';
     >
       <div class="w-full max-w-[440px] rounded-2xl border border-borde bg-papel p-6 shadow-[0_24px_60px_rgba(36,26,17,.35)]">
         <h2 class="m-0 font-serif text-[21px] font-semibold text-tinta">{{ 'connect.title' | translate }}</h2>
-        <p class="mt-1 mb-4 text-[12.5px] leading-relaxed text-tinta-media">{{ 'connect.subtitle' | translate }}</p>
+        <p class="mt-1 mb-3 text-[12.5px] leading-relaxed text-tinta-media">{{ 'connect.subtitle' | translate }}</p>
+
+        <a
+          routerLink="/instalacion"
+          (click)="close.emit()"
+          class="mb-4 flex items-center gap-2 rounded-[10px] border border-terracota bg-duna/40 px-3 py-2.5 text-[12.5px] font-semibold text-terracota-profundo hover:bg-duna"
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M2 7l3 3 7-7"/>
+          </svg>
+          <span class="flex-1">¿Primera vez? Sigue la guía paso a paso</span>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <path d="M3 6h6M6 3l3 3-3 3"/>
+          </svg>
+        </a>
 
         <label class="mb-1.5 block text-[11.5px] font-semibold text-tinta-media" for="sb-url">
           {{ 'connect.url_label' | translate }}

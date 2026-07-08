@@ -438,6 +438,7 @@ export class SupabaseSettingsRepository extends SettingsRepository {
       seasonStart: data.season_start,
       seasonEnd: data.season_end,
       logoUrl: data.logo_url ?? null,
+      currency: data.currency ?? '$',
     };
   }
 
@@ -450,6 +451,7 @@ export class SupabaseSettingsRepository extends SettingsRepository {
       season_start: patch.seasonStart,
       season_end: patch.seasonEnd,
       logo_url: patch.logoUrl,
+      currency: patch.currency,
     });
     const { error } = await (rId ? base.eq('restaurant_id', rId) : base);
     if (error) throw error;

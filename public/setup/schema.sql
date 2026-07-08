@@ -893,3 +893,7 @@ insert into public.tables (number, x, y, seats, shape, status) values
 update public.restaurant_settings
 set season_start = '2026-03-15', season_end = '2026-09-15'
 where id = 1;
+
+-- migration 11: moneda configurable por el admin
+alter table public.restaurant_settings
+  add column if not exists currency text not null default '$';

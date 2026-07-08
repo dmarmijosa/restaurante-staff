@@ -5,6 +5,7 @@
  */
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { RestaurantStore } from '../../../core/application/restaurant.store';
+import { ChipBtnDirective } from '../../../shared/chip-btn.directive';
 import type { Season } from '../../../core/domain/entities/entities';
 
 const SEASON_CHIPS: Array<{ key: Season; label: string }> = [
@@ -22,6 +23,7 @@ const SEASON_DESCS: Record<Season, string> = {
 
 @Component({
   selector: 'app-season',
+  imports: [ChipBtnDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="max-w-[640px]" data-testid="admin-temporada">
@@ -61,12 +63,8 @@ const SEASON_DESCS: Record<Season, string> = {
         <div class="mb-2.5 text-[13px] font-semibold">Temporada actual</div>
         <div class="mb-3 flex gap-1.5">
           @for (chip of seasonChips; track chip.key) {
-            <button
-              type="button"
-              (click)="store.setSeason(chip.key)"
-              class="cursor-pointer rounded-full border-none px-4 py-[9px] text-xs font-semibold"
-              [class]="store.settings().season === chip.key ? 'bg-tinta text-lino' : 'bg-panal text-tinta-suave'"
-            >
+            <button chipBtn [active]="store.settings().season === chip.key" type="button"
+              (click)="store.setSeason(chip.key)" class="px-4 py-[9px] text-xs">
               {{ chip.label }}
             </button>
           }

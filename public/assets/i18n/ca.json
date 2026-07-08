@@ -385,7 +385,8 @@
     "role_updated": "Rol actualitzat",
     "call_attended": "Trucada atesa — cambrer en camí",
     "admin_name_required": "Escriu el nom de l'administrador",
-    "category_name_required": "Posa-li nom al producte"
+    "category_name_required": "Posa-li nom al producte",
+    "currency_updated": "Moneda actualitzada"
   },
   "weekday": {
     "0": "Dilluns",

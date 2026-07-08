@@ -4,7 +4,7 @@
 
 ## Estado de la aplicación
 
-**v0.9 · Wizard de instalación + PWA** — actualizado el 2026-07-08
+**v0.9 · Moneda configurable + refactors** — actualizado el 2026-07-08
 
 | Módulo                                                                                     | Estado                               |
 | ------------------------------------------------------------------------------------------ | ------------------------------------ |
@@ -39,10 +39,12 @@
 | Módulo Horario de trabajo (editor semanal por empleado; visible al trabajador)             | ✅ Completo                          |
 | PWA / offline para la tablet del mesero (SW, manifest, banner, caché localStorage)         | ✅ Completo                          |
 | Wizard de instalación guiada `/instalacion` (6 pasos, sin código, schema.sql descargable)  | ✅ Completo                          |
+| Moneda configurable por el admin: 12 símbolos ($, €, £, ¥, R$, S/, ₹, ₩, CHF, CLP$, COP$, ARS$); propagación automática en toda la UI | ✅ Completo |
+| Refactors: `ChipBtnDirective` (7 componentes), `OrderCardComponent` (admin + mesero), `waiterName` real en demo | ✅ Completo |
 | Panel 100% responsivo (drawer móvil, sin scroll horizontal)                                | ✅ Completo                          |
 | Internacionalización (6 idiomas, paridad de claves; dashboard e historial incluidos)       | ✅ Completo                          |
 
-Pruebas: **33 unitarias** (Vitest) y **29 E2E** (Playwright, escritorio + móvil, `locale: es-ES`) en verde. Build limpio.
+Pruebas: **43 unitarias** (Vitest) y **29 E2E** (Playwright, escritorio + móvil, `locale: es-ES`) en verde. Build limpio.
 
 > Diseño mejorado con la skill **ui-ux-pro-max** aplicando sus principios (foco visible, `prefers-reduced-motion`, transiciones 150–300 ms, touch targets ≥44px, `min-h-dvh`, validación inline) **sin alterar la identidad visual** (paleta terracota/crema, Instrument Sans + Source Serif 4).
 
@@ -64,21 +66,36 @@ Sin credenciales de Supabase la app usa **datos de ejemplo en memoria** (los del
 
 > En modo demo el estado vive en memoria: al recargar, vuelve al ejemplo.
 
-## Conectar con Supabase
+## Conectar tu propio Supabase
 
-1. Crea un proyecto en [supabase.com](https://supabase.com) (o usa el tuyo).
+> Cada quien debe usar **su propio proyecto**. Si ves credenciales `vtkdvxrocemdyybynegs` en algún commit histórico, era un sandbox privado de desarrollo — **no está pensado para producción ni funcionará como back-end de nadie más**. Este repositorio arranca por defecto en **modo demo** (mock en memoria) y tú decides cuándo/cómo conectarlo a tu Supabase.
+
+### Opción A · Wizard visual (recomendado, sin tocar archivos)
+
+1. `npm start` (arranca en modo demo, sin credenciales).
+2. Abre <http://localhost:4200/instalacion> — un asistente de 6 pasos te guía:
+   - Cómo crear tu proyecto gratuito en Supabase
+   - Dónde encontrar la URL y la clave `anon` / `public`
+   - Descargas `schema.sql` (las 10 migraciones + seed unificadas) y lo pegas en el SQL Editor
+   - Creas tu cuenta de administrador propietario
+3. Las claves se guardan en `localStorage` — persisten entre reinicios sin recompilar.
+4. Desde el propio panel puedes volver a cambiarlas o volver al modo demo en cualquier momento (**Salir del modo demo** en la barra lateral del admin).
+
+### Opción B · `.env` clásico
+
+1. Crea un proyecto en [supabase.com](https://supabase.com).
 2. Aplica `supabase/migrations/*.sql` y `supabase/seed.sql` (SQL Editor o `supabase db push`).
-3. Copia las variables de entorno — **nunca se versionan claves**:
+3. Copia las variables — **nunca se versionan claves**:
 
-```bash
-cp .env.example .env
-# Edita .env:
-# SUPABASE_URL=https://<tu-proyecto>.supabase.co
-# SUPABASE_ANON_KEY=<tu clave publishable/anon>
-```
+   ```bash
+   cp .env.example .env
+   # Edita .env:
+   # SUPABASE_URL=https://<tu-proyecto>.supabase.co
+   # SUPABASE_ANON_KEY=<tu clave publishable/anon>
+   ```
 
 4. `npm start`. El script `scripts/set-env.mjs` genera `src/environments/env.generated.ts` (gitignorado) antes de compilar.
-5. **Registro inicial del administrador**: abre la app e ve a **`/registro-inicial`** (o pulsa el aviso que aparece en `/login` cuando aún no hay cuentas). El **primer** usuario registrado se convierte automáticamente en **administrador propietario**; a partir de ahí esa ruta se cierra sola y el resto del equipo se da de alta desde el panel.
+5. **Registro inicial del administrador**: abre la app y ve a **`/registro-inicial`** (o pulsa el aviso que aparece en `/login` cuando aún no hay cuentas). El **primer** usuario registrado se convierte automáticamente en **administrador propietario**; a partir de ahí esa ruta se cierra sola y el resto del equipo se da de alta desde el panel.
    - Recomendado: en Supabase → Authentication → Providers, **desactiva el registro público** tras crear al propietario, para que solo el admin dé de alta cuentas.
 6. El QR físico de cada mesa apunta a `https://tu-dominio/mesa/<numero>` (el panel del plano genera e imprime cada QR).
 
@@ -113,6 +130,8 @@ Angular 22 (standalone + signals) · Tailwind CSS 4 · Supabase (Postgres, Auth,
 ## Changelog
 
 ### 2026-07-08
+- **feat:** moneda configurable por el admin (12 símbolos, `CurrencyService` + `MoneyPipe` reactivo, migración SQL, selector en Ajustes, i18n)
+- **refactor:** `ChipBtnDirective` (7 componentes), `OrderCardComponent` (admin kanban + mesero), `waiterName` real en demo
 - **feat:** wizard de instalación guiada `/instalacion` (6 pasos, sin código, schema.sql descargable, banner en home demo)
 - **feat:** notificación sonora automática en cocina: detección por ID de comanda, beep encolado si AudioContext suspendido, indicador visual pulsante e i18n
 - **feat:** PWA/offline para la tablet del mesero (service worker, manifest, OfflineService, WaiterCacheService, banner offline/reconexión)

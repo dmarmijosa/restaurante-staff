@@ -1,10 +1,10 @@
 # Trabajo actual
 
-_Última actualización: 2026-07-08 (iteración 13)_
+_Última actualización: 2026-07-08 (iteración 14)_
 
 ## Estado actual
 
-Plataforma **v0.8**: 10 migraciones SQL aplicadas. **Build limpio**, **33 unitarias** y **29 E2E en verde**.
+Plataforma **v0.9**: 11 migraciones SQL aplicadas. **Build limpio**, **43 unitarias** y **29 E2E en verde**.
 Los E2E ahora fijan `locale: es-ES` en Playwright (la app detecta idioma del navegador) y esperan a que
 la mock API con latencia cargue los datos antes de contar.
 
@@ -78,6 +78,39 @@ la mock API con latencia cargue los datos antes de contar.
   (`kitchen.tap_for_sound`).
 - ✅ **i18n**: clave `kitchen.tap_for_sound` añadida en los 6 idiomas (es/en/ca/pt/fr/it).
 - ✅ **33 unitarias en verde**; sin errores de lint.
+
+## Hecho en la iteración 14 (moneda configurable + refactors)
+
+- ✅ **Moneda configurable por el admin** (`features/admin/settings/settings.component.ts`): selector
+  visual con 12 símbolos ($, €, £, ¥, R$, S/, ₹, ₩, CHF, CLP$, COP$, ARS$). Chips con estilo `outlined`
+  activo/inactivo en terracota; vista previa "los importes se verán como €12.50".
+- ✅ **`CurrencyService`** (`shared/currency.service.ts`): signal `symbol` (default `'$'`), inyectable
+  en `MoneyPipe` sin crear dependencias circulares con el store.
+- ✅ **`MoneyPipe` reactivo** (`shared/money.pipe.ts`): `pure: false`, lee `CurrencyService.symbol()` —
+  todos los precios del panel, caja, historial y menú del cliente se actualizan en tiempo real al cambiar
+  la moneda.
+- ✅ **`RestaurantStore.setCurrency()`**: actualiza `settings().currency` + `CurrencyService.symbol` +
+  llama a `settingsRepo.updateSettings()` para persistir. Toast de confirmación con clave i18n
+  `toast.currency_updated`.
+- ✅ **Migración SQL** (`20260708000011_add_currency.sql`): columna `currency TEXT NOT NULL DEFAULT '$'`
+  en `public.restaurant_settings`; `public/setup/schema.sql` actualizado.
+- ✅ **Repos Supabase y Demo**: `getSettings()`/`updateSettings()` mapean la nueva columna;
+  `DEMO_SETTINGS` incluye `currency: '$'`.
+- ✅ **i18n**: clave `toast.currency_updated` en 6 idiomas.
+- ✅ **Tests actualizados**: `money.pipe.spec.ts` usa `TestBed.runInInjectionContext` + `CurrencyService`.
+  43 unitarias en verde.
+
+### Refactors incluidos en esta iteración
+
+- ✅ **`ChipBtnDirective`** (`shared/chip-btn.directive.ts`): directiva `button[chipBtn]` con inputs
+  `active` y `variant` (`tinta | terracota | outlined | cacao`). Aplicada en 7 componentes: dashboard,
+  history, menu-products, season, schedule, staff-page, client-home. Elimina decenas de líneas de
+  clases Tailwind duplicadas.
+- ✅ **`OrderCardComponent`** (`shared/order-card/order-card.component.ts`): componente reutilizable
+  con inputs `order`, `showStatus`, `showMeta`, `actionLabel`, `actionFull`, `disabled` y output
+  `advance`. Usado en `orders-board` (admin) y `waiter` (mesero).
+- ✅ **`waiterName` real en demo**: `mock-api.service.ts` resuelve el nombre del mesero desde la
+  asignación de mesa en lugar del hardcoded `'Carlos M.'`.
 
 ## Pendiente inmediato
 

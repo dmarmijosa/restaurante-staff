@@ -6,15 +6,15 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
 import { RestaurantStore } from '../../../core/application/restaurant.store';
-import { MoneyPipe } from '../../../shared/money.pipe';
 import { ORDER_STATUS_UI } from '../../../shared/ui-maps';
-import { orderTotal, type OrderStatus } from '../../../core/domain/entities/entities';
+import { OrderCardComponent } from '../../../shared/order-card/order-card.component';
+import type { OrderStatus } from '../../../core/domain/entities/entities';
 
 const COLUMNS: OrderStatus[] = ['recibido', 'preparando', 'listo', 'entregado'];
 
 @Component({
   selector: 'app-orders-board',
-  imports: [MoneyPipe, TranslatePipe],
+  imports: [TranslatePipe, OrderCardComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div data-testid="admin-pedidos">
@@ -32,36 +32,15 @@ const COLUMNS: OrderStatus[] = ['recibido', 'preparando', 'listo', 'entregado'];
             </div>
             <div class="flex flex-col gap-2.5">
               @for (order of column.orders; track order.id) {
-                <article class="rounded-xl border border-borde bg-papel px-3.5 py-3">
-                  <div class="mb-2 flex items-baseline gap-2">
-                    <span class="text-[13.5px] font-bold">{{ 'admin.orders.mesa' | translate }} {{ order.tableNumber }}</span>
-                    <span class="font-mono text-[11px] text-tinta-media">#{{ order.id }}</span>
-                    <span class="flex-1"></span>
-                    <span class="text-[11px] text-tinta-media">{{ order.createdAt }}</span>
-                  </div>
-                  <ul class="mb-2 flex list-none flex-col gap-1 p-0">
-                    @for (item of order.items; track item.productName) {
-                      <li class="flex gap-1.5 text-xs text-tinta-suave">
-                        <span class="font-semibold">{{ item.quantity }}×</span>
-                        <span class="flex-1">{{ item.productName }}</span>
-                        <span>{{ item.unitPrice * item.quantity | money }}</span>
-                      </li>
-                    }
-                  </ul>
-                  <div class="mb-2 flex justify-between border-t border-panal pt-2 text-[12.5px]">
-                    <span class="text-tinta-media">{{ order.waiterName }}</span>
-                    <span class="font-bold">{{ total(order) | money }}</span>
-                  </div>
-                  @if (order.status !== 'entregado') {
-                    <button
-                      type="button"
-                      (click)="store.advanceOrder(order.id)"
-                      class="w-full cursor-pointer rounded-[9px] border-none bg-tinta py-2 text-xs font-semibold text-lino hover:bg-cacao-hover"
-                    >
-                      {{ ('order.status.' + order.status + '_next') | translate }}
-                    </button>
-                  }
-                </article>
+                <app-order-card
+                  [order]="order"
+                  [showMeta]="true"
+                  [actionFull]="true"
+                  [actionLabel]="order.status !== 'entregado'
+                    ? (('order.status.' + order.status + '_next') | translate)
+                    : null"
+                  (advance)="store.advanceOrder(order.id)"
+                />
               }
             </div>
           </section>
@@ -73,7 +52,6 @@ const COLUMNS: OrderStatus[] = ['recibido', 'preparando', 'listo', 'entregado'];
 export class OrdersBoardComponent {
   protected readonly store = inject(RestaurantStore);
   protected readonly orderUi = ORDER_STATUS_UI;
-  protected readonly total = orderTotal;
 
   protected readonly columns = computed(() =>
     COLUMNS.map((status) => ({

@@ -8,11 +8,12 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { RestaurantStore } from '../../../core/application/restaurant.store';
+import { ChipBtnDirective } from '../../../shared/chip-btn.directive';
 import { defaultWorkSchedule, type DaySchedule, type WorkSchedule } from '../../../core/domain/entities/entities';
 
 @Component({
   selector: 'app-schedule',
-  imports: [FormsModule, TranslatePipe],
+  imports: [FormsModule, TranslatePipe, ChipBtnDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="max-w-[860px]" data-testid="admin-horarios">
@@ -24,12 +25,8 @@ import { defaultWorkSchedule, type DaySchedule, type WorkSchedule } from '../../
       <!-- Selección de empleado -->
       <div class="mb-4 flex flex-wrap gap-2">
         @for (w of workers(); track w.id) {
-          <button
-            type="button"
-            (click)="selectedId.set(w.id)"
-            class="cursor-pointer rounded-full border px-3.5 py-2 text-[12.5px] font-semibold transition"
-            [class]="selectedId() === w.id ? 'border-terracota bg-terracota text-lino-calido' : 'border-borde bg-papel text-tinta-suave hover:border-terracota'"
-          >
+          <button chipBtn variant="outlined" [active]="selectedId() === w.id" type="button"
+            (click)="selectedId.set(w.id)" class="px-3.5 py-2 text-[12.5px]">
             {{ w.fullName }}
           </button>
         }

@@ -38,6 +38,7 @@ import {
   WorkScheduleRepository,
 } from '../domain/repositories/repositories';
 import { ToastService } from '../../shared/toast/toast.service';
+import { CurrencyService } from '../../shared/currency.service';
 import { compressImage } from '../../shared/image-utils';
 
 /** Orden natural del flujo de una comanda. */
@@ -62,6 +63,7 @@ export class RestaurantStore {
   private paymentsRepo = inject(PaymentsRepository);
   private scheduleRepo = inject(WorkScheduleRepository);
   private toast = inject(ToastService);
+  private currencyService = inject(CurrencyService);
 
   readonly settings = signal<RestaurantSettings>({
     name: 'Casa Nogal',
@@ -70,6 +72,7 @@ export class RestaurantStore {
     seasonStart: null,
     seasonEnd: null,
     logoUrl: null,
+    currency: '$',
   });
   readonly categories = signal<Category[]>([]);
   readonly products = signal<Product[]>([]);
@@ -128,7 +131,10 @@ export class RestaurantStore {
         this.paymentsRepo.getMethods(),
         this.scheduleRepo.getSchedules().catch(() => [] as WorkSchedule[]),
       ]);
-    if (settings.status === 'fulfilled') this.settings.set(settings.value);
+    if (settings.status === 'fulfilled') {
+      this.settings.set(settings.value);
+      this.currencyService.symbol.set(settings.value.currency ?? '$');
+    }
     if (categories.status === 'fulfilled') this.categories.set(categories.value);
     if (products.status === 'fulfilled') this.products.set(products.value);
     if (tables.status === 'fulfilled') this.tables.set(tables.value);
@@ -490,6 +496,14 @@ export class RestaurantStore {
   async setRestaurantName(name: string): Promise<void> {
     this.settings.update((s) => ({ ...s, name }));
     await this.settingsRepo.updateSettings({ name });
+  }
+
+  /** Cambia el símbolo de moneda visible en toda la app (precios, totales, caja). */
+  async setCurrency(currency: string): Promise<void> {
+    this.settings.update((s) => ({ ...s, currency }));
+    this.currencyService.symbol.set(currency);
+    await this.settingsRepo.updateSettings({ currency });
+    this.toast.show('toast.currency_updated');
   }
 
   /** Sube el logo a Storage y lo propaga a todo el sistema. */

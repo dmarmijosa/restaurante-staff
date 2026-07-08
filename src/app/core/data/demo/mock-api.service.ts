@@ -141,10 +141,17 @@ export class MockApiService {
     return this.respond(this.orders);
   }
   async placeOrder(tableNumber: number, items: OrderItem[]): Promise<Order> {
+    // Resuelve el mesero asignado a la mesa; si no hay asignación, muestra '—'.
+    const table = this.tables.find((t) => t.number === tableNumber);
+    const waiterId = table?.waiterId ?? null;
+    const waiter = waiterId ? this.staff.find((s) => s.id === waiterId) : null;
+    const waiterName = waiter ? waiter.fullName : '—';
+
     const order: Order = {
       id: Math.max(1040, ...this.orders.map((o) => o.id)) + 1,
       tableNumber,
-      waiterName: 'Carlos M.',
+      waiterId,
+      waiterName,
       status: 'recibido',
       createdAt: 'ahora',
       createdAtMs: Date.now(),

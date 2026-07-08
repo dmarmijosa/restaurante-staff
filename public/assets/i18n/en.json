@@ -385,7 +385,8 @@
     "role_updated": "Role updated",
     "call_attended": "Call attended — waiter on the way",
     "admin_name_required": "Enter the admin's name",
-    "category_name_required": "Give the product a name"
+    "category_name_required": "Give the product a name",
+    "currency_updated": "Currency updated"
   },
   "weekday": {
     "0": "Monday",

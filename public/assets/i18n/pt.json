@@ -385,7 +385,8 @@
     "role_updated": "Papel atualizado",
     "call_attended": "Chamada atendida — garçom a caminho",
     "admin_name_required": "Digite o nome do administrador",
-    "category_name_required": "Dê um nome ao produto"
+    "category_name_required": "Dê um nome ao produto",
+    "currency_updated": "Moeda atualizada"
   },
   "weekday": {
     "0": "Segunda",

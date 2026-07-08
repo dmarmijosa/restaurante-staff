@@ -11,6 +11,7 @@ import { RestaurantStore } from '../../../core/application/restaurant.store';
 import { AuthService } from '../../../core/auth/auth.service';
 import { isSupabaseConfigured } from '../../../core/data/supabase/supabase-client.service';
 import { MoneyPipe } from '../../../shared/money.pipe';
+import { ChipBtnDirective } from '../../../shared/chip-btn.directive';
 import {
   averagePrepMinutes,
   averageTicket,
@@ -24,7 +25,7 @@ type Range = 'hoy' | '7d' | '30d' | 'todo';
 
 @Component({
   selector: 'app-dashboard',
-  imports: [MoneyPipe, RouterLink, TranslatePipe],
+  imports: [MoneyPipe, RouterLink, TranslatePipe, ChipBtnDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div data-testid="admin-resumen">
@@ -52,12 +53,8 @@ type Range = 'hoy' | '7d' | '30d' | 'todo';
         <!-- Filtro por fecha -->
         <div class="flex gap-1.5" role="group" aria-label="Periodo">
           @for (r of rangeChips; track r.key) {
-            <button
-              type="button"
-              (click)="range.set(r.key)"
-              class="cursor-pointer rounded-full border-none px-3.5 py-2 text-[12px] font-semibold"
-              [class]="range() === r.key ? 'bg-tinta text-lino' : 'bg-panal text-tinta-suave'"
-            >
+            <button chipBtn [active]="range() === r.key" type="button"
+              (click)="range.set(r.key)" class="px-3.5 py-2 text-[12px]">
               {{ r.label | translate }}
             </button>
           }

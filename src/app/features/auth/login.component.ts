@@ -113,9 +113,33 @@ import { isSupabaseConfigured } from '../../core/data/supabase/supabase-client.s
           </button>
 
           @if (demoMode) {
-            <div class="mt-5 rounded-[10px] border-[1.5px] border-dashed border-borde-punteado p-3.5 text-[11.5px] leading-relaxed text-tinta-media">
-              <strong>Modo demo</strong> — sin Supabase configurado. Cuentas de prueba:<br />
-              admin&#64;demo.dev / admin123 &nbsp;·&nbsp; mesero&#64;demo.dev / mesero123 &nbsp;·&nbsp; cocina&#64;demo.dev / cocina123
+            <div class="mt-5 border-t border-borde pt-4">
+              <div class="mb-2.5 flex items-center gap-2 text-[11.5px] font-semibold text-tinta-media">
+                <span class="h-1.5 w-1.5 rounded-full bg-oliva"></span>
+                {{ 'login.demo_quick_access' | translate }}
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                @for (acc of demoAccounts; track acc.role) {
+                  <button
+                    type="button"
+                    [attr.data-testid]="'demo-' + acc.role"
+                    (click)="loginDemo(acc.email, acc.password)"
+                    [disabled]="loading()"
+                    class="flex items-center gap-2 rounded-[10px] border border-borde bg-crema px-3 py-2.5 text-left transition hover:border-terracota hover:bg-papel disabled:opacity-60"
+                  >
+                    <span
+                      class="flex h-7 w-7 flex-none items-center justify-center rounded-full bg-terracota text-[11px] font-bold text-lino-calido"
+                    >
+                      {{ acc.initial }}
+                    </span>
+                    <span class="min-w-0">
+                      <span class="block text-[12.5px] font-semibold text-tinta">{{ acc.label | translate }}</span>
+                      <span class="block truncate text-[10.5px] text-tinta-media">{{ acc.email }}</span>
+                    </span>
+                  </button>
+                }
+              </div>
+              <p class="mt-2.5 text-[10.5px] text-tinta-media">{{ 'login.demo_hint' | translate }}</p>
             </div>
           }
         </form>
@@ -140,10 +164,10 @@ export class LoginComponent implements OnInit {
   protected readonly showPassword = signal(false);
 
   protected readonly demoAccounts = [
-    { role: 'admin',  label: 'Administrador', initial: 'A',  email: 'admin@demo.dev',  password: 'admin123'  },
-    { role: 'mesero', label: 'Mesero',         initial: 'M',  email: 'mesero@demo.dev', password: 'mesero123' },
-    { role: 'cocina', label: 'Cocina',          initial: 'C',  email: 'cocina@demo.dev', password: 'cocina123' },
-    { role: 'cajero', label: 'Cajero',          initial: 'Ca', email: 'cajero@demo.dev', password: 'cajero123' },
+    { role: 'admin', label: 'topbar.area.admin', initial: 'A', email: 'admin@demo.dev', password: 'admin123' },
+    { role: 'mesero', label: 'topbar.area.waiter', initial: 'M', email: 'mesero@demo.dev', password: 'mesero123' },
+    { role: 'cocina', label: 'topbar.area.kitchen', initial: 'C', email: 'cocina@demo.dev', password: 'cocina123' },
+    { role: 'cajero', label: 'topbar.area.cashier', initial: 'Ca', email: 'cajero@demo.dev', password: 'cajero123' },
   ];
 
   protected readonly emailTouched = signal(false);

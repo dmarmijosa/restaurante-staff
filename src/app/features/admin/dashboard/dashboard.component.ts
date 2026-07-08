@@ -6,6 +6,7 @@
  */
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { RestaurantStore } from '../../../core/application/restaurant.store';
 import { AuthService } from '../../../core/auth/auth.service';
 import { isSupabaseConfigured } from '../../../core/data/supabase/supabase-client.service';
@@ -23,7 +24,7 @@ type Range = 'hoy' | '7d' | '30d' | 'todo';
 
 @Component({
   selector: 'app-dashboard',
-  imports: [MoneyPipe, RouterLink],
+  imports: [MoneyPipe, RouterLink, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div data-testid="admin-resumen">
@@ -32,23 +33,21 @@ type Range = 'hoy' | '7d' | '30d' | 'todo';
         <div class="mb-5 rounded-2xl border-[1.5px] border-dashed border-borde-punteado bg-papel p-5 flex items-center gap-4">
           <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-terracota font-serif text-xl font-bold text-lino-calido">R</div>
           <div class="flex-1">
-            <div class="font-semibold text-tinta">Crea tu primer restaurante</div>
-            <div class="mt-0.5 text-[12.5px] text-tinta-media">Aún no hay ningún restaurante registrado en este despliegue.</div>
+            <div class="font-semibold text-tinta">{{ 'admin.dashboard.create_title' | translate }}</div>
+            <div class="mt-0.5 text-[12.5px] text-tinta-media">{{ 'admin.dashboard.create_hint' | translate }}</div>
           </div>
           <a
             routerLink="/nuevo-restaurante"
             class="shrink-0 rounded-[10px] bg-terracota px-4 py-2.5 text-[13px] font-bold text-lino-calido hover:bg-terracota-hover"
           >
-            Crear restaurante
+            {{ 'admin.dashboard.create_cta' | translate }}
           </a>
         </div>
       }
       <div class="mb-4 flex flex-wrap items-end gap-4">
         <div class="flex-1">
-          <h1 class="m-0 font-serif text-[27px] font-semibold">Resumen</h1>
-          <p class="mt-1 mb-0 text-[13px] text-tinta-media">
-            Ingresos, cobros por método y lo que más se pide — en el periodo elegido.
-          </p>
+          <h1 class="m-0 font-serif text-[27px] font-semibold">{{ 'admin.dashboard.title' | translate }}</h1>
+          <p class="mt-1 mb-0 text-[13px] text-tinta-media">{{ 'admin.dashboard.subtitle' | translate }}</p>
         </div>
         <!-- Filtro por fecha -->
         <div class="flex gap-1.5" role="group" aria-label="Periodo">
@@ -59,7 +58,7 @@ type Range = 'hoy' | '7d' | '30d' | 'todo';
               class="cursor-pointer rounded-full border-none px-3.5 py-2 text-[12px] font-semibold"
               [class]="range() === r.key ? 'bg-tinta text-lino' : 'bg-panal text-tinta-suave'"
             >
-              {{ r.label }}
+              {{ r.label | translate }}
             </button>
           }
         </div>
@@ -79,10 +78,10 @@ type Range = 'hoy' | '7d' | '30d' | 'todo';
       <div class="grid grid-cols-1 gap-3.5 lg:grid-cols-2">
         <!-- Ventas por método de pago -->
         <section class="rounded-[14px] border border-borde bg-papel px-5 py-[18px]">
-          <div class="mb-3.5 text-[13px] font-semibold">Ventas por método de pago</div>
+          <div class="mb-3.5 text-[13px] font-semibold">{{ 'admin.dashboard.by_method' | translate }}</div>
           @if (methods().length === 0) {
             <div class="rounded-[10px] border-[1.5px] border-dashed border-borde-punteado p-6 text-center text-xs text-tinta-media">
-              Aún no hay cobros registrados.
+              {{ 'admin.dashboard.no_sales' | translate }}
             </div>
           }
           <div class="flex flex-col gap-3">
@@ -90,7 +89,7 @@ type Range = 'hoy' | '7d' | '30d' | 'todo';
               <div>
                 <div class="mb-1 flex items-baseline gap-2 text-[12.5px]">
                   <span class="font-semibold">{{ m.method }}</span>
-                  <span class="text-tinta-media">· {{ m.count }} {{ m.count === 1 ? 'cobro' : 'cobros' }}</span>
+                  <span class="text-tinta-media">· {{ m.count }} {{ (m.count === 1 ? 'admin.dashboard.charge_one' : 'admin.dashboard.charge_many') | translate }}</span>
                   <span class="flex-1"></span>
                   <span class="font-bold">{{ m.total | money }}</span>
                 </div>
@@ -104,10 +103,10 @@ type Range = 'hoy' | '7d' | '30d' | 'todo';
 
         <!-- Productos más vendidos -->
         <section class="rounded-[14px] border border-borde bg-papel px-5 py-[18px]">
-          <div class="mb-3.5 text-[13px] font-semibold">Productos más vendidos</div>
+          <div class="mb-3.5 text-[13px] font-semibold">{{ 'admin.dashboard.top' | translate }}</div>
           @if (products().length === 0) {
             <div class="rounded-[10px] border-[1.5px] border-dashed border-borde-punteado p-6 text-center text-xs text-tinta-media">
-              Todavía no hay pedidos.
+              {{ 'admin.dashboard.no_top' | translate }}
             </div>
           }
           <div class="flex flex-col gap-3">
@@ -116,7 +115,7 @@ type Range = 'hoy' | '7d' | '30d' | 'todo';
                 <div class="mb-1 flex items-baseline gap-2 text-[12.5px]">
                   <span class="font-semibold">{{ p.name }}</span>
                   <span class="flex-1"></span>
-                  <span class="text-tinta-media">{{ p.quantity }} uds · {{ p.revenue | money }}</span>
+                  <span class="text-tinta-media">{{ p.quantity }} {{ 'admin.dashboard.units' | translate }} · {{ p.revenue | money }}</span>
                 </div>
                 <div class="h-2.5 overflow-hidden rounded-full bg-panal">
                   <div class="h-full rounded-full bg-oliva" [style.width.%]="pct(p.quantity, maxProductQty())"></div>
@@ -143,10 +142,10 @@ export class DashboardComponent implements OnInit {
   }
 
   protected readonly rangeChips: Array<{ key: Range; label: string }> = [
-    { key: 'hoy', label: 'Hoy' },
-    { key: '7d', label: '7 días' },
-    { key: '30d', label: '30 días' },
-    { key: 'todo', label: 'Todo' },
+    { key: 'hoy', label: 'admin.range.hoy' },
+    { key: '7d', label: 'admin.range.d7' },
+    { key: '30d', label: 'admin.range.d30' },
+    { key: 'todo', label: 'admin.range.todo' },
   ];
   /** Periodo seleccionado; por defecto "Hoy" (lo más útil para la operación diaria). */
   protected readonly range = signal<Range>('hoy');
@@ -183,22 +182,21 @@ export class DashboardComponent implements OnInit {
     Math.max(1, ...this.products().map((p) => p.quantity)),
   );
 
+  private translate = inject(TranslateService);
+
   protected readonly kpis = computed(() => {
     const orders = this.orders();
     const paid = orders.filter((o) => o.paid).length;
     const pending = orders.filter((o) => !o.paid).length;
+    const t = (k: string, p?: object) => this.translate.instant(k, p);
     const money = (n: number) => '$' + n.toFixed(2);
     const prep = averagePrepMinutes(orders);
     return [
-      { label: 'INGRESOS COBRADOS', value: money(totalRevenue(orders)), hint: paid + ' pedidos cobrados' },
-      { label: 'TICKET MEDIO', value: money(averageTicket(orders)), hint: 'por pedido cobrado' },
-      { label: 'PEDIDOS', value: String(orders.length), hint: paid + ' cobrados · ' + pending + ' pendientes' },
-      { label: 'POR COBRAR', value: String(pending), hint: 'pedidos sin pagar' },
-      {
-        label: 'TIEMPO DE COCINA',
-        value: prep === null ? '—' : prep + ' min',
-        hint: 'promedio recibido → listo',
-      },
+      { label: t('admin.dashboard.revenue'), value: money(totalRevenue(orders)), hint: t('admin.dashboard.revenue_hint', { count: paid }) },
+      { label: t('admin.dashboard.avg'), value: money(averageTicket(orders)), hint: t('admin.dashboard.avg_hint') },
+      { label: t('admin.dashboard.orders'), value: String(orders.length), hint: t('admin.dashboard.orders_hint', { paid, pending }) },
+      { label: t('admin.dashboard.tocharge'), value: String(pending), hint: t('admin.dashboard.tocharge_hint') },
+      { label: t('admin.dashboard.ktime'), value: prep === null ? '—' : prep + ' min', hint: t('admin.dashboard.ktime_hint') },
     ];
   });
 

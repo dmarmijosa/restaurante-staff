@@ -30,6 +30,12 @@ No necesitas saber programar: solo copiar y pegar en los sitios que te indico.
 
 ## 2. Probar la app sin instalar nada (modo demostración)
 
+> **Atajo:** en la pantalla de acceso, en modo demo, hay **botones de entrada rápida**
+> (Administrador, Mesero, Cocina, Cajero): un clic y entras con ese rol, sin escribir nada.
+> Y desde el panel de administración, el botón **«Salir del modo demo»** te pide la URL y la
+> clave publishable de tu Supabase para pasar a trabajar con tu propia base (ver §4).
+
+
 Si solo quieres **verla funcionando**, alguien con conocimientos técnicos puede
 ejecutarla en "modo demo" (con datos de ejemplo, sin base de datos). Las cuentas
 de prueba son:
@@ -134,6 +140,7 @@ sección (puedes repetirla con el botón **"Ver guía del panel"**). Un recorrid
 - **Menú y productos**: crea tus platillos, súbeles una **foto** y actívalos/desactívalos.
 - **Categorías**: agrupa el menú (Entradas, Postres…).
 - **Meseros y turnos**: da de alta a tu equipo — **mesero, cocina o cajero** — con su turno; aquí también das de baja (borra sus datos de forma permanente).
+- **Horarios**: define el horario semanal de cada empleado (día, franja y descansos). Cada trabajador ve su horario de hoy en la barra superior al iniciar sesión.
 - **Métodos de pago**: define cómo cobra la caja (efectivo, tarjeta, transferencia o los que añadas).
 - **Temporada y horario**: abre o cierra el restaurante y fija las fechas de temporada.
 - **Ajustes**: nombre y logo del restaurante y cuentas de administración.

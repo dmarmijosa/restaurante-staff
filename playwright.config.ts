@@ -13,6 +13,10 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:4200',
     trace: 'on-first-retry',
+    // Locale fijo para que la detección de idioma sea determinista: los specs
+    // están escritos con los textos en español (la app detecta el idioma del
+    // navegador, y el Chromium de Playwright reportaría 'en' por defecto).
+    locale: 'es-ES',
   },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },

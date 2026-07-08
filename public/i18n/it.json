@@ -22,7 +22,9 @@
       "screen": "Schermo",
       "register": "Cassa",
       "mobile_qr": "Mobile · QR"
-    }
+    },
+    "today": "Oggi",
+    "day_off": "Oggi riposo"
   },
   "client": {
     "via_qr": "tramite codice QR",
@@ -85,7 +87,9 @@
     "email_invalid": "Inserisci un'e-mail valida.",
     "password_required": "Inserisci la tua password.",
     "error_invalid": "Credenziali errate. Controlla e-mail e password.",
-    "error_unknown": "Accesso non riuscito. Riprova."
+    "error_unknown": "Accesso non riuscito. Riprova.",
+    "demo_quick_access": "Accesso demo rapido",
+    "demo_hint": "Dati di esempio in memoria: si azzerano al ricaricamento."
   },
   "register": {
     "badge": "NUOVO RISTORANTE",
@@ -171,7 +175,8 @@
       "pagos": "Metodi di pagamento",
       "temporada": "Stagione e orari",
       "ajustes": "Impostazioni",
-      "area": "Amministrazione"
+      "area": "Amministrazione",
+      "horarios": "Orari"
     },
     "tour": {
       "welcome_title": "Benvenuto nel tuo pannello!",
@@ -190,48 +195,39 @@
       "temporada_desc": "Apri/chiudi il ristorante e imposta la stagione; controlla se il QR accetta ordini.",
       "ajustes_desc": "Nome e logo del ristorante e account di amministrazione.",
       "multirestaurant_title": "Hai altri locali?",
-      "multirestaurant_desc": "Questa piattaforma supporta più ristoranti in un unico deployment. Per creare un secondo locale visita <strong>/nuevo-restaurante</strong> — ognuno ha il proprio menu, team, tavoli e ordini completamente separati."
+      "multirestaurant_desc": "Questa piattaforma supporta più ristoranti in un unico deployment. Per creare un secondo locale visita <strong>/nuevo-restaurante</strong> — ognuno ha il proprio menu, team, tavoli e ordini completamente separati.",
+      "horarios_desc": "Imposta l’orario settimanale di ogni dipendente; ognuno lo vede dopo l’accesso."
     },
     "dashboard": {
+      "revenue": "INCASSI",
+      "avg": "SCONTRINO MEDIO",
+      "orders": "ORDINI",
+      "tocharge": "DA INCASSARE",
+      "ktime": "TEMPO CUCINA",
+      "revenue_hint": "{count} ordini incassati",
+      "avg_hint": "per ordine incassato",
+      "orders_hint": "{paid} incassati · {pending} in sospeso",
+      "tocharge_hint": "ordini non pagati",
+      "ktime_hint": "media ricevuto → pronto",
+      "by_method": "Vendite per metodo di pagamento",
+      "top": "Prodotti più venduti",
+      "no_sales": "Nessuna vendita in questo periodo.",
+      "no_top": "Ancora nessun ordine.",
       "title": "Riepilogo",
-      "subtitle": "Ricavi, pagamenti per metodo e i più ordinati — per il periodo selezionato.",
-      "range_today": "Oggi",
-      "range_7d": "7 giorni",
-      "range_30d": "30 giorni",
-      "range_all": "Tutto",
-      "period_label": "Periodo",
-      "kpi_revenue": "Ricavi",
-      "kpi_avg_ticket": "Scontrino medio",
-      "kpi_orders": "Ordini incassati",
-      "kpi_avg_cook": "Tempo medio cucina",
-      "kpi_revenue_hint": "Somma degli ordini incassati",
-      "kpi_orders_hint": "Ordini pagati nel periodo",
-      "kpi_cook_hint": "Da ricevuto a pronto",
-      "sales_by_method": "Vendite per metodo di pagamento",
-      "top_products": "Prodotti più venduti",
-      "no_charges": "Nessun incasso registrato.",
-      "no_orders": "Nessun ordine ancora.",
-      "charge_one": "{{count}} incasso",
-      "charge_many": "{{count}} incassi"
+      "subtitle": "Incassi, pagamenti per metodo e i piatti più richiesti — nel periodo scelto.",
+      "create_title": "Crea il tuo primo ristorante",
+      "create_hint": "Nessun ristorante registrato in questo deployment.",
+      "create_cta": "Crea ristorante",
+      "units": "u",
+      "charge_one": "incasso",
+      "charge_many": "incassi"
     },
     "orders": {
       "title": "Ordini",
       "subtitle": "Ordini della sala in tempo reale. Gli ordini dal menu QR arrivano qui e al cameriere del tavolo.",
       "mesa": "Tavolo"
     },
-    "menu": {
-      "title": "Menu e prodotti",
-      "subtitle": "Ciò che attivi qui appare istantaneamente nel menu pubblico del cliente.",
-      "new_product": "+ Nuovo prodotto",
-      "product_name_placeholder": "Nome del prodotto",
-      "price_placeholder": "Prezzo",
-      "save": "Salva",
-      "upload_photo": "Carica foto",
-      "change_photo": "Cambia foto",
-      "availability": "Disponibilità di {{name}}",
-      "sold_out": "ESAURITO",
-      "all": "Tutte"
-    },
+    "menu": "Apri il menu",
     "categories": {
       "title": "Categorie",
       "subtitle": "Organizzano il menu pubblico e i filtri del pannello.",
@@ -309,7 +305,20 @@
       "subtitle": "Ordini e cassa del periodo selezionato.",
       "unpaid": "Non pagato",
       "orders_count": "{{count}} ordini nel periodo.",
-      "total": "Totale"
+      "total": "Totale",
+      "col_table": "TAVOLO",
+      "col_items": "ARTICOLI",
+      "col_total": "TOTALE",
+      "col_status": "STATO",
+      "col_charge": "PAGAMENTO",
+      "no_orders": "Nessun ordine in questo periodo.",
+      "total_charged": "TOTALE INCASSATO",
+      "charges": "INCASSI",
+      "methods_used": "METODI USATI",
+      "breakdown": "Dettaglio per metodo",
+      "no_breakdown": "Nessun incasso in questo periodo.",
+      "charges_period": "Incassi del periodo",
+      "no_charges": "Nessun incasso."
     },
     "floor_plan": {
       "title": "Planimetria",
@@ -320,6 +329,21 @@
       "split": "Separa",
       "mesa": "Tavolo",
       "tables": "Tavoli"
+    },
+    "schedule": {
+      "title": "Orario di lavoro",
+      "subtitle": "Turni settimanali per dipendente. Ogni lavoratore vede il proprio orario dopo l’accesso.",
+      "no_staff": "Aggiungi prima i dipendenti in «Camerieri e turni».",
+      "works": "Lavora",
+      "day_off": "Riposo",
+      "save": "Salva orario",
+      "weekly_hours": "h/settimana"
+    },
+    "range": {
+      "hoy": "Oggi",
+      "d7": "7 giorni",
+      "d30": "30 giorni",
+      "todo": "Tutto"
     }
   },
   "qr": {
@@ -361,5 +385,25 @@
     "call_attended": "Chiamata gestita — cameriere in arrivo",
     "admin_name_required": "Inserisci il nome dell'amministratore",
     "category_name_required": "Dai un nome al prodotto"
+  },
+  "weekday": {
+    "0": "Lunedì",
+    "1": "Martedì",
+    "2": "Mercoledì",
+    "3": "Giovedì",
+    "4": "Venerdì",
+    "5": "Sabato",
+    "6": "Domenica"
+  },
+  "connect": {
+    "exit_demo": "Esci dalla demo",
+    "title": "Connetti il tuo Supabase",
+    "subtitle": "Incolla URL e chiave publishable del tuo progetto. L’app uscirà dalla demo e userà il tuo database (vuoto, da zero).",
+    "url_label": "URL del progetto",
+    "key_label": "Chiave publishable (anon)",
+    "hint": "In Supabase → Project Settings → API. La chiave publishable è sicura lato client.",
+    "cancel": "Annulla",
+    "submit": "Connetti e ricarica",
+    "error_invalid": "Controlla l’URL (https://…supabase.co) e la chiave."
   }
 }

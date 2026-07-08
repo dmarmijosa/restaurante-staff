@@ -22,7 +22,9 @@
       "screen": "Pantalla",
       "register": "Caixa",
       "mobile_qr": "Mòbil · QR"
-    }
+    },
+    "today": "Avui",
+    "day_off": "Avui festa"
   },
   "client": {
     "via_qr": "via codi QR",
@@ -85,7 +87,9 @@
     "email_invalid": "Escriu un correu vàlid.",
     "password_required": "Escriu la teva contrasenya.",
     "error_invalid": "Credencials incorrectes. Revisa el correu i la contrasenya.",
-    "error_unknown": "No s'ha pogut iniciar sessió. Torna-ho a intentar."
+    "error_unknown": "No s'ha pogut iniciar sessió. Torna-ho a intentar.",
+    "demo_quick_access": "Accés ràpid de demostració",
+    "demo_hint": "Dades d'exemple en memòria. Es restableixen en recarregar."
   },
   "register": {
     "badge": "NOU RESTAURANT",
@@ -171,7 +175,8 @@
       "pagos": "Mètodes de pagament",
       "temporada": "Temporada i horari",
       "ajustes": "Ajustos",
-      "area": "Administració"
+      "area": "Administració",
+      "horarios": "Horaris"
     },
     "tour": {
       "welcome_title": "Benvingut al teu tauler!",
@@ -190,48 +195,39 @@
       "temporada_desc": "Obre/tanca el restaurant i defineix la temporada; controla si el QR accepta comandes.",
       "ajustes_desc": "Nom i logotip del restaurant i comptes d'administració.",
       "multirestaurant_title": "Tens més locals?",
-      "multirestaurant_desc": "Aquesta plataforma suporta múltiples restaurants en un sol desplegament. Per crear un segon local visita <strong>/nuevo-restaurante</strong> — cadascun té el seu propi menú, equip, taules i comandes completament separats."
+      "multirestaurant_desc": "Aquesta plataforma suporta múltiples restaurants en un sol desplegament. Per crear un segon local visita <strong>/nuevo-restaurante</strong> — cadascun té el seu propi menú, equip, taules i comandes completament separats.",
+      "horarios_desc": "Defineix l’horari setmanal de cada empleat; cada treballador el veu en iniciar sessió."
     },
     "dashboard": {
+      "revenue": "INGRESSOS",
+      "avg": "TIQUET MITJÀ",
+      "orders": "COMANDES",
+      "tocharge": "PER COBRAR",
+      "ktime": "TEMPS DE CUINA",
+      "revenue_hint": "{count} comandes cobrades",
+      "avg_hint": "per comanda cobrada",
+      "orders_hint": "{paid} cobrades · {pending} pendents",
+      "tocharge_hint": "comandes sense pagar",
+      "ktime_hint": "mitjana rebut → llest",
+      "by_method": "Vendes per mètode de pagament",
+      "top": "Productes més venuts",
+      "no_sales": "Encara no hi ha vendes en aquest període.",
+      "no_top": "Encara no hi ha comandes.",
       "title": "Resum",
       "subtitle": "Ingressos, cobraments per mètode i el que més es demana — en el període triat.",
-      "range_today": "Avui",
-      "range_7d": "7 dies",
-      "range_30d": "30 dies",
-      "range_all": "Tot",
-      "period_label": "Període",
-      "kpi_revenue": "Ingressos",
-      "kpi_avg_ticket": "Tiquet mitjà",
-      "kpi_orders": "Comandes cobrades",
-      "kpi_avg_cook": "Temps mitjà cuina",
-      "kpi_revenue_hint": "Suma de comandes cobrades",
-      "kpi_orders_hint": "Comandes pagades en el període",
-      "kpi_cook_hint": "Des de rebut fins a llest",
-      "sales_by_method": "Vendes per mètode de pagament",
-      "top_products": "Productes més venuts",
-      "no_charges": "Encara no hi ha cobraments registrats.",
-      "no_orders": "Encara no hi ha comandes.",
-      "charge_one": "{{count}} cobrament",
-      "charge_many": "{{count}} cobraments"
+      "create_title": "Crea el teu primer restaurant",
+      "create_hint": "Encara no hi ha cap restaurant registrat en aquest desplegament.",
+      "create_cta": "Crea restaurant",
+      "units": "u",
+      "charge_one": "cobrament",
+      "charge_many": "cobraments"
     },
     "orders": {
       "title": "Comandes",
       "subtitle": "Comandes del saló en temps real. Les comandes del menú QR arriben aquí i al cambrer de la taula.",
       "mesa": "Taula"
     },
-    "menu": {
-      "title": "Menú i productes",
-      "subtitle": "El que activis aquí apareix a l'instant al menú públic del client.",
-      "new_product": "+ Nou producte",
-      "product_name_placeholder": "Nom del producte",
-      "price_placeholder": "Preu",
-      "save": "Desar",
-      "upload_photo": "Pujar foto",
-      "change_photo": "Canviar foto",
-      "availability": "Disponibilitat de {{name}}",
-      "sold_out": "ESGOTAT",
-      "all": "Totes"
-    },
+    "menu": "Obre el menú",
     "categories": {
       "title": "Categories",
       "subtitle": "Organitzen el menú públic i els filtres del tauler.",
@@ -309,7 +305,20 @@
       "subtitle": "Comandes i arqueig de caixa del període seleccionat.",
       "unpaid": "Sense cobrar",
       "orders_count": "{{count}} comandes en el període.",
-      "total": "Total"
+      "total": "Total",
+      "col_table": "TAULA",
+      "col_items": "ARTICLES",
+      "col_total": "TOTAL",
+      "col_status": "ESTAT",
+      "col_charge": "COBRAMENT",
+      "no_orders": "No hi ha comandes en aquest període.",
+      "total_charged": "TOTAL COBRAT",
+      "charges": "COBRAMENTS",
+      "methods_used": "MÈTODES USATS",
+      "breakdown": "Desglossament per mètode",
+      "no_breakdown": "No hi ha cobraments en aquest període.",
+      "charges_period": "Cobraments del període",
+      "no_charges": "Sense cobraments."
     },
     "floor_plan": {
       "title": "Plànol del saló",
@@ -320,6 +329,21 @@
       "split": "Separar",
       "mesa": "Taula",
       "tables": "Taules"
+    },
+    "schedule": {
+      "title": "Horari de treball",
+      "subtitle": "Torns setmanals per empleat. Cada treballador veu el seu horari en iniciar sessió.",
+      "no_staff": "Primer dona d’alta empleats a «Cambrers i torns».",
+      "works": "Treballa",
+      "day_off": "Festa",
+      "save": "Desa l’horari",
+      "weekly_hours": "h/setmana"
+    },
+    "range": {
+      "hoy": "Avui",
+      "d7": "7 dies",
+      "d30": "30 dies",
+      "todo": "Tot"
     }
   },
   "qr": {
@@ -361,5 +385,25 @@
     "call_attended": "Trucada atesa — cambrer en camí",
     "admin_name_required": "Escriu el nom de l'administrador",
     "category_name_required": "Posa-li nom al producte"
+  },
+  "weekday": {
+    "0": "Dilluns",
+    "1": "Dimarts",
+    "2": "Dimecres",
+    "3": "Dijous",
+    "4": "Divendres",
+    "5": "Dissabte",
+    "6": "Diumenge"
+  },
+  "connect": {
+    "exit_demo": "Surt del mode demo",
+    "title": "Connecta el teu Supabase",
+    "subtitle": "Enganxa la URL i la clau publishable del teu projecte. L’app deixarà el mode demo i treballarà amb la teva base (buida, des de zero).",
+    "url_label": "URL del projecte",
+    "key_label": "Clau publishable (anon)",
+    "hint": "Són a Supabase → Project Settings → API. La clau publishable és segura per al client.",
+    "cancel": "Cancel·la",
+    "submit": "Connecta i recarrega",
+    "error_invalid": "Revisa la URL (https://…supabase.co) i la clau."
   }
 }

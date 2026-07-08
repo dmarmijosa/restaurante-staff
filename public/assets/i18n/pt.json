@@ -22,7 +22,9 @@
       "screen": "Tela",
       "register": "Caixa",
       "mobile_qr": "Celular · QR"
-    }
+    },
+    "today": "Hoje",
+    "day_off": "Folga hoje"
   },
   "client": {
     "via_qr": "via código QR",
@@ -85,7 +87,9 @@
     "email_invalid": "Digite um e-mail válido.",
     "password_required": "Digite sua senha.",
     "error_invalid": "Credenciais incorretas. Verifique seu e-mail e senha.",
-    "error_unknown": "Não foi possível entrar. Tente novamente."
+    "error_unknown": "Não foi possível entrar. Tente novamente.",
+    "demo_quick_access": "Acesso rápido de demonstração",
+    "demo_hint": "Dados de exemplo em memória — reiniciam ao recarregar."
   },
   "register": {
     "badge": "NOVO RESTAURANTE",
@@ -171,7 +175,8 @@
       "pagos": "Métodos de pagamento",
       "temporada": "Temporada e horário",
       "ajustes": "Configurações",
-      "area": "Administração"
+      "area": "Administração",
+      "horarios": "Horários"
     },
     "tour": {
       "welcome_title": "Bem-vindo ao seu painel!",
@@ -190,48 +195,39 @@
       "temporada_desc": "Abra/feche o restaurante e defina a temporada; controle se o QR aceita pedidos.",
       "ajustes_desc": "Nome e logotipo do restaurante e contas de administração.",
       "multirestaurant_title": "Tem mais locais?",
-      "multirestaurant_desc": "Esta plataforma suporta múltiplos restaurantes em um único deploy. Para criar um segundo local visite <strong>/nuevo-restaurante</strong> — cada um tem seu próprio cardápio, equipe, mesas e pedidos completamente separados."
+      "multirestaurant_desc": "Esta plataforma suporta múltiplos restaurantes em um único deploy. Para criar um segundo local visite <strong>/nuevo-restaurante</strong> — cada um tem seu próprio cardápio, equipe, mesas e pedidos completamente separados.",
+      "horarios_desc": "Defina o horário semanal de cada funcionário; cada trabalhador o vê ao entrar."
     },
     "dashboard": {
+      "revenue": "RECEITA",
+      "avg": "TICKET MÉDIO",
+      "orders": "PEDIDOS",
+      "tocharge": "A COBRAR",
+      "ktime": "TEMPO DE COZINHA",
+      "revenue_hint": "{count} pedidos cobrados",
+      "avg_hint": "por pedido cobrado",
+      "orders_hint": "{paid} cobrados · {pending} pendentes",
+      "tocharge_hint": "pedidos por pagar",
+      "ktime_hint": "média recebido → pronto",
+      "by_method": "Vendas por método de pagamento",
+      "top": "Produtos mais vendidos",
+      "no_sales": "Ainda não há vendas neste período.",
+      "no_top": "Ainda não há pedidos.",
       "title": "Resumo",
-      "subtitle": "Receita, cobranças por método e o mais pedido — no período selecionado.",
-      "range_today": "Hoje",
-      "range_7d": "7 dias",
-      "range_30d": "30 dias",
-      "range_all": "Tudo",
-      "period_label": "Período",
-      "kpi_revenue": "Receita",
-      "kpi_avg_ticket": "Ticket médio",
-      "kpi_orders": "Pedidos cobrados",
-      "kpi_avg_cook": "Tempo médio cozinha",
-      "kpi_revenue_hint": "Soma de pedidos cobrados",
-      "kpi_orders_hint": "Pedidos pagos no período",
-      "kpi_cook_hint": "Do recebido ao pronto",
-      "sales_by_method": "Vendas por método de pagamento",
-      "top_products": "Produtos mais vendidos",
-      "no_charges": "Ainda não há cobranças registradas.",
-      "no_orders": "Ainda não há pedidos.",
-      "charge_one": "{{count}} cobrança",
-      "charge_many": "{{count}} cobranças"
+      "subtitle": "Receita, cobranças por método e o que mais se pede — no período escolhido.",
+      "create_title": "Crie o seu primeiro restaurante",
+      "create_hint": "Ainda não há nenhum restaurante registado neste deployment.",
+      "create_cta": "Criar restaurante",
+      "units": "u",
+      "charge_one": "cobrança",
+      "charge_many": "cobranças"
     },
     "orders": {
       "title": "Pedidos",
       "subtitle": "Pedidos do salão em tempo real. Os pedidos do cardápio QR chegam aqui e ao garçom da mesa.",
       "mesa": "Mesa"
     },
-    "menu": {
-      "title": "Cardápio e produtos",
-      "subtitle": "O que você ativar aqui aparece instantaneamente no cardápio público do cliente.",
-      "new_product": "+ Novo produto",
-      "product_name_placeholder": "Nome do produto",
-      "price_placeholder": "Preço",
-      "save": "Salvar",
-      "upload_photo": "Enviar foto",
-      "change_photo": "Trocar foto",
-      "availability": "Disponibilidade de {{name}}",
-      "sold_out": "ESGOTADO",
-      "all": "Todos"
-    },
+    "menu": "Abrir menu",
     "categories": {
       "title": "Categorias",
       "subtitle": "Organizam o cardápio público e os filtros do painel.",
@@ -309,7 +305,20 @@
       "subtitle": "Pedidos e fechamento de caixa do período selecionado.",
       "unpaid": "Sem cobrar",
       "orders_count": "{{count}} pedidos no período.",
-      "total": "Total"
+      "total": "Total",
+      "col_table": "MESA",
+      "col_items": "ARTIGOS",
+      "col_total": "TOTAL",
+      "col_status": "ESTADO",
+      "col_charge": "PAGAMENTO",
+      "no_orders": "Não há pedidos neste período.",
+      "total_charged": "TOTAL COBRADO",
+      "charges": "COBRANÇAS",
+      "methods_used": "MÉTODOS USADOS",
+      "breakdown": "Detalhe por método",
+      "no_breakdown": "Não há cobranças neste período.",
+      "charges_period": "Cobranças do período",
+      "no_charges": "Sem cobranças."
     },
     "floor_plan": {
       "title": "Planta do salão",
@@ -320,6 +329,21 @@
       "split": "Separar",
       "mesa": "Mesa",
       "tables": "Mesas"
+    },
+    "schedule": {
+      "title": "Horário de trabalho",
+      "subtitle": "Turnos semanais por funcionário. Cada trabalhador vê o seu horário ao entrar.",
+      "no_staff": "Adicione primeiro funcionários em «Garçons e turnos».",
+      "works": "Trabalha",
+      "day_off": "Folga",
+      "save": "Guardar horário",
+      "weekly_hours": "h/semana"
+    },
+    "range": {
+      "hoy": "Hoje",
+      "d7": "7 dias",
+      "d30": "30 dias",
+      "todo": "Tudo"
     }
   },
   "qr": {
@@ -361,5 +385,25 @@
     "call_attended": "Chamada atendida — garçom a caminho",
     "admin_name_required": "Digite o nome do administrador",
     "category_name_required": "Dê um nome ao produto"
+  },
+  "weekday": {
+    "0": "Segunda",
+    "1": "Terça",
+    "2": "Quarta",
+    "3": "Quinta",
+    "4": "Sexta",
+    "5": "Sábado",
+    "6": "Domingo"
+  },
+  "connect": {
+    "exit_demo": "Sair do modo demo",
+    "title": "Conecte o seu Supabase",
+    "subtitle": "Cole a URL e a chave publishable do seu projeto. A app sairá do modo demo e usará a sua base (vazia, do zero).",
+    "url_label": "URL do projeto",
+    "key_label": "Chave publishable (anon)",
+    "hint": "Estão em Supabase → Project Settings → API. A chave publishable é segura para o cliente.",
+    "cancel": "Cancelar",
+    "submit": "Conectar e recarregar",
+    "error_invalid": "Verifique a URL (https://…supabase.co) e a chave."
   }
 }

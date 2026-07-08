@@ -4,7 +4,7 @@
 
 ## Estado de la aplicación
 
-**v0.6 · Multi-restaurante** — actualizado el 2026-07-04
+**v0.7 · Multi-restaurante + horarios** — actualizado el 2026-07-08
 
 | Módulo                                                                                     | Estado                               |
 | ------------------------------------------------------------------------------------------ | ------------------------------------ |
@@ -33,8 +33,14 @@
 | Recorte manual de imagen antes de subir (logo y productos)                                 | ✅ Completo                          |
 | Bloqueo de registro público tras bootstrap (trigger en `auth.users`)                       | ✅ Completo                          |
 | Manual de instalación para persona natural ([manual.md](manual.md))                        | ✅ Completo                          |
+| Mock API única para el modo demo (todos los roles, con latencia simulada)                  | ✅ Completo                          |
+| Login demo con accesos rápidos por rol (sin credenciales en texto)                         | ✅ Completo                          |
+| Salir del modo demo con credenciales Supabase en runtime (sin recompilar)                  | ✅ Completo                          |
+| Módulo Horario de trabajo (editor semanal por empleado; visible al trabajador)             | ✅ Completo                          |
+| Panel 100% responsivo (drawer móvil, sin scroll horizontal)                                | ✅ Completo                          |
+| Internacionalización (6 idiomas, paridad de claves; dashboard e historial incluidos)       | ✅ Completo                          |
 
-Pruebas: **33 unitarias** (Vitest) y **28 E2E** (Playwright, escritorio + móvil) en verde.
+Pruebas: **33 unitarias** (Vitest) y **29 E2E** (Playwright, escritorio + móvil, `locale: es-ES`) en verde. Build limpio.
 
 > Diseño mejorado con la skill **ui-ux-pro-max** aplicando sus principios (foco visible, `prefers-reduced-motion`, transiciones 150–300 ms, touch targets ≥44px, `min-h-dvh`, validación inline) **sin alterar la identidad visual** (paleta terracota/crema, Instrument Sans + Source Serif 4).
 

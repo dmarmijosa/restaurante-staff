@@ -3,17 +3,15 @@
  *
  * ¿Por qué un servicio propio? supabase-js mantiene estado (sesión, websockets
  * de Realtime); crear más de un cliente duplica conexiones y provoca errores de
- * "Multiple GoTrueClient". Este servicio garantiza una sola instancia y
- * centraliza el punto donde se leen las variables de entorno.
+ * "Multiple GoTrueClient". Este servicio garantiza una sola instancia y lee la
+ * configuración efectiva (localStorage del usuario o variables del build).
  */
 import { Injectable } from '@angular/core';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import { environment } from '../../../../environments/environment';
+import { getSupabaseConfig, isSupabaseConfigured } from './runtime-config';
 
-/** true si hay credenciales; si no, la app entra en modo demo. */
-export function isSupabaseConfigured(): boolean {
-  return Boolean(environment.supabaseUrl && environment.supabaseAnonKey);
-}
+// Re-export para no romper los imports existentes que apuntan a este archivo.
+export { isSupabaseConfigured };
 
 @Injectable({ providedIn: 'root' })
 export class SupabaseClientService {
@@ -21,7 +19,8 @@ export class SupabaseClientService {
 
   get client(): SupabaseClient {
     if (!this._client) {
-      this._client = createClient(environment.supabaseUrl, environment.supabaseAnonKey);
+      const { url, anonKey } = getSupabaseConfig();
+      this._client = createClient(url, anonKey);
     }
     return this._client;
   }

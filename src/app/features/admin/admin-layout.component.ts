@@ -3,7 +3,7 @@
  * pedidos activos), tarjeta de usuario abajo y chip de estado
  * abierto/temporada arriba a la derecha — calcado del diseño.
  */
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { driver } from 'driver.js';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -11,6 +11,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { RestaurantStore } from '../../core/application/restaurant.store';
 import { AuthService } from '../../core/auth/auth.service';
 import { StaffTopbarComponent } from '../../shared/staff-topbar/staff-topbar.component';
+import { ConnectSupabaseDialogComponent } from './connect-supabase/connect-supabase-dialog.component';
+import { isRuntimeConfigured } from '../../core/data/supabase/runtime-config';
+import { isSupabaseConfigured } from '../../core/data/supabase/supabase-client.service';
 import { initialsOf } from '../../shared/ui-maps';
 
 /** Marca en localStorage para no repetir el tour automático cada visita. */
@@ -18,14 +21,25 @@ const TOUR_SEEN_KEY = 'rs-admin-tour-seen';
 
 @Component({
   selector: 'app-admin-layout',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, StaffTopbarComponent, TranslatePipe],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, StaffTopbarComponent, TranslatePipe, ConnectSupabaseDialogComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="flex min-h-dvh flex-col">
       <app-staff-topbar />
-      <div class="flex min-h-0 flex-1 items-stretch">
-        <!-- Sidebar -->
-        <aside class="flex w-[236px] flex-none flex-col bg-cacao-panel px-3 pt-5 pb-4 text-lino-suave">
+      <div class="relative flex min-h-0 flex-1 items-stretch">
+        <!-- Backdrop del cajón en móvil -->
+        @if (sidebarOpen()) {
+          <div
+            class="fixed inset-0 z-30 bg-cacao/50 lg:hidden"
+            (click)="sidebarOpen.set(false)"
+            aria-hidden="true"
+          ></div>
+        }
+        <!-- Sidebar: fijo en escritorio, cajón deslizante en móvil -->
+        <aside
+          class="fixed inset-y-0 left-0 z-40 flex w-[236px] flex-none flex-col overflow-y-auto bg-cacao-panel px-3 pt-5 pb-4 text-lino-suave transition-transform duration-200 lg:static lg:z-auto lg:translate-x-0"
+          [class.-translate-x-full]="!sidebarOpen()"
+          [class.translate-x-0]="sidebarOpen()">
           <div class="mb-3.5 border-b border-lino/10 px-2.5 pt-0.5 pb-[18px]">
             <div class="font-serif text-lg font-semibold text-lino">{{ store.settings().name }}</div>
             <div class="mt-0.5 text-[11px] text-lino-gris">{{ 'admin.panel' | translate }}</div>
@@ -35,6 +49,7 @@ const TOUR_SEEN_KEY = 'rs-admin-tour-seen';
               <a
                 [routerLink]="item.path"
                 [attr.data-tour]="item.path"
+                (click)="sidebarOpen.set(false)"
                 routerLinkActive="!bg-lino !text-cacao"
                 class="flex cursor-pointer items-center gap-2 rounded-[9px] px-3 py-[9px] text-[13.5px] font-medium text-lino-tenue hover:opacity-90"
               >
@@ -54,6 +69,16 @@ const TOUR_SEEN_KEY = 'rs-admin-tour-seen';
           >
             {{ 'admin.guide_btn' | translate }}
           </button>
+          @if (demoMode) {
+            <button
+              type="button"
+              data-testid="exit-demo-btn"
+              (click)="showConnect.set(true)"
+              class="mt-2 cursor-pointer rounded-[9px] border-none bg-terracota px-3 py-2 text-[12px] font-bold text-lino-calido hover:bg-terracota-hover"
+            >
+              {{ 'connect.exit_demo' | translate }}
+            </button>
+          }
           <div class="flex-1"></div>
           <div class="flex items-center gap-2.5 border-t border-lino/10 px-2.5 py-2.5">
             <div
@@ -72,7 +97,22 @@ const TOUR_SEEN_KEY = 'rs-admin-tour-seen';
         </aside>
 
         <!-- Contenido -->
-        <main class="min-w-0 flex-1 overflow-y-auto px-8 pt-[22px] pb-10">
+        <main class="min-w-0 flex-1 overflow-y-auto px-4 pt-4 pb-10 sm:px-8 sm:pt-[22px]">
+          <div class="mb-3 flex items-center gap-3 lg:hidden">
+            <button
+              type="button"
+              (click)="sidebarOpen.set(!sidebarOpen())"
+              [attr.aria-label]="'admin.menu' | translate"
+              aria-haspopup="true"
+              [attr.aria-expanded]="sidebarOpen()"
+              class="flex h-10 w-10 items-center justify-center rounded-[10px] border border-borde bg-papel text-tinta"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                <path d="M3 6h18M3 12h18M3 18h18" />
+              </svg>
+            </button>
+            <span class="font-serif text-[17px] font-semibold text-tinta">{{ store.settings().name }}</span>
+          </div>
           <div class="mb-1 flex justify-end">
             <a
               routerLink="temporada"
@@ -90,6 +130,10 @@ const TOUR_SEEN_KEY = 'rs-admin-tour-seen';
         </main>
       </div>
     </div>
+
+    @if (showConnect()) {
+      <app-connect-supabase-dialog (close)="showConnect.set(false)" />
+    }
   `,
 })
 export class AdminLayoutComponent implements OnInit {
@@ -101,6 +145,12 @@ export class AdminLayoutComponent implements OnInit {
   protected readonly userName = computed(() => this.auth.user()?.fullName ?? this.translate.instant('admin.nav.area'));
   protected readonly initials = computed(() => initialsOf(this.userName()));
 
+  /** Solo en modo demo puro (sin claves, ni de build ni de runtime) se ofrece conectar. */
+  protected readonly demoMode = !isSupabaseConfigured() && !isRuntimeConfigured();
+  protected readonly showConnect = signal(false);
+  /** Cajón del sidebar en móvil (en escritorio siempre visible). */
+  protected readonly sidebarOpen = signal(false);
+
   protected readonly navItems = computed(() => [
     { path: 'resumen', badge: 0 },
     { path: 'plano', badge: 0 },
@@ -109,6 +159,7 @@ export class AdminLayoutComponent implements OnInit {
     { path: 'menu', badge: 0 },
     { path: 'categorias', badge: 0 },
     { path: 'meseros', badge: 0 },
+    { path: 'horarios', badge: 0 },
     { path: 'pagos', badge: 0 },
     { path: 'temporada', badge: 0 },
     { path: 'ajustes', badge: 0 },

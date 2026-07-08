@@ -18,6 +18,7 @@ import {
   StaffRepository,
   StorageRepository,
   TablesRepository,
+  WorkScheduleRepository,
 } from './domain/repositories/repositories';
 import {
   DemoAuthRepository,
@@ -30,6 +31,7 @@ import {
   DemoStaffRepository,
   DemoStorageRepository,
   DemoTablesRepository,
+  DemoWorkScheduleRepository,
 } from './data/demo/demo-repositories';
 import {
   SupabaseAuthRepository,
@@ -42,6 +44,7 @@ import {
   SupabaseStaffRepository,
   SupabaseStorageRepository,
   SupabaseTablesRepository,
+  SupabaseWorkScheduleRepository,
 } from './data/supabase/supabase-repositories';
 import { isSupabaseConfigured } from './data/supabase/supabase-client.service';
 
@@ -58,5 +61,6 @@ export function provideRepositories(): Provider[] {
     { provide: StorageRepository, useClass: useSupabase ? SupabaseStorageRepository : DemoStorageRepository },
     { provide: PaymentsRepository, useClass: useSupabase ? SupabasePaymentsRepository : DemoPaymentsRepository },
     { provide: RestaurantRepository, useClass: useSupabase ? SupabaseRestaurantRepository : DemoRestaurantRepository },
+    { provide: WorkScheduleRepository, useClass: useSupabase ? SupabaseWorkScheduleRepository : DemoWorkScheduleRepository },
   ];
 }

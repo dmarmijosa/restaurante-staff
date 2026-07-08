@@ -45,7 +45,7 @@ test.describe('Panel de administración', () => {
     await loginAdmin(page);
     await page.getByRole('link', { name: 'Menú y productos' }).click();
     await page.getByRole('switch', { name: 'Disponibilidad de Tostadas de tinga' }).click();
-    await expect(page.getByText('“Tostadas de tinga” marcado como agotado')).toBeVisible();
+    await expect(page.getByText(/Tostadas de tinga.*agotado/)).toBeVisible();
   });
 
   test('permite recortar manualmente una foto antes de subirla al producto', async ({ page }) => {
@@ -141,6 +141,8 @@ test.describe('Cocina', () => {
     await page.getByRole('button', { name: 'Iniciar sesión' }).click();
     await expect(page).toHaveURL(/\/cocina/);
 
+    // La mock API tiene latencia: espera a que carguen las comandas antes de contar.
+    await expect(page.getByRole('button', { name: /Empezar a preparar|Platillo listo/ }).first()).toBeVisible();
     const before = await page.getByRole('button', { name: /Empezar a preparar|Platillo listo/ }).count();
     await page.getByRole('button', { name: 'Empezar a preparar' }).first().click();
     // La comanda pasa a "preparando" (botón verde "Platillo listo")
@@ -159,6 +161,8 @@ test.describe('Cajero', () => {
     await expect(page).toHaveURL(/\/cajero/);
     await expect(page.getByText('PEDIDOS POR COBRAR')).toBeVisible();
 
+    // La mock API tiene latencia: espera a que carguen los pedidos antes de contar.
+    await expect(page.locator('section article').first()).toBeVisible();
     const before = await page.locator('section article').count();
     // Cobra el primer pedido en efectivo
     await page.locator('section').getByRole('button', { name: 'Efectivo' }).first().click();

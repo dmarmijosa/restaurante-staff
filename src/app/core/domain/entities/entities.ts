@@ -37,6 +37,32 @@ export interface StaffMember {
   tables: number[];
 }
 
+/** Días de la semana (0 = lunes … 6 = domingo). */
+export type Weekday = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+
+/** Franja de trabajo de un día: horas o descanso. */
+export interface DaySchedule {
+  /** true si ese día libra (no trabaja). */
+  off: boolean;
+  /** Hora de entrada 'HH:MM' (si no libra). */
+  start: string;
+  /** Hora de salida 'HH:MM' (si no libra). */
+  end: string;
+}
+
+/** Horario semanal de un trabajador (7 días, lunes→domingo). */
+export interface WorkSchedule {
+  staffId: string;
+  days: DaySchedule[]; // longitud 7
+}
+
+/** Horario por defecto (mañana, con domingo libre) para un alta rápida. */
+export function defaultWorkSchedule(staffId: string): WorkSchedule {
+  const work: DaySchedule = { off: false, start: '09:00', end: '17:00' };
+  const rest: DaySchedule = { off: true, start: '09:00', end: '17:00' };
+  return { staffId, days: [work, work, work, work, work, work, rest] };
+}
+
 export interface Category {
   id: number;
   name: string;

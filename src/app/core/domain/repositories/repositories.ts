@@ -21,6 +21,7 @@ import type {
   StaffMember,
   StaffRole,
   WaiterCall,
+  WorkSchedule,
 } from '../entities/entities';
 
 export abstract class MenuRepository {
@@ -86,6 +87,11 @@ export abstract class StaffRepository {
 export abstract class SettingsRepository {
   abstract getSettings(): Promise<RestaurantSettings>;
   abstract updateSettings(patch: Partial<RestaurantSettings>): Promise<void>;
+}
+
+export abstract class WorkScheduleRepository {
+  abstract getSchedules(): Promise<WorkSchedule[]>;
+  abstract saveSchedule(schedule: WorkSchedule): Promise<void>;
 }
 
 export interface SessionUser {

@@ -1,13 +1,11 @@
 /**
- * Implementación en memoria de todos los repositorios.
+ * Repositorios demo — adaptadores finos sobre la Mock API en memoria.
  *
- * ¿Por qué existe? Dos razones:
- *  1. Modo demo: la app open source debe poder probarse sin una cuenta de
- *     Supabase (npm start y listo), replicando el comportamiento del diseño.
- *  2. Pruebas: las unit tests usan estos repositorios reales-pero-en-memoria
- *     en lugar de mocks frágiles.
+ * Toda la lógica y el estado viven en `MockApiService` (un único backend
+ * simulado). Cada repositorio traduce el contrato de dominio a llamadas de esa
+ * API, igual que los repositorios de Supabase traducen a llamadas HTTP.
  */
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import type {
   Category,
   Order,
@@ -21,6 +19,7 @@ import type {
   StaffMember,
   StaffRole,
   WaiterCall,
+  WorkSchedule,
 } from '../../domain/entities/entities';
 import {
   AuthRepository,
@@ -33,287 +32,147 @@ import {
   StaffRepository,
   StorageRepository,
   TablesRepository,
+  WorkScheduleRepository,
   type SessionUser,
 } from '../../domain/repositories/repositories';
-import {
-  DEMO_CALLS,
-  DEMO_CATEGORIES,
-  DEMO_ORDERS,
-  DEMO_PAYMENT_METHODS,
-  DEMO_PRODUCTS,
-  DEMO_RESTAURANT_ID,
-  DEMO_SETTINGS,
-  DEMO_STAFF,
-  DEMO_TABLES,
-  DEMO_USERS,
-} from './demo-data';
-
-/** Pequeño emisor para imitar Realtime dentro de la misma pestaña. */
-class Emitter {
-  private listeners = new Set<() => void>();
-  on(listener: () => void): () => void {
-    this.listeners.add(listener);
-    return () => this.listeners.delete(listener);
-  }
-  emit(): void {
-    this.listeners.forEach((l) => l());
-  }
-}
-
-const clone = <T>(value: T): T => structuredClone(value);
+import { DEMO_RESTAURANT_ID } from './demo-data';
+import { MockApiService } from './mock-api.service';
 
 @Injectable()
 export class DemoMenuRepository extends MenuRepository {
-  private categories = clone(DEMO_CATEGORIES);
-  private products = clone(DEMO_PRODUCTS);
-
-  async getCategories(): Promise<Category[]> {
-    return clone(this.categories);
+  private api = inject(MockApiService);
+  getCategories(): Promise<Category[]> {
+    return this.api.getCategories();
   }
-
-  async addCategory(name: string): Promise<Category> {
-    const cat: Category = {
-      id: Math.max(0, ...this.categories.map((c) => c.id)) + 1,
-      name,
-      position: this.categories.length + 1,
-    };
-    this.categories.push(cat);
-    return clone(cat);
+  addCategory(name: string): Promise<Category> {
+    return this.api.addCategory(name);
   }
-
-  async deleteCategory(id: number): Promise<void> {
-    this.categories = this.categories.filter((c) => c.id !== id);
+  deleteCategory(id: number): Promise<void> {
+    return this.api.deleteCategory(id);
   }
-
-  async getProducts(): Promise<Product[]> {
-    return clone(this.products);
+  getProducts(): Promise<Product[]> {
+    return this.api.getProducts();
   }
-
-  async addProduct(input: {
-    name: string;
-    price: number;
-    categoryId: number | null;
-    description?: string;
-  }): Promise<Product> {
-    const product: Product = {
-      id: Math.max(0, ...this.products.map((p) => p.id)) + 1,
-      name: input.name,
-      description: input.description ?? 'Nuevo platillo de la casa.',
-      price: input.price,
-      categoryId: input.categoryId,
-      categoryName: this.categories.find((c) => c.id === input.categoryId)?.name ?? '',
-      available: true,
-      imageUrl: null,
-    };
-    this.products.push(product);
-    return clone(product);
+  addProduct(input: { name: string; price: number; categoryId: number | null; description?: string }): Promise<Product> {
+    return this.api.addProduct(input);
   }
-
-  async setProductAvailability(id: number, available: boolean): Promise<void> {
-    const p = this.products.find((x) => x.id === id);
-    if (p) p.available = available;
+  setProductAvailability(id: number, available: boolean): Promise<void> {
+    return this.api.setProductAvailability(id, available);
   }
-
-  async setProductImage(id: number, imageUrl: string | null): Promise<void> {
-    const p = this.products.find((x) => x.id === id);
-    if (p) p.imageUrl = imageUrl;
+  setProductImage(id: number, imageUrl: string | null): Promise<void> {
+    return this.api.setProductImage(id, imageUrl);
   }
 }
 
 @Injectable()
 export class DemoTablesRepository extends TablesRepository {
-  private tables = clone(DEMO_TABLES);
-
-  async getTables(): Promise<RestaurantTable[]> {
-    return clone(this.tables);
+  private api = inject(MockApiService);
+  getTables(): Promise<RestaurantTable[]> {
+    return this.api.getTables();
   }
-
-  async saveTable(table: RestaurantTable): Promise<RestaurantTable> {
-    this.tables = this.tables.map((t) => (t.id === table.id ? clone(table) : t));
-    return clone(table);
+  saveTable(table: RestaurantTable): Promise<RestaurantTable> {
+    return this.api.saveTable(table);
   }
-
-  async addTable(table: Omit<RestaurantTable, 'id'>): Promise<RestaurantTable> {
-    const created: RestaurantTable = { ...clone(table), id: Math.max(0, ...this.tables.map((t) => t.id)) + 1 } as RestaurantTable;
-    this.tables.push(created);
-    return clone(created);
+  addTable(table: Omit<RestaurantTable, 'id'>): Promise<RestaurantTable> {
+    return this.api.addTable(table);
   }
-
-  async deleteTable(id: number): Promise<void> {
-    this.tables = this.tables.filter((t) => t.id !== id);
+  deleteTable(id: number): Promise<void> {
+    return this.api.deleteTable(id);
   }
 }
 
 @Injectable()
 export class DemoOrdersRepository extends OrdersRepository {
-  private orders = clone(DEMO_ORDERS);
-  private emitter = new Emitter();
-
-  async getOrders(): Promise<Order[]> {
-    return clone(this.orders);
+  private api = inject(MockApiService);
+  getOrders(): Promise<Order[]> {
+    return this.api.getOrders();
   }
-
-  async placeOrder(tableNumber: number, items: OrderItem[]): Promise<Order> {
-    const order: Order = {
-      id: Math.max(1040, ...this.orders.map((o) => o.id)) + 1,
-      tableNumber,
-      waiterName: 'Carlos M.',
-      status: 'recibido',
-      createdAt: 'ahora',
-      createdAtMs: Date.now(),
-      readyAtMs: null,
-      paid: false,
-      paymentMethod: null,
-      paidAt: null,
-      items: clone(items),
-    };
-    this.orders.unshift(order);
-    this.emitter.emit();
-    return clone(order);
+  placeOrder(tableNumber: number, items: OrderItem[]): Promise<Order> {
+    return this.api.placeOrder(tableNumber, items);
   }
-
-  async setStatus(orderId: number, status: OrderStatus): Promise<void> {
-    const o = this.orders.find((x) => x.id === orderId);
-    if (o) {
-      o.status = status;
-      // Al pasar a "listo" se sella el fin de cocina (si no estaba ya).
-      if (status === 'listo' && o.readyAtMs == null) o.readyAtMs = Date.now();
-    }
-    this.emitter.emit();
+  setStatus(orderId: number, status: OrderStatus): Promise<void> {
+    return this.api.setOrderStatus(orderId, status);
   }
-
-  async chargeOrder(orderId: number, paymentMethod: string): Promise<void> {
-    const o = this.orders.find((x) => x.id === orderId);
-    if (o) {
-      o.paid = true;
-      o.paymentMethod = paymentMethod;
-      o.paidAt = 'ahora';
-    }
-    this.emitter.emit();
+  chargeOrder(orderId: number, paymentMethod: string): Promise<void> {
+    return this.api.chargeOrder(orderId, paymentMethod);
   }
-
   onChange(listener: () => void): () => void {
-    return this.emitter.on(listener);
+    return this.api.orders$.on(listener);
   }
 }
 
 @Injectable()
 export class DemoCallsRepository extends CallsRepository {
-  private calls = clone(DEMO_CALLS);
-  private emitter = new Emitter();
-
-  async getPendingCalls(): Promise<WaiterCall[]> {
-    return clone(this.calls.filter((c) => !c.attended));
+  private api = inject(MockApiService);
+  getPendingCalls(): Promise<WaiterCall[]> {
+    return this.api.getPendingCalls();
   }
-
-  async createCall(tableNumber: number): Promise<WaiterCall> {
-    const call: WaiterCall = {
-      id: Math.max(0, ...this.calls.map((c) => c.id)) + 1,
-      tableNumber,
-      attended: false,
-      createdAt: 'ahora',
-    };
-    this.calls.push(call);
-    this.emitter.emit();
-    return clone(call);
+  createCall(tableNumber: number): Promise<WaiterCall> {
+    return this.api.createCall(tableNumber);
   }
-
-  async attendCall(id: number): Promise<void> {
-    const c = this.calls.find((x) => x.id === id);
-    if (c) c.attended = true;
-    this.emitter.emit();
+  attendCall(id: number): Promise<void> {
+    return this.api.attendCall(id);
   }
-
   onChange(listener: () => void): () => void {
-    return this.emitter.on(listener);
+    return this.api.calls$.on(listener);
   }
 }
 
 @Injectable()
 export class DemoStaffRepository extends StaffRepository {
-  private staff = clone(DEMO_STAFF);
-
-  async getStaff(): Promise<StaffMember[]> {
-    return clone(this.staff);
+  private api = inject(MockApiService);
+  getStaff(): Promise<StaffMember[]> {
+    return this.api.getStaff();
   }
-
-  async addStaff(input: { fullName: string; email: string; role: StaffRole; shift?: Shift }): Promise<StaffMember> {
-    const member: StaffMember = {
-      id: 'u' + Date.now(),
-      fullName: input.fullName,
-      email: input.email,
-      role: input.role,
-      shift: input.shift ?? null,
-      status: 'activo',
-      isOwner: false,
-      tables: [],
-    };
-    this.staff.push(member);
-    return clone(member);
+  addStaff(input: { fullName: string; email: string; role: StaffRole; shift?: Shift }): Promise<StaffMember> {
+    return this.api.addStaff(input);
   }
-
-  async updateStaff(id: string, patch: Partial<Pick<StaffMember, 'role' | 'shift' | 'status'>>): Promise<void> {
-    this.staff = this.staff.map((s) => (s.id === id ? { ...s, ...patch } : s));
+  updateStaff(id: string, patch: Partial<Pick<StaffMember, 'role' | 'shift' | 'status'>>): Promise<void> {
+    return this.api.updateStaff(id, patch);
   }
+  deleteStaffPermanently(id: string): Promise<void> {
+    return this.api.deleteStaff(id);
+  }
+}
 
-  async deleteStaffPermanently(id: string): Promise<void> {
-    const member = this.staff.find((s) => s.id === id);
-    if (member?.isOwner) {
-      throw new Error('La cuenta propietaria no puede eliminarse');
-    }
-    this.staff = this.staff.filter((s) => s.id !== id);
+@Injectable()
+export class DemoWorkScheduleRepository extends WorkScheduleRepository {
+  private api = inject(MockApiService);
+  getSchedules(): Promise<WorkSchedule[]> {
+    return this.api.getSchedules();
+  }
+  saveSchedule(schedule: WorkSchedule): Promise<void> {
+    return this.api.saveSchedule(schedule);
   }
 }
 
 @Injectable()
 export class DemoSettingsRepository extends SettingsRepository {
-  private settings = clone(DEMO_SETTINGS);
-
-  async getSettings(): Promise<RestaurantSettings> {
-    return clone(this.settings);
+  private api = inject(MockApiService);
+  getSettings(): Promise<RestaurantSettings> {
+    return this.api.getSettings();
   }
-
-  async updateSettings(patch: Partial<RestaurantSettings>): Promise<void> {
-    this.settings = { ...this.settings, ...patch };
+  updateSettings(patch: Partial<RestaurantSettings>): Promise<void> {
+    return this.api.updateSettings(patch);
   }
 }
 
 @Injectable()
 export class DemoAuthRepository extends AuthRepository {
-  private current: SessionUser | null = null;
-
-  async signIn(email: string, password: string): Promise<SessionUser> {
-    const match = DEMO_USERS.find((u) => u.email === email && u.password === password);
-    if (!match) throw new Error('Credenciales incorrectas');
-    const staff = DEMO_STAFF.find((s) => s.id === match.staffId)!;
-    this.current = {
-      id: staff.id,
-      email: staff.email,
-      fullName: staff.fullName,
-      role: staff.role,
-      restaurantId: DEMO_RESTAURANT_ID,
-    };
-    sessionStorage.setItem('demo-session', JSON.stringify(this.current));
-    return this.current;
+  private api = inject(MockApiService);
+  signIn(email: string, password: string): Promise<SessionUser> {
+    return this.api.signIn(email, password);
   }
-
   async signOut(): Promise<void> {
-    this.current = null;
-    sessionStorage.removeItem('demo-session');
+    this.api.signOut();
   }
-
   async getCurrentUser(): Promise<SessionUser | null> {
-    if (this.current) return this.current;
-    const raw = sessionStorage.getItem('demo-session');
-    this.current = raw ? (JSON.parse(raw) as SessionUser) : null;
-    return this.current;
+    return this.api.getCurrentUser();
   }
-
   /** En demo siempre hay un admin de ejemplo, así que el registro inicial no aplica. */
   async adminExists(_restaurantId?: string): Promise<boolean> {
     return true;
   }
-
   async signUpFirstAdmin(): Promise<SessionUser | null> {
     throw new Error('El registro inicial no está disponible en modo demo');
   }
@@ -331,30 +190,18 @@ export class DemoRestaurantRepository extends RestaurantRepository {
 
 @Injectable()
 export class DemoPaymentsRepository extends PaymentsRepository {
-  private methods = clone(DEMO_PAYMENT_METHODS);
-
-  async getMethods(): Promise<PaymentMethod[]> {
-    return clone(this.methods);
+  private api = inject(MockApiService);
+  getMethods(): Promise<PaymentMethod[]> {
+    return this.api.getMethods();
   }
-
-  async addMethod(name: string): Promise<PaymentMethod> {
-    const method: PaymentMethod = {
-      id: Math.max(0, ...this.methods.map((m) => m.id)) + 1,
-      name,
-      active: true,
-      position: this.methods.length + 1,
-    };
-    this.methods.push(method);
-    return clone(method);
+  addMethod(name: string): Promise<PaymentMethod> {
+    return this.api.addMethod(name);
   }
-
-  async setActive(id: number, active: boolean): Promise<void> {
-    const m = this.methods.find((x) => x.id === id);
-    if (m) m.active = active;
+  setActive(id: number, active: boolean): Promise<void> {
+    return this.api.setMethodActive(id, active);
   }
-
-  async deleteMethod(id: number): Promise<void> {
-    this.methods = this.methods.filter((m) => m.id !== id);
+  deleteMethod(id: number): Promise<void> {
+    return this.api.deleteMethod(id);
   }
 }
 

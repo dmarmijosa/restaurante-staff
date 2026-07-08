@@ -1,10 +1,43 @@
 # Trabajo actual
 
-_Última actualización: 2026-07-07 (iteración 10)_
+_Última actualización: 2026-07-08 (iteración 11)_
 
 ## Estado actual
 
-Plataforma **v0.6 — multi-restaurante**: 9 migraciones SQL aplicadas, 33 pruebas unitarias y 29 E2E en verde.
+Plataforma **v0.7**: 10 migraciones SQL aplicadas. **Build limpio**, **33 unitarias** y **29 E2E en verde**.
+Los E2E ahora fijan `locale: es-ES` en Playwright (la app detecta idioma del navegador) y esperan a que
+la mock API con latencia cargue los datos antes de contar.
+
+## Hecho en la iteración 11 (mock API, login demo, salir de demo, horarios, responsive, i18n)
+
+- ✅ **Mock API única** (`core/data/demo/mock-api.service.ts`): un solo backend en memoria con
+  latencia simulada que sirve a todos los roles (incluido cliente). Los repositorios demo pasan a
+  ser adaptadores finos sobre ella.
+- ✅ **Login demo con accesos rápidos**: se elimina el `div` con credenciales en texto; ahora hay
+  botones "Entrar como Administrador/Mesero/Cocina/Cajero" que autentican y redirigen al área del rol.
+- ✅ **Salir del modo demo en runtime** (`runtime-config.ts` + diálogo `connect-supabase`): el admin
+  pega la URL y la clave publishable de su proyecto; se guardan en localStorage y, al recargar, la app
+  trabaja contra su base (vacía, desde cero) sin recompilar. Botón visible solo en modo demo.
+- ✅ **Módulo Horario de trabajo** (`/admin/horarios`): editor semanal por empleado (día/franja/libre),
+  tabla `work_schedules` (migración 10 con RLS multi-tenant), y el horario de hoy se muestra al
+  trabajador en la barra superior.
+- ✅ **Panel responsivo**: sidebar convertido en cajón deslizante con hamburguesa en móvil; topbar sin
+  scroll horizontal; grids adaptativos. Verificado a 375 px sin overflow.
+- ✅ **i18n ampliada**: dashboard e historial totalmente traducidos; nuevas claves (horarios, días de la
+  semana, connect, login demo, rangos). Los 6 idiomas mantienen **paridad exacta de claves**.
+- ✅ El tour de driver.js ya cubre cada sección del panel, incluida Horarios.
+
+- ✅ **E2E arreglados**: `locale: es-ES` determinista en Playwright y esperas al primer elemento antes
+  de contar (por la latencia de la mock API). Toast de disponibilidad con matcher tolerante a comillas.
+
+## Pendiente inmediato
+
+- Commit + push (con confirmación del usuario).
+- Opcional: rediseño visual más profundo estilo 21st.dev (la base responsiva ya está).
+
+## Estado anterior
+
+Plataforma v0.6 — multi-restaurante: 9 migraciones SQL aplicadas, 33 unit y 29 E2E en verde.
 
 ## Hecho tras conectar Supabase (2026-07-02, iteración 2)
 

@@ -22,7 +22,9 @@
       "screen": "Pantalla",
       "register": "Caja",
       "mobile_qr": "Móvil · QR"
-    }
+    },
+    "today": "Hoy",
+    "day_off": "Hoy libras"
   },
   "client": {
     "via_qr": "vía código QR",
@@ -85,7 +87,9 @@
     "email_invalid": "Escribe un correo válido.",
     "password_required": "Escribe tu contraseña.",
     "error_invalid": "Credenciales incorrectas. Revisa tu correo y contraseña.",
-    "error_unknown": "No se pudo iniciar sesión. Inténtalo de nuevo."
+    "error_unknown": "No se pudo iniciar sesión. Inténtalo de nuevo.",
+    "demo_quick_access": "Acceso rápido de demostración",
+    "demo_hint": "Datos de ejemplo en memoria. Al recargar se restablecen."
   },
   "register": {
     "badge": "NUEVO RESTAURANTE",
@@ -171,7 +175,8 @@
       "pagos": "Métodos de pago",
       "temporada": "Temporada y horario",
       "ajustes": "Ajustes",
-      "area": "Administración"
+      "area": "Administración",
+      "horarios": "Horarios"
     },
     "tour": {
       "welcome_title": "¡Bienvenido a tu panel!",
@@ -190,48 +195,39 @@
       "temporada_desc": "Abre/cierra el restaurante y define la temporada; controla si el QR acepta pedidos.",
       "ajustes_desc": "Nombre y logo del restaurante y cuentas de administración.",
       "multirestaurant_title": "¿Tienes más locales?",
-      "multirestaurant_desc": "Esta plataforma soporta múltiples restaurantes en un solo despliegue. Para crear un segundo local visita <strong>/nuevo-restaurante</strong> — cada uno tiene su propio menú, equipo, mesas y pedidos completamente separados."
+      "multirestaurant_desc": "Esta plataforma soporta múltiples restaurantes en un solo despliegue. Para crear un segundo local visita <strong>/nuevo-restaurante</strong> — cada uno tiene su propio menú, equipo, mesas y pedidos completamente separados.",
+      "horarios_desc": "Define el horario semanal de cada empleado; cada trabajador lo ve al iniciar sesión."
     },
     "dashboard": {
+      "revenue": "INGRESOS COBRADOS",
+      "avg": "TICKET MEDIO",
+      "orders": "PEDIDOS",
+      "tocharge": "POR COBRAR",
+      "ktime": "TIEMPO DE COCINA",
+      "revenue_hint": "{count} pedidos cobrados",
+      "avg_hint": "por pedido cobrado",
+      "orders_hint": "{paid} cobrados · {pending} pendientes",
+      "tocharge_hint": "pedidos sin pagar",
+      "ktime_hint": "promedio recibido → listo",
+      "by_method": "Ventas por método de pago",
+      "top": "Productos más vendidos",
+      "no_sales": "Aún no hay ventas en este periodo.",
+      "no_top": "Todavía no hay pedidos.",
       "title": "Resumen",
       "subtitle": "Ingresos, cobros por método y lo que más se pide — en el periodo elegido.",
-      "range_today": "Hoy",
-      "range_7d": "7 días",
-      "range_30d": "30 días",
-      "range_all": "Todo",
-      "period_label": "Periodo",
-      "kpi_revenue": "Ingresos",
-      "kpi_avg_ticket": "Ticket medio",
-      "kpi_orders": "Pedidos cobrados",
-      "kpi_avg_cook": "Tiempo medio cocina",
-      "kpi_revenue_hint": "Suma de pedidos cobrados",
-      "kpi_orders_hint": "Pedidos pagados en el periodo",
-      "kpi_cook_hint": "Desde recibido hasta listo",
-      "sales_by_method": "Ventas por método de pago",
-      "top_products": "Productos más vendidos",
-      "no_charges": "Aún no hay cobros registrados.",
-      "no_orders": "Todavía no hay pedidos.",
-      "charge_one": "{{count}} cobro",
-      "charge_many": "{{count}} cobros"
+      "create_title": "Crea tu primer restaurante",
+      "create_hint": "Aún no hay ningún restaurante registrado en este despliegue.",
+      "create_cta": "Crear restaurante",
+      "units": "uds",
+      "charge_one": "cobro",
+      "charge_many": "cobros"
     },
     "orders": {
       "title": "Pedidos",
       "subtitle": "Comandas del salón en tiempo real. Los pedidos del menú QR llegan aquí y al mesero de la mesa.",
       "mesa": "Mesa"
     },
-    "menu": {
-      "title": "Menú y productos",
-      "subtitle": "Lo que actives aquí aparece al instante en el menú público del cliente.",
-      "new_product": "+ Nuevo producto",
-      "product_name_placeholder": "Nombre del producto",
-      "price_placeholder": "Precio",
-      "save": "Guardar",
-      "upload_photo": "Subir foto",
-      "change_photo": "Cambiar foto",
-      "availability": "Disponibilidad de {{name}}",
-      "sold_out": "AGOTADO",
-      "all": "Todas"
-    },
+    "menu": "Abrir menú",
     "categories": {
       "title": "Categorías",
       "subtitle": "Organizan el menú público y los filtros del panel.",
@@ -309,7 +305,20 @@
       "subtitle": "Pedidos y arqueo de caja del periodo elegido.",
       "unpaid": "Sin cobrar",
       "orders_count": "{{count}} pedidos en el periodo.",
-      "total": "Total"
+      "total": "Total",
+      "col_table": "MESA",
+      "col_items": "ARTÍCULOS",
+      "col_total": "TOTAL",
+      "col_status": "ESTADO",
+      "col_charge": "COBRO",
+      "no_orders": "No hay pedidos en este periodo.",
+      "total_charged": "TOTAL COBRADO",
+      "charges": "COBROS",
+      "methods_used": "MÉTODOS USADOS",
+      "breakdown": "Desglose por método",
+      "no_breakdown": "No hay cobros en este periodo.",
+      "charges_period": "Cobros del periodo",
+      "no_charges": "Sin cobros."
     },
     "floor_plan": {
       "title": "Plano del salón",
@@ -320,6 +329,21 @@
       "split": "Separar",
       "mesa": "Mesa",
       "tables": "Mesas"
+    },
+    "schedule": {
+      "title": "Horario de trabajo",
+      "subtitle": "Turnos semanales por empleado. Cada trabajador ve su horario al iniciar sesión.",
+      "no_staff": "Primero da de alta empleados en «Meseros y turnos».",
+      "works": "Trabaja",
+      "day_off": "Libra",
+      "save": "Guardar horario",
+      "weekly_hours": "h/semana"
+    },
+    "range": {
+      "hoy": "Hoy",
+      "d7": "7 días",
+      "d30": "30 días",
+      "todo": "Todo"
     }
   },
   "qr": {
@@ -361,5 +385,25 @@
     "call_attended": "Llamada atendida — mesero en camino",
     "admin_name_required": "Escribe el nombre del administrador",
     "category_name_required": "Ponle nombre al producto"
+  },
+  "weekday": {
+    "0": "Lunes",
+    "1": "Martes",
+    "2": "Miércoles",
+    "3": "Jueves",
+    "4": "Viernes",
+    "5": "Sábado",
+    "6": "Domingo"
+  },
+  "connect": {
+    "exit_demo": "Salir del modo demo",
+    "title": "Conecta tu Supabase",
+    "subtitle": "Pega la URL y la clave publishable de tu proyecto. La app dejará el modo demo y trabajará con tu base (vacía, desde cero).",
+    "url_label": "URL del proyecto",
+    "key_label": "Clave publishable (anon)",
+    "hint": "Están en Supabase → Project Settings → API. La clave publishable es segura para el cliente.",
+    "cancel": "Cancelar",
+    "submit": "Conectar y recargar",
+    "error_invalid": "Revisa la URL (https://…supabase.co) y la clave."
   }
 }

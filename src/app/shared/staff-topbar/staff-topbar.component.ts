@@ -8,6 +8,7 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { AuthService } from '../../core/auth/auth.service';
+import { RestaurantStore } from '../../core/application/restaurant.store';
 import { LanguageService, LANG_LABELS, type SupportedLang } from '../../core/i18n/language.service';
 
 interface AreaLink {
@@ -21,7 +22,7 @@ interface AreaLink {
   imports: [RouterLink, RouterLinkActive, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="flex flex-none items-center gap-4 bg-cacao px-[22px] py-[11px] text-lino">
+    <div class="flex flex-none flex-wrap items-center gap-x-4 gap-y-2 bg-cacao px-4 py-[11px] text-lino sm:px-[22px]">
       <a routerLink="/" class="flex items-center gap-2.5">
         <div
           class="flex h-7 w-7 items-center justify-center rounded-lg bg-terracota font-serif text-[15px] font-bold text-lino-calido"
@@ -34,7 +35,7 @@ interface AreaLink {
         </div>
       </a>
       <div class="flex-1"></div>
-      <nav class="flex gap-1 rounded-full bg-white/8 p-1" [attr.aria-label]="'topbar.area.admin' | translate">
+      <nav class="flex max-w-full gap-1 overflow-x-auto rounded-full bg-white/8 p-1" [attr.aria-label]="'topbar.area.admin' | translate">
         @for (area of areas(); track area.path) {
           <a
             [routerLink]="area.path"
@@ -47,6 +48,17 @@ interface AreaLink {
           </a>
         }
       </nav>
+      <!-- Horario de hoy del trabajador (influye a cada empleado) -->
+      @if (todayShift(); as shift) {
+        <div class="hidden items-center gap-1.5 rounded-full bg-white/8 px-3 py-1 text-[11px] font-semibold text-lino-tenue sm:flex">
+          <span class="text-lino-apagado">{{ 'topbar.today' | translate }}</span>
+          @if (shift.off) {
+            <span class="text-lino-gris">{{ 'topbar.day_off' | translate }}</span>
+          } @else {
+            <span>{{ shift.start }}–{{ shift.end }}</span>
+          }
+        </div>
+      }
       <!-- Selector de idioma -->
       <div class="relative">
         <select
@@ -77,7 +89,18 @@ export class StaffTopbarComponent {
   protected readonly auth = inject(AuthService);
   protected readonly lang = inject(LanguageService);
   protected readonly langLabels = LANG_LABELS;
+  private store = inject(RestaurantStore);
   private router = inject(Router);
+
+  /** Franja de hoy del trabajador en sesión (null si no tiene horario). */
+  protected readonly todayShift = computed(() => {
+    const user = this.auth.user();
+    if (!user) return null;
+    const sched = this.store.schedules().find((s) => s.staffId === user.id);
+    if (!sched) return null;
+    const idx = (new Date().getDay() + 6) % 7; // JS: 0=domingo → 0=lunes
+    return sched.days[idx] ?? null;
+  });
 
   /** Áreas visibles según el rol; el admin ve todo, como en el diseño. */
   protected readonly areas = computed(() => {

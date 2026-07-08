@@ -41,6 +41,10 @@ export const ADMIN_ROUTES: Routes = [
         loadComponent: () => import('./staff/staff-page.component').then((m) => m.StaffPageComponent),
       },
       {
+        path: 'horarios',
+        loadComponent: () => import('./schedule/schedule.component').then((m) => m.ScheduleComponent),
+      },
+      {
         path: 'pagos',
         loadComponent: () => import('./payments/payments.component').then((m) => m.PaymentsComponent),
       },

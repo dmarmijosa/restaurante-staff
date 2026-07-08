@@ -18,6 +18,18 @@
 - [x] ~~Registro inicial del administrador propietario~~ — hecho (servidor en modo Supabase, usuario completa `/registro-inicial`)
 - [x] ~~Desactivar registro público tras el bootstrap~~ — hecho (trigger `on_auth_signup_check` en `auth.users`, invitaciones del dashboard permitidas)
 - [x] ~~Multi-restaurante (multi-tenant): un despliegue, varios locales~~ — hecho (tabla `restaurants`, `restaurant_id` en todas las tablas, RLS scoped, RPCs `create_restaurant`/`restaurant_by_slug`, rutas `/r/:slug`, bootstrap con nombre de restaurante, paso en el tour de driver.js)
+- [x] ~~Mock API única para el modo demo (todos los roles)~~ — hecho (`mock-api.service.ts`, backend en memoria con latencia; repos demo como adaptadores)
+- [x] ~~Login demo con accesos rápidos (sin credenciales en texto)~~ — hecho (botones por rol, incluido cajero)
+- [x] ~~Salir del modo demo con credenciales Supabase en runtime~~ — hecho (`runtime-config.ts` + diálogo; localStorage + recarga)
+- [x] ~~Módulo Horario de trabajo~~ — hecho (`/admin/horarios`, tabla `work_schedules`, visible al trabajador en la topbar)
+- [x] ~~Panel 100% responsivo (drawer móvil)~~ — hecho (sidebar deslizante, sin scroll horizontal, grids adaptativos)
+- [x] ~~i18n de dashboard e historial~~ — hecho (6 idiomas con paridad de claves)
+
+- [x] ~~Arreglar E2E tras i18n/mock~~ — hecho (`locale: es-ES` en Playwright + esperas por la latencia de la mock API; 29 E2E en verde)
+
+## Pendiente / en curso
+
+- [ ] Rediseño visual más profundo estilo 21st.dev (la base responsiva ya está; falta pulido de profundidad/jerarquía).
 - [x] ~~i18n~~ — hecho (6 idiomas: es/en/ca/pt/fr/it; 334 claves; `@ngx-translate/core` + HttpLoader; detector automático del idioma del navegador; selector en el topbar)
 - [ ] PWA/offline para la tablet del mesero
 - [ ] Notificación sonora en cocina al entrar comanda nueva

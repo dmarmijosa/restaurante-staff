@@ -16,6 +16,7 @@ import {
   StaffRepository,
   StorageRepository,
   TablesRepository,
+  WorkScheduleRepository,
 } from '../domain/repositories/repositories';
 import {
   DemoAuthRepository,
@@ -28,6 +29,7 @@ import {
   DemoStaffRepository,
   DemoStorageRepository,
   DemoTablesRepository,
+  DemoWorkScheduleRepository,
 } from '../data/demo/demo-repositories';
 
 describe('RestaurantStore', () => {
@@ -46,6 +48,7 @@ describe('RestaurantStore', () => {
         { provide: StorageRepository, useClass: DemoStorageRepository },
         { provide: PaymentsRepository, useClass: DemoPaymentsRepository },
         { provide: RestaurantRepository, useClass: DemoRestaurantRepository },
+        { provide: WorkScheduleRepository, useClass: DemoWorkScheduleRepository },
       ],
     });
     store = TestBed.inject(RestaurantStore);

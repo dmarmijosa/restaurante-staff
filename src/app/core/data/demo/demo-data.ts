@@ -12,6 +12,7 @@ import type {
   RestaurantTable,
   StaffMember,
   WaiterCall,
+  WorkSchedule,
 } from '../../domain/entities/entities';
 
 /** UUID fijo del restaurante demo (en memoria, sin Supabase). */
@@ -118,6 +119,58 @@ export const DEMO_SETTINGS: RestaurantSettings = {
   seasonEnd: '2026-09-15',
   logoUrl: null,
 };
+
+/** Horarios semanales de ejemplo (lunes→domingo). */
+export const DEMO_SCHEDULES: WorkSchedule[] = [
+  {
+    staffId: 'w1',
+    days: [
+      { off: false, start: '14:00', end: '20:00' },
+      { off: false, start: '14:00', end: '20:00' },
+      { off: false, start: '14:00', end: '20:00' },
+      { off: false, start: '14:00', end: '20:00' },
+      { off: false, start: '14:00', end: '22:00' },
+      { off: false, start: '14:00', end: '22:00' },
+      { off: true, start: '09:00', end: '17:00' },
+    ],
+  },
+  {
+    staffId: 'w2',
+    days: [
+      { off: false, start: '08:00', end: '14:00' },
+      { off: false, start: '08:00', end: '14:00' },
+      { off: true, start: '08:00', end: '14:00' },
+      { off: false, start: '08:00', end: '14:00' },
+      { off: false, start: '08:00', end: '14:00' },
+      { off: false, start: '08:00', end: '14:00' },
+      { off: false, start: '10:00', end: '16:00' },
+    ],
+  },
+  {
+    staffId: 'k1',
+    days: [
+      { off: false, start: '13:00', end: '21:00' },
+      { off: false, start: '13:00', end: '21:00' },
+      { off: false, start: '13:00', end: '21:00' },
+      { off: true, start: '13:00', end: '21:00' },
+      { off: false, start: '13:00', end: '23:00' },
+      { off: false, start: '13:00', end: '23:00' },
+      { off: false, start: '13:00', end: '21:00' },
+    ],
+  },
+  {
+    staffId: 'c1',
+    days: [
+      { off: false, start: '14:00', end: '22:00' },
+      { off: false, start: '14:00', end: '22:00' },
+      { off: false, start: '14:00', end: '22:00' },
+      { off: false, start: '14:00', end: '22:00' },
+      { off: false, start: '14:00', end: '23:00' },
+      { off: false, start: '14:00', end: '23:00' },
+      { off: true, start: '09:00', end: '17:00' },
+    ],
+  },
+];
 
 /** Credenciales aceptadas por el modo demo (solo para probar la app). */
 export const DEMO_USERS = [

@@ -80,17 +80,17 @@ src/app/
 │   │   └── repositories/repositories.ts# Contratos (clases abstractas)
 │   ├── application/restaurant.store.ts # Estado global con signals
 │   ├── data/
-│   │   ├── supabase/                   # Cliente único + repos reales
-│   │   └── demo/                       # Datos del diseño + repos en memoria
+│   │   ├── supabase/                   # Cliente único + repos reales + runtime-config (localStorage)
+│   │   └── demo/                       # Mock API en memoria (mock-api.service) + repos adaptadores
 │   ├── auth/                           # AuthService + roleGuard
 │   └── core.providers.ts               # Selección Supabase/demo (único punto)
 ├── features/
 │   ├── client/                         # Home pública (menú QR)
-│   ├── auth/                           # Login del personal
-│   ├── admin/                          # Layout + plano/pedidos/menú/categorías/meseros/pagos/temporada/ajustes
+│   ├── auth/                           # Login del personal (accesos rápidos demo)
+│   ├── admin/                          # Layout responsivo + resumen/plano/pedidos/historial/menú/categorías/meseros/horarios/pagos/temporada/ajustes + diálogo "salir de demo"
 │   ├── waiter/                         # Tablet del mesero
 │   ├── cashier/                        # Caja del cajero (cobro por método de pago)
-│   └── kitchen/                        # Pantalla de cocina
+│   └── kitchen/                        # Pantalla de cocina (aviso sonoro)
 └── shared/                             # Toast, pipe de moneda, topbar, mapas UI, QR por mesa (table-qr)
 supabase/
 ├── migrations/                         # Esquema + RLS versionados

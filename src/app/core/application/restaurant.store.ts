@@ -23,6 +23,7 @@ import type {
   TableShape,
   TableStatus,
   WaiterCall,
+  WorkSchedule,
 } from '../domain/entities/entities';
 import { isAcceptingOrders } from '../domain/entities/entities';
 import {
@@ -34,6 +35,7 @@ import {
   StaffRepository,
   StorageRepository,
   TablesRepository,
+  WorkScheduleRepository,
 } from '../domain/repositories/repositories';
 import { ToastService } from '../../shared/toast/toast.service';
 import { compressImage } from '../../shared/image-utils';
@@ -58,6 +60,7 @@ export class RestaurantStore {
   private settingsRepo = inject(SettingsRepository);
   private storageRepo = inject(StorageRepository);
   private paymentsRepo = inject(PaymentsRepository);
+  private scheduleRepo = inject(WorkScheduleRepository);
   private toast = inject(ToastService);
 
   readonly settings = signal<RestaurantSettings>({
@@ -75,6 +78,7 @@ export class RestaurantStore {
   readonly calls = signal<WaiterCall[]>([]);
   readonly staff = signal<StaffMember[]>([]);
   readonly paymentMethods = signal<PaymentMethod[]>([]);
+  readonly schedules = signal<WorkSchedule[]>([]);
   readonly loaded = signal(false);
 
   /** El menú QR solo acepta pedidos con el restaurante abierto. */
@@ -112,7 +116,7 @@ export class RestaurantStore {
     // Cada recurso se resuelve de forma independiente: el cliente anónimo no
     // puede leer `profiles` (protección de datos), así que ese fallo no debe
     // vaciar el menú público. `allSettled` aísla cada error.
-    const [settings, categories, products, tables, orders, calls, staff, methods] =
+    const [settings, categories, products, tables, orders, calls, staff, methods, schedules] =
       await Promise.allSettled([
         this.settingsRepo.getSettings(),
         this.menuRepo.getCategories(),
@@ -122,6 +126,7 @@ export class RestaurantStore {
         this.callsRepo.getPendingCalls(),
         this.staffRepo.getStaff(),
         this.paymentsRepo.getMethods(),
+        this.scheduleRepo.getSchedules().catch(() => [] as WorkSchedule[]),
       ]);
     if (settings.status === 'fulfilled') this.settings.set(settings.value);
     if (categories.status === 'fulfilled') this.categories.set(categories.value);
@@ -130,7 +135,19 @@ export class RestaurantStore {
     if (calls.status === 'fulfilled') this.calls.set(calls.value);
     if (staff.status === 'fulfilled') this.staff.set(staff.value);
     if (methods.status === 'fulfilled') this.paymentMethods.set(methods.value);
+    if (schedules.status === 'fulfilled') this.schedules.set(schedules.value);
     if (orders.status === 'fulfilled') this.orders.set(this.withWaiterNames(orders.value));
+  }
+
+  /** Guarda (upsert) el horario semanal de un trabajador. */
+  async saveSchedule(schedule: WorkSchedule): Promise<void> {
+    this.schedules.update((list) => {
+      const idx = list.findIndex((s) => s.staffId === schedule.staffId);
+      if (idx >= 0) return list.map((s) => (s.staffId === schedule.staffId ? schedule : s));
+      return [...list, schedule];
+    });
+    await this.scheduleRepo.saveSchedule(schedule);
+    this.toast.show('Horario guardado');
   }
 
   private async refreshOrders(): Promise<void> {

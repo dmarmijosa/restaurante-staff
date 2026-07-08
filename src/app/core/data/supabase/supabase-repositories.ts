@@ -20,6 +20,7 @@ import type {
   StaffMember,
   StaffRole,
   WaiterCall,
+  WorkSchedule,
 } from '../../domain/entities/entities';
 import {
   AuthRepository,
@@ -32,6 +33,7 @@ import {
   StaffRepository,
   StorageRepository,
   TablesRepository,
+  WorkScheduleRepository,
   type SessionUser,
 } from '../../domain/repositories/repositories';
 import { SupabaseClientService } from './supabase-client.service';
@@ -589,6 +591,31 @@ export class SupabasePaymentsRepository extends PaymentsRepository {
 
   async deleteMethod(id: number): Promise<void> {
     const { error } = await this.supabase.client.from('payment_methods').delete().eq('id', id);
+    if (error) throw error;
+  }
+}
+
+@Injectable()
+export class SupabaseWorkScheduleRepository extends WorkScheduleRepository {
+  private supabase = inject(SupabaseClientService);
+  private context = inject(RestaurantContextService);
+
+  async getSchedules(): Promise<WorkSchedule[]> {
+    const rId = this.context.restaurantId();
+    const base = this.supabase.client.from('work_schedules').select('staff_id, days');
+    const { data, error } = await (rId ? base.eq('restaurant_id', rId) : base);
+    if (error) throw error;
+    return (data ?? []).map((row) => ({ staffId: row.staff_id as string, days: row.days as WorkSchedule['days'] }));
+  }
+
+  async saveSchedule(schedule: WorkSchedule): Promise<void> {
+    const rId = this.context.restaurantId();
+    const { error } = await this.supabase.client
+      .from('work_schedules')
+      .upsert(
+        { restaurant_id: rId, staff_id: schedule.staffId, days: schedule.days, updated_at: new Date().toISOString() },
+        { onConflict: 'staff_id' },
+      );
     if (error) throw error;
   }
 }

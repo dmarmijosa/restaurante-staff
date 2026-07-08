@@ -22,7 +22,9 @@
       "screen": "Screen",
       "register": "Register",
       "mobile_qr": "Mobile · QR"
-    }
+    },
+    "today": "Today",
+    "day_off": "Off today"
   },
   "client": {
     "via_qr": "via QR code",
@@ -85,7 +87,9 @@
     "email_invalid": "Enter a valid email.",
     "password_required": "Enter your password.",
     "error_invalid": "Invalid credentials. Check your email and password.",
-    "error_unknown": "Could not sign in. Please try again."
+    "error_unknown": "Could not sign in. Please try again.",
+    "demo_quick_access": "Quick demo access",
+    "demo_hint": "Sample in-memory data — it resets on reload."
   },
   "register": {
     "badge": "NEW RESTAURANT",
@@ -171,7 +175,8 @@
       "pagos": "Payment methods",
       "temporada": "Season & hours",
       "ajustes": "Settings",
-      "area": "Administration"
+      "area": "Administration",
+      "horarios": "Schedules"
     },
     "tour": {
       "welcome_title": "Welcome to your panel!",
@@ -190,48 +195,39 @@
       "temporada_desc": "Open/close the restaurant and set the season; control whether the QR accepts orders.",
       "ajustes_desc": "Restaurant name, logo and admin accounts.",
       "multirestaurant_title": "Do you have more locations?",
-      "multirestaurant_desc": "This platform supports multiple restaurants in a single deployment. To create a second location visit <strong>/nuevo-restaurante</strong> — each has its own menu, team, tables and orders, completely separate."
+      "multirestaurant_desc": "This platform supports multiple restaurants in a single deployment. To create a second location visit <strong>/nuevo-restaurante</strong> — each has its own menu, team, tables and orders, completely separate.",
+      "horarios_desc": "Set each employee’s weekly schedule; every worker sees it after signing in."
     },
     "dashboard": {
-      "title": "Summary",
-      "subtitle": "Revenue, payment breakdowns and top dishes — for the selected period.",
-      "range_today": "Today",
-      "range_7d": "7 days",
-      "range_30d": "30 days",
-      "range_all": "All",
-      "period_label": "Period",
-      "kpi_revenue": "Revenue",
-      "kpi_avg_ticket": "Avg. ticket",
-      "kpi_orders": "Charged orders",
-      "kpi_avg_cook": "Avg. cook time",
-      "kpi_revenue_hint": "Sum of charged orders",
-      "kpi_orders_hint": "Paid orders in period",
-      "kpi_cook_hint": "From received to ready",
-      "sales_by_method": "Sales by payment method",
-      "top_products": "Top products",
-      "no_charges": "No charges recorded yet.",
-      "no_orders": "No orders yet.",
-      "charge_one": "{{count}} charge",
-      "charge_many": "{{count}} charges"
+      "revenue": "REVENUE",
+      "avg": "AVG TICKET",
+      "orders": "ORDERS",
+      "tocharge": "TO CHARGE",
+      "ktime": "KITCHEN TIME",
+      "revenue_hint": "{count} orders charged",
+      "avg_hint": "per charged order",
+      "orders_hint": "{paid} charged · {pending} pending",
+      "tocharge_hint": "unpaid orders",
+      "ktime_hint": "avg received → ready",
+      "by_method": "Sales by payment method",
+      "top": "Best-selling products",
+      "no_sales": "No sales in this period yet.",
+      "no_top": "No orders yet.",
+      "title": "Overview",
+      "subtitle": "Revenue, charges by method and what sells most — in the chosen period.",
+      "create_title": "Create your first restaurant",
+      "create_hint": "No restaurant is registered in this deployment yet.",
+      "create_cta": "Create restaurant",
+      "units": "units",
+      "charge_one": "charge",
+      "charge_many": "charges"
     },
     "orders": {
       "title": "Orders",
       "subtitle": "Live floor orders. QR menu orders appear here and on the waiter's tablet.",
       "mesa": "Table"
     },
-    "menu": {
-      "title": "Menu & products",
-      "subtitle": "Activate products here and they instantly appear on the customer's menu.",
-      "new_product": "+ New product",
-      "product_name_placeholder": "Product name",
-      "price_placeholder": "Price",
-      "save": "Save",
-      "upload_photo": "Upload photo",
-      "change_photo": "Change photo",
-      "availability": "Availability of {{name}}",
-      "sold_out": "SOLD OUT",
-      "all": "All"
-    },
+    "menu": "Open menu",
     "categories": {
       "title": "Categories",
       "subtitle": "They organise the public menu and panel filters.",
@@ -305,11 +301,24 @@
     "history": {
       "title": "History",
       "tab_orders": "Orders",
-      "tab_cash": "Register",
+      "tab_cash": "Cash",
       "subtitle": "Orders and cash register summary for the selected period.",
       "unpaid": "Unpaid",
       "orders_count": "{{count}} orders in this period.",
-      "total": "Total"
+      "total": "Total",
+      "col_table": "TABLE",
+      "col_items": "ITEMS",
+      "col_total": "TOTAL",
+      "col_status": "STATUS",
+      "col_charge": "PAYMENT",
+      "no_orders": "No orders in this period.",
+      "total_charged": "TOTAL CHARGED",
+      "charges": "CHARGES",
+      "methods_used": "METHODS USED",
+      "breakdown": "Breakdown by method",
+      "no_breakdown": "No charges in this period.",
+      "charges_period": "Charges in the period",
+      "no_charges": "No charges."
     },
     "floor_plan": {
       "title": "Floor plan",
@@ -320,6 +329,21 @@
       "split": "Split",
       "mesa": "Table",
       "tables": "Tables"
+    },
+    "schedule": {
+      "title": "Work schedule",
+      "subtitle": "Weekly shifts per employee. Each worker sees their schedule after signing in.",
+      "no_staff": "First add employees under “Waiters & shifts”.",
+      "works": "Works",
+      "day_off": "Day off",
+      "save": "Save schedule",
+      "weekly_hours": "h/week"
+    },
+    "range": {
+      "hoy": "Today",
+      "d7": "7 days",
+      "d30": "30 days",
+      "todo": "All"
     }
   },
   "qr": {
@@ -361,5 +385,25 @@
     "call_attended": "Call attended — waiter on the way",
     "admin_name_required": "Enter the admin's name",
     "category_name_required": "Give the product a name"
+  },
+  "weekday": {
+    "0": "Monday",
+    "1": "Tuesday",
+    "2": "Wednesday",
+    "3": "Thursday",
+    "4": "Friday",
+    "5": "Saturday",
+    "6": "Sunday"
+  },
+  "connect": {
+    "exit_demo": "Exit demo mode",
+    "title": "Connect your Supabase",
+    "subtitle": "Paste your project URL and publishable key. The app will leave demo mode and use your database (empty, from scratch).",
+    "url_label": "Project URL",
+    "key_label": "Publishable key (anon)",
+    "hint": "Find them in Supabase → Project Settings → API. The publishable key is safe for the client.",
+    "cancel": "Cancel",
+    "submit": "Connect and reload",
+    "error_invalid": "Check the URL (https://…supabase.co) and the key."
   }
 }

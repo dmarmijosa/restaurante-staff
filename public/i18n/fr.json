@@ -22,7 +22,9 @@
       "screen": "Écran",
       "register": "Caisse",
       "mobile_qr": "Mobile · QR"
-    }
+    },
+    "today": "Aujourd’hui",
+    "day_off": "Repos aujourd’hui"
   },
   "client": {
     "via_qr": "via code QR",
@@ -85,7 +87,9 @@
     "email_invalid": "Entrez un e-mail valide.",
     "password_required": "Entrez votre mot de passe.",
     "error_invalid": "Identifiants incorrects. Vérifiez votre e-mail et mot de passe.",
-    "error_unknown": "Connexion impossible. Veuillez réessayer."
+    "error_unknown": "Connexion impossible. Veuillez réessayer.",
+    "demo_quick_access": "Accès démo rapide",
+    "demo_hint": "Données d'exemple en mémoire, réinitialisées au rechargement."
   },
   "register": {
     "badge": "NOUVEAU RESTAURANT",
@@ -171,7 +175,8 @@
       "pagos": "Modes de paiement",
       "temporada": "Saison et horaires",
       "ajustes": "Paramètres",
-      "area": "Administration"
+      "area": "Administration",
+      "horarios": "Horaires"
     },
     "tour": {
       "welcome_title": "Bienvenue dans votre panneau !",
@@ -190,48 +195,39 @@
       "temporada_desc": "Ouvrez/fermez le restaurant et définissez la saison ; contrôlez si le QR accepte les commandes.",
       "ajustes_desc": "Nom et logo du restaurant et comptes d'administration.",
       "multirestaurant_title": "Vous avez d'autres établissements ?",
-      "multirestaurant_desc": "Cette plateforme prend en charge plusieurs restaurants dans un seul déploiement. Pour créer un deuxième établissement, visitez <strong>/nuevo-restaurante</strong> — chacun a son propre menu, équipe, tables et commandes, complètement séparés."
+      "multirestaurant_desc": "Cette plateforme prend en charge plusieurs restaurants dans un seul déploiement. Pour créer un deuxième établissement, visitez <strong>/nuevo-restaurante</strong> — chacun a son propre menu, équipe, tables et commandes, complètement séparés.",
+      "horarios_desc": "Définissez l’horaire hebdomadaire de chaque employé; chacun le voit à la connexion."
     },
     "dashboard": {
-      "title": "Résumé",
-      "subtitle": "Revenus, paiements par méthode et les plus commandés — pour la période sélectionnée.",
-      "range_today": "Aujourd'hui",
-      "range_7d": "7 jours",
-      "range_30d": "30 jours",
-      "range_all": "Tout",
-      "period_label": "Période",
-      "kpi_revenue": "Revenus",
-      "kpi_avg_ticket": "Ticket moyen",
-      "kpi_orders": "Commandes encaissées",
-      "kpi_avg_cook": "Temps moyen cuisine",
-      "kpi_revenue_hint": "Somme des commandes encaissées",
-      "kpi_orders_hint": "Commandes payées sur la période",
-      "kpi_cook_hint": "De reçu à prêt",
-      "sales_by_method": "Ventes par mode de paiement",
-      "top_products": "Produits les plus vendus",
-      "no_charges": "Aucun encaissement enregistré pour l'instant.",
-      "no_orders": "Aucune commande pour l'instant.",
-      "charge_one": "{{count}} encaissement",
-      "charge_many": "{{count}} encaissements"
+      "revenue": "RECETTES",
+      "avg": "TICKET MOYEN",
+      "orders": "COMMANDES",
+      "tocharge": "À ENCAISSER",
+      "ktime": "TEMPS CUISINE",
+      "revenue_hint": "{count} commandes encaissées",
+      "avg_hint": "par commande encaissée",
+      "orders_hint": "{paid} encaissées · {pending} en attente",
+      "tocharge_hint": "commandes impayées",
+      "ktime_hint": "moy. reçu → prêt",
+      "by_method": "Ventes par moyen de paiement",
+      "top": "Produits les plus vendus",
+      "no_sales": "Pas encore de ventes sur cette période.",
+      "no_top": "Aucune commande pour l’instant.",
+      "title": "Aperçu",
+      "subtitle": "Recettes, encaissements par moyen et ce qui se vend le plus — sur la période choisie.",
+      "create_title": "Créez votre premier restaurant",
+      "create_hint": "Aucun restaurant enregistré dans ce déploiement pour l’instant.",
+      "create_cta": "Créer un restaurant",
+      "units": "u",
+      "charge_one": "encaissement",
+      "charge_many": "encaissements"
     },
     "orders": {
       "title": "Commandes",
       "subtitle": "Commandes du salon en temps réel. Les commandes du menu QR arrivent ici et sur la tablette du serveur.",
       "mesa": "Table"
     },
-    "menu": {
-      "title": "Menu et produits",
-      "subtitle": "Ce que vous activez ici apparaît instantanément dans le menu public du client.",
-      "new_product": "+ Nouveau produit",
-      "product_name_placeholder": "Nom du produit",
-      "price_placeholder": "Prix",
-      "save": "Enregistrer",
-      "upload_photo": "Télécharger une photo",
-      "change_photo": "Changer la photo",
-      "availability": "Disponibilité de {{name}}",
-      "sold_out": "ÉPUISÉ",
-      "all": "Toutes"
-    },
+    "menu": "Ouvrir le menu",
     "categories": {
       "title": "Catégories",
       "subtitle": "Elles organisent le menu public et les filtres du panneau.",
@@ -309,7 +305,20 @@
       "subtitle": "Commandes et caisse pour la période sélectionnée.",
       "unpaid": "Non encaissé",
       "orders_count": "{{count}} commandes sur la période.",
-      "total": "Total"
+      "total": "Total",
+      "col_table": "TABLE",
+      "col_items": "ARTICLES",
+      "col_total": "TOTAL",
+      "col_status": "ÉTAT",
+      "col_charge": "PAIEMENT",
+      "no_orders": "Aucune commande sur cette période.",
+      "total_charged": "TOTAL ENCAISSÉ",
+      "charges": "ENCAISSEMENTS",
+      "methods_used": "MOYENS UTILISÉS",
+      "breakdown": "Détail par moyen",
+      "no_breakdown": "Aucun encaissement sur cette période.",
+      "charges_period": "Encaissements de la période",
+      "no_charges": "Aucun encaissement."
     },
     "floor_plan": {
       "title": "Plan de salle",
@@ -320,6 +329,21 @@
       "split": "Séparer",
       "mesa": "Table",
       "tables": "Tables"
+    },
+    "schedule": {
+      "title": "Horaires de travail",
+      "subtitle": "Créneaux hebdomadaires par employé. Chaque employé voit son horaire à la connexion.",
+      "no_staff": "Ajoutez d’abord des employés dans « Serveurs et services ».",
+      "works": "Travaille",
+      "day_off": "Repos",
+      "save": "Enregistrer l’horaire",
+      "weekly_hours": "h/semaine"
+    },
+    "range": {
+      "hoy": "Aujourd’hui",
+      "d7": "7 jours",
+      "d30": "30 jours",
+      "todo": "Tout"
     }
   },
   "qr": {
@@ -361,5 +385,25 @@
     "call_attended": "Appel pris en charge — serveur en route",
     "admin_name_required": "Entrez le nom de l'administrateur",
     "category_name_required": "Donnez un nom au produit"
+  },
+  "weekday": {
+    "0": "Lundi",
+    "1": "Mardi",
+    "2": "Mercredi",
+    "3": "Jeudi",
+    "4": "Vendredi",
+    "5": "Samedi",
+    "6": "Dimanche"
+  },
+  "connect": {
+    "exit_demo": "Quitter le mode démo",
+    "title": "Connectez votre Supabase",
+    "subtitle": "Collez l’URL et la clé publishable de votre projet. L’app quittera le mode démo et utilisera votre base (vide, de zéro).",
+    "url_label": "URL du projet",
+    "key_label": "Clé publishable (anon)",
+    "hint": "Dans Supabase → Project Settings → API. La clé publishable est sûre côté client.",
+    "cancel": "Annuler",
+    "submit": "Connecter et recharger",
+    "error_invalid": "Vérifiez l’URL (https://…supabase.co) et la clé."
   }
 }

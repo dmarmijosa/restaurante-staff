@@ -54,6 +54,7 @@ src/environments/env.generated.ts
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+/Playwright/
 
 # Supabase CLI (temporales locales) — las migraciones y el seed SÍ se versionan.
 supabase/.branches/

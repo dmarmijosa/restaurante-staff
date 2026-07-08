@@ -89,7 +89,9 @@
     "error_invalid": "Identifiants incorrects. Vérifiez votre e-mail et mot de passe.",
     "error_unknown": "Connexion impossible. Veuillez réessayer.",
     "demo_quick_access": "Accès démo rapide",
-    "demo_hint": "Données d'exemple en mémoire, réinitialisées au rechargement."
+    "demo_hint": "Données d'exemple en mémoire, réinitialisées au rechargement.",
+    "try_demo_mode": "Essayer le mode démo (sans Supabase)",
+    "try_demo_hint": "Données d'exemple en mémoire avec accès rapide par rôle."
   },
   "register": {
     "badge": "NOUVEAU RESTAURANT",

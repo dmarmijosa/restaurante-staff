@@ -89,7 +89,9 @@
     "error_invalid": "Credenciais incorretas. Verifique seu e-mail e senha.",
     "error_unknown": "Não foi possível entrar. Tente novamente.",
     "demo_quick_access": "Acesso rápido de demonstração",
-    "demo_hint": "Dados de exemplo em memória — reiniciam ao recarregar."
+    "demo_hint": "Dados de exemplo em memória — reiniciam ao recarregar.",
+    "try_demo_mode": "Experimentar modo demo (sem Supabase)",
+    "try_demo_hint": "Dados de exemplo em memória com acesso rápido por função."
   },
   "register": {
     "badge": "NOVO RESTAURANTE",

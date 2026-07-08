@@ -89,7 +89,9 @@
     "error_invalid": "Invalid credentials. Check your email and password.",
     "error_unknown": "Could not sign in. Please try again.",
     "demo_quick_access": "Quick demo access",
-    "demo_hint": "Sample in-memory data — it resets on reload."
+    "demo_hint": "Sample in-memory data — it resets on reload.",
+    "try_demo_mode": "Try demo mode (no Supabase)",
+    "try_demo_hint": "In-memory sample data with quick role access."
   },
   "register": {
     "badge": "NEW RESTAURANT",

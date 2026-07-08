@@ -89,7 +89,9 @@
     "error_invalid": "Credenciales incorrectas. Revisa tu correo y contraseña.",
     "error_unknown": "No se pudo iniciar sesión. Inténtalo de nuevo.",
     "demo_quick_access": "Acceso rápido de demostración",
-    "demo_hint": "Datos de ejemplo en memoria. Al recargar se restablecen."
+    "demo_hint": "Datos de ejemplo en memoria. Al recargar se restablecen.",
+    "try_demo_mode": "Probar modo demo (sin Supabase)",
+    "try_demo_hint": "Datos de ejemplo en memoria con acceso rápido por rol."
   },
   "register": {
     "badge": "NUEVO RESTAURANTE",

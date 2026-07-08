@@ -89,7 +89,9 @@
     "error_invalid": "Credenziali errate. Controlla e-mail e password.",
     "error_unknown": "Accesso non riuscito. Riprova.",
     "demo_quick_access": "Accesso demo rapido",
-    "demo_hint": "Dati di esempio in memoria: si azzerano al ricaricamento."
+    "demo_hint": "Dati di esempio in memoria: si azzerano al ricaricamento.",
+    "try_demo_mode": "Prova modalità demo (senza Supabase)",
+    "try_demo_hint": "Dati di esempio in memoria con accesso rapido per ruolo."
   },
   "register": {
     "badge": "NUOVO RISTORANTE",

@@ -3,7 +3,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { AuthService } from '../../core/auth/auth.service';
-import { isSupabaseConfigured } from '../../core/data/supabase/supabase-client.service';
+import { enterDemoMode, isDemoMode } from '../../core/data/supabase/runtime-config';
 
 @Component({
   selector: 'app-login',
@@ -141,6 +141,17 @@ import { isSupabaseConfigured } from '../../core/data/supabase/supabase-client.s
               </div>
               <p class="mt-2.5 text-[10.5px] text-tinta-media">{{ 'login.demo_hint' | translate }}</p>
             </div>
+          } @else {
+            <div class="mt-5 border-t border-borde pt-4 text-center">
+              <button
+                type="button"
+                (click)="tryDemoMode()"
+                class="cursor-pointer border-none bg-transparent text-[12px] font-semibold text-terracota-profundo hover:underline"
+              >
+                {{ 'login.try_demo_mode' | translate }}
+              </button>
+              <p class="mt-1.5 text-[10.5px] text-tinta-media">{{ 'login.try_demo_hint' | translate }}</p>
+            </div>
           }
         </form>
 
@@ -158,7 +169,7 @@ export class LoginComponent implements OnInit {
 
   ngOnInit(): void {}
 
-  protected readonly demoMode = !isSupabaseConfigured();
+  protected readonly demoMode = isDemoMode();
   protected readonly loading = signal(false);
   protected readonly error = signal<string | null>(null);
   protected readonly showPassword = signal(false);
@@ -184,6 +195,11 @@ export class LoginComponent implements OnInit {
 
   protected passwordInvalid(): boolean {
     return this.passwordTouched() && this.form.controls.password.invalid;
+  }
+
+  /** Vuelve al mock en memoria (admin / mesero / cocina / cajero de demo). */
+  protected tryDemoMode(): void {
+    enterDemoMode();
   }
 
   /** Acceso rápido en modo demo. */

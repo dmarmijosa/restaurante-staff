@@ -89,7 +89,9 @@
     "error_invalid": "Credencials incorrectes. Revisa el correu i la contrasenya.",
     "error_unknown": "No s'ha pogut iniciar sessió. Torna-ho a intentar.",
     "demo_quick_access": "Accés ràpid de demostració",
-    "demo_hint": "Dades d'exemple en memòria. Es restableixen en recarregar."
+    "demo_hint": "Dades d'exemple en memòria. Es restableixen en recarregar.",
+    "try_demo_mode": "Provar mode demo (sense Supabase)",
+    "try_demo_hint": "Dades d'exemple en memòria amb accés ràpid per rol."
   },
   "register": {
     "badge": "NOU RESTAURANT",

@@ -136,7 +136,8 @@
     "mark_ready": "Piatto pronto",
     "elapsed_label": "Da {{minutes}} minuti",
     "queue_one": "1 ordine in coda",
-    "queue_many": "{{n}} ordini in coda"
+    "queue_many": "{{n}} ordini in coda",
+    "tap_for_sound": "Tocca per sentire l'avviso"
   },
   "waiter": {
     "online": "Online",
@@ -405,5 +406,10 @@
     "cancel": "Annulla",
     "submit": "Connetti e ricarica",
     "error_invalid": "Controlla l’URL (https://…supabase.co) e la chiave."
+  },
+  "pwa": {
+    "offline_banner": "Nessuna connessione · dati dalla cache",
+    "cached_data": "Dati del turno precedente",
+    "back_online": "Connessione ripristinata · sincronizzazione…"
   }
 }

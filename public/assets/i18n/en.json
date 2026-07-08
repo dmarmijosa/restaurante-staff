@@ -136,7 +136,8 @@
     "mark_ready": "Dish ready",
     "elapsed_label": "{{minutes}} minutes",
     "queue_one": "1 order in queue",
-    "queue_many": "{{n}} orders in queue"
+    "queue_many": "{{n}} orders in queue",
+    "tap_for_sound": "Tap to hear the alert"
   },
   "waiter": {
     "online": "Online",
@@ -405,5 +406,10 @@
     "cancel": "Cancel",
     "submit": "Connect and reload",
     "error_invalid": "Check the URL (https://…supabase.co) and the key."
+  },
+  "pwa": {
+    "offline_banner": "No connection · showing cached data",
+    "cached_data": "Last shift data",
+    "back_online": "Back online · syncing…"
   }
 }

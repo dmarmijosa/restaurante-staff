@@ -136,7 +136,8 @@
     "mark_ready": "Plat llest",
     "elapsed_label": "Porta {{minutes}} minuts",
     "queue_one": "1 comanda a la cua",
-    "queue_many": "{{n}} comandes a la cua"
+    "queue_many": "{{n}} comandes a la cua",
+    "tap_for_sound": "Toca per escoltar l'avís"
   },
   "waiter": {
     "online": "En línia",
@@ -405,5 +406,10 @@
     "cancel": "Cancel·la",
     "submit": "Connecta i recarrega",
     "error_invalid": "Revisa la URL (https://…supabase.co) i la clau."
+  },
+  "pwa": {
+    "offline_banner": "Sense connexió · mostrant dades en memòria",
+    "cached_data": "Dades del darrer torn",
+    "back_online": "Connexió restaurada · sincronitzant…"
   }
 }

@@ -7,6 +7,13 @@
  * Tiempo de cocina: cada comanda muestra los minutos que lleva esperando (reloj
  * en vivo, se refresca cada 30 s) y se resalta en rojo si supera el umbral, para
  * que la cocina priorice lo que más tiempo lleva.
+ *
+ * Notificación sonora automática: se detectan IDs nuevos en kitchenOrders (no
+ * solo el conteo) para ser robusto ante añadir+quitar en el mismo tick. Si el
+ * AudioContext está suspendido cuando llega la comanda, el tono queda encolado
+ * en BeepService y se dispara en cuanto el usuario toca la pantalla (prime).
+ * Mientras el tono está pendiente se muestra un indicador pulsante junto al
+ * botón de silencio para que el cocinero sepa que hay un aviso esperando.
  */
 import {
   ChangeDetectionStrategy,
@@ -32,6 +39,8 @@ const LATE_THRESHOLD_MIN = 15;
   imports: [StaffTopbarComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   // El AudioContext solo suena tras un gesto: lo despertamos en el primer toque.
+  // Si había un beep pendiente (comanda llegada con contexto suspendido), se
+  // reproduce aquí mismo sin que el cocinero tenga que hacer nada extra.
   host: { '(pointerdown)': 'beep.prime()' },
   template: `
     <div class="flex min-h-dvh flex-col">
@@ -41,6 +50,19 @@ const LATE_THRESHOLD_MIN = 15;
           <h1 class="font-serif text-[26px] font-semibold text-lino">{{ 'kitchen.title' | translate }}</h1>
           <div class="text-sm text-lino-gris">{{ 'kitchen.subtitle' | translate }}</div>
           <div class="flex-1"></div>
+
+          <!-- Indicador pulsante: hay un aviso sonoro esperando el primer toque -->
+          @if (beep.pendingBeep() && !beep.muted()) {
+            <span
+              class="relative flex h-2.5 w-2.5 self-center"
+              role="status"
+              [attr.aria-label]="'kitchen.tap_for_sound' | translate"
+            >
+              <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-arcilla opacity-75"></span>
+              <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-arcilla"></span>
+            </span>
+          }
+
           <button
             type="button"
             (click)="beep.toggleMuted()"
@@ -118,15 +140,40 @@ export class KitchenComponent implements OnInit {
   /** Reloj compartido; se actualiza cada 30 s para refrescar los minutos. */
   private readonly now = signal(Date.now());
 
-  /** Nº de comandas en la anterior comprobación, para detectar entradas nuevas. */
-  private prevCount = -1;
+  /**
+   * IDs de comandas ya conocidas al cargar la vista.
+   * Permite detectar solo las que llegan después de la carga inicial
+   * (no sonar al entrar aunque haya comandas pendientes de turnos anteriores).
+   */
+  private readonly knownIds = new Set<number>();
+  private initialized = false;
 
   constructor() {
-    // Suena cuando la cola de cocina crece (entra una comanda nueva).
+    /**
+     * Dispara el aviso sonoro cuando llega una comanda realmente nueva.
+     *
+     * Se rastrea por ID en lugar de por conteo para evitar falsos positivos
+     * (p.ej., si una comanda avanza a "listo" y entra otra en el mismo ciclo,
+     * el conteo no cambia pero sí hay una ID nueva).
+     */
     effect(() => {
-      const count = this.store.kitchenOrders().length;
-      if (this.prevCount >= 0 && count > this.prevCount) this.beep.beep();
-      this.prevCount = count;
+      const orders = this.store.kitchenOrders();
+
+      if (!this.initialized) {
+        // Primera evaluación: marcar todas las existentes como conocidas sin sonar.
+        orders.forEach((o) => this.knownIds.add(o.id));
+        this.initialized = true;
+        return;
+      }
+
+      // Detectar IDs que no estaban en la última instantánea.
+      const hasNew = orders.some((o) => !this.knownIds.has(o.id));
+      // Actualizar el set con el estado actual (añadir nuevas, las avanzadas
+      // a "listo" ya no aparecen en kitchenOrders pero sus IDs quedan, lo que
+      // evita sonar si por algún motivo vuelven a aparecer brevemente).
+      orders.forEach((o) => this.knownIds.add(o.id));
+
+      if (hasNew) this.beep.beep();
     });
   }
 

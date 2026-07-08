@@ -136,7 +136,8 @@
     "mark_ready": "Plat prêt",
     "elapsed_label": "Depuis {{minutes}} minutes",
     "queue_one": "1 commande en file",
-    "queue_many": "{{n}} commandes en file"
+    "queue_many": "{{n}} commandes en file",
+    "tap_for_sound": "Appuyez pour entendre l'alerte"
   },
   "waiter": {
     "online": "En ligne",
@@ -405,5 +406,10 @@
     "cancel": "Annuler",
     "submit": "Connecter et recharger",
     "error_invalid": "Vérifiez l’URL (https://…supabase.co) et la clé."
+  },
+  "pwa": {
+    "offline_banner": "Hors ligne · affichage des données en cache",
+    "cached_data": "Données du dernier service",
+    "back_online": "Reconnecté · synchronisation…"
   }
 }

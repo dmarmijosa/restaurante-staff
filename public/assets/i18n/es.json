@@ -136,7 +136,8 @@
     "mark_ready": "Platillo listo",
     "elapsed_label": "Lleva {{minutes}} minutos",
     "queue_one": "1 comanda en cola",
-    "queue_many": "{{n}} comandas en cola"
+    "queue_many": "{{n}} comandas en cola",
+    "tap_for_sound": "Toca para escuchar el aviso"
   },
   "waiter": {
     "online": "En línea",
@@ -405,5 +406,10 @@
     "cancel": "Cancelar",
     "submit": "Conectar y recargar",
     "error_invalid": "Revisa la URL (https://…supabase.co) y la clave."
+  },
+  "pwa": {
+    "offline_banner": "Sin conexión · mostrando datos en caché",
+    "cached_data": "Datos del último turno",
+    "back_online": "Conexión restaurada · sincronizando…"
   }
 }

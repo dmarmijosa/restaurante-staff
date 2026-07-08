@@ -1,10 +1,10 @@
 # Trabajo actual
 
-_Última actualización: 2026-07-08 (iteración 11)_
+_Última actualización: 2026-07-08 (iteración 13)_
 
 ## Estado actual
 
-Plataforma **v0.7**: 10 migraciones SQL aplicadas. **Build limpio**, **33 unitarias** y **29 E2E en verde**.
+Plataforma **v0.8**: 10 migraciones SQL aplicadas. **Build limpio**, **33 unitarias** y **29 E2E en verde**.
 Los E2E ahora fijan `locale: es-ES` en Playwright (la app detecta idioma del navegador) y esperan a que
 la mock API con latencia cargue los datos antes de contar.
 
@@ -29,6 +29,40 @@ la mock API con latencia cargue los datos antes de contar.
 
 - ✅ **E2E arreglados**: `locale: es-ES` determinista en Playwright y esperas al primer elemento antes
   de contar (por la latencia de la mock API). Toast de disponibilidad con matcher tolerante a comillas.
+
+## Hecho en la iteración 12 (PWA / offline para la tablet del mesero)
+
+- ✅ **`@angular/service-worker`** instalado y configurado.
+- ✅ **`ngsw-config.json`**: app-shell precacheable (HTML, JS, CSS) + runtime-cache para i18n JSON.
+- ✅ **`public/manifest.webmanifest`**: nombre, colores de marca (terracota/cacao), `start_url: /mesero`, orientación landscape, acceso directo a "Mis mesas". Instalable en Android/iOS/Chrome/Safari.
+- ✅ **Iconos SVG** (`/icons/icon-192.svg` y `/icons/icon-512.svg`) con diseño de plato y cubiertos en paleta terracota/cacao.
+- ✅ **`index.html`** actualizado: `<link rel="manifest">`, `theme-color`, `apple-mobile-web-app-*`.
+- ✅ **`angular.json`**: `serviceWorker: ngsw-config.json` en la configuración de producción.
+- ✅ **`OfflineService`** (`core/pwa/offline.service.ts`): signal `isOnline` que reacciona en tiempo real a `window:online/offline`.
+- ✅ **`WaiterCacheService`** (`core/pwa/waiter-cache.service.ts`): persiste el último snapshot de mesas/pedidos/llamadas en localStorage con TTL de 4 horas.
+- ✅ **`OfflineBannerComponent`** (`shared/offline-banner/`): banner amarillo al perder red (con indicador de "datos en caché") y banner verde 3 segundos al reconectarse. `aria-live="polite"` para accesibilidad.
+- ✅ **`WaiterComponent`** actualizado: carga caché al abrir sin red, deshabilita botones de acción offline, guarda snapshot automáticamente al recibir datos nuevos, refresca el store al reconectarse.
+- ✅ **`app.config.ts`**: `provideServiceWorker('ngsw-worker.js', { enabled: !isDevMode() })`.
+- ✅ **Claves i18n** `pwa.*` añadidas en 6 idiomas (es/en/ca/pt/fr/it).
+- ✅ **8 pruebas unitarias** (jsdom) para `OfflineService` y `WaiterCacheService` en verde.
+- ✅ TypeScript compila sin errores (`tsc --noEmit`).
+
+## Hecho en la iteración 13 (notificación sonora automática en cocina)
+
+- ✅ **`BeepService` mejorado** (`shared/beep.service.ts`): se extrae `_play()` como método privado;
+  `beep()` ya no descarta el tono silenciosamente si el AudioContext está suspendido (política de
+  autoplay): marca `pendingBeep = true` e intenta `ctx.resume()` en background. `prime()` (llamado en
+  cada `pointerdown` de la pantalla de cocina) reanuda el contexto y dispara el tono pendiente de
+  inmediato. Nueva señal pública `pendingBeep` para que la UI pueda reaccionar.
+- ✅ **`KitchenComponent` mejorado** (`features/kitchen/kitchen.component.ts`): el `effect` de
+  detección pasa de comparar `.length` a rastrear un `Set<number>` de IDs conocidas. La primera
+  evaluación marca los pedidos existentes como conocidos (sin sonar); las siguientes solo beepean
+  cuando aparece un ID nuevo — robusto ante añadir+quitar en el mismo ciclo reactivo.
+- ✅ **Indicador visual pulsante**: punto terracota con `animate-ping` en la cabecera de cocina
+  cuando `beep.pendingBeep() && !beep.muted()`. Accesible con `role="status"` + `aria-label`
+  (`kitchen.tap_for_sound`).
+- ✅ **i18n**: clave `kitchen.tap_for_sound` añadida en los 6 idiomas (es/en/ca/pt/fr/it).
+- ✅ **33 unitarias en verde**; sin errores de lint.
 
 ## Pendiente inmediato
 

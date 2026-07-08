@@ -4,7 +4,7 @@
 
 ## Estado de la aplicación
 
-**v0.7 · Multi-restaurante + horarios** — actualizado el 2026-07-08
+**v0.8 · Notificación sonora automática en cocina** — actualizado el 2026-07-08
 
 | Módulo                                                                                     | Estado                               |
 | ------------------------------------------------------------------------------------------ | ------------------------------------ |
@@ -27,7 +27,7 @@
 | Resumen/métricas del admin (ingresos, ticket medio, ventas por método, top productos)      | ✅ Completo                          |
 | Tiempo de cocina (temporizador en vivo + tiempo medio de preparación)                      | ✅ Completo                          |
 | Filtros por fecha en el Resumen (Hoy / 7 días / 30 días / Todo)                            | ✅ Completo                          |
-| Aviso sonoro en cocina + asignación de mesas a meseros                                     | ✅ Completo                          |
+| Aviso sonoro en cocina: disparo automático al llegar comanda (detección por ID, beep pendiente si AudioContext suspendido + indicador visual) | ✅ Completo |
 | Historial de caja y pedidos (arqueo por método)                                            | ✅ Completo                          |
 | Reinicio diario de demo en Supabase (pg_cron)                                              | ✅ Completo                          |
 | Recorte manual de imagen antes de subir (logo y productos)                                 | ✅ Completo                          |
@@ -37,6 +37,7 @@
 | Login demo con accesos rápidos por rol (sin credenciales en texto)                         | ✅ Completo                          |
 | Salir del modo demo con credenciales Supabase en runtime (sin recompilar)                  | ✅ Completo                          |
 | Módulo Horario de trabajo (editor semanal por empleado; visible al trabajador)             | ✅ Completo                          |
+| PWA / offline para la tablet del mesero (SW, manifest, banner, caché localStorage)         | ✅ Completo                          |
 | Panel 100% responsivo (drawer móvil, sin scroll horizontal)                                | ✅ Completo                          |
 | Internacionalización (6 idiomas, paridad de claves; dashboard e historial incluidos)       | ✅ Completo                          |
 
@@ -111,6 +112,8 @@ Angular 22 (standalone + signals) · Tailwind CSS 4 · Supabase (Postgres, Auth,
 ## Changelog
 
 ### 2026-07-08
+- **feat:** notificación sonora automática en cocina: detección por ID de comanda, beep encolado si AudioContext suspendido, indicador visual pulsante e i18n
+- **feat:** PWA/offline para la tablet del mesero (service worker, manifest, OfflineService, WaiterCacheService, banner offline/reconexión)
 - `89aaeac` **feat:** mock API demo, login rápido, salir de demo, horarios, responsive e i18n
 
 ### 2026-07-07

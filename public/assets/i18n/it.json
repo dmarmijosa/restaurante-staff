@@ -137,7 +137,9 @@
     "elapsed_label": "Da {{minutes}} minuti",
     "queue_one": "1 ordine in coda",
     "queue_many": "{{n}} ordini in coda",
-    "tap_for_sound": "Tocca per sentire l'avviso"
+    "tap_for_sound": "Tocca per sentire l'avviso",
+    "status_received": "In attesa",
+    "status_preparing": "In preparazione"
   },
   "waiter": {
     "online": "Online",
@@ -147,11 +149,13 @@
     "orders_title": "ORDINI ATTIVI",
     "attend_btn": "Vai al tavolo",
     "table_calls": "Tavolo {{n}} chiama",
-    "your_table": "Tuo"
+    "your_table": "Tuo",
+    "no_orders": "Nessun ordine attivo"
   },
   "cashier": {
     "shift_label": "Cassa · pagamenti del turno",
     "charged_total": "Incassato: {{total}}",
+    "charged_total_label": "Incassato",
     "orders_title": "ORDINI DA PAGARE",
     "no_orders": "Nessun ordine in attesa di pagamento",
     "charge_with": "PAGA CON",

@@ -137,7 +137,9 @@
     "elapsed_label": "Lleva {{minutes}} minutos",
     "queue_one": "1 comanda en cola",
     "queue_many": "{{n}} comandas en cola",
-    "tap_for_sound": "Toca para escuchar el aviso"
+    "tap_for_sound": "Toca para escuchar el aviso",
+    "status_received": "Pendiente",
+    "status_preparing": "Preparando"
   },
   "waiter": {
     "online": "En línea",
@@ -147,11 +149,13 @@
     "orders_title": "PEDIDOS ACTIVOS",
     "attend_btn": "Atender mesa",
     "table_calls": "Mesa {{n}} llama",
-    "your_table": "Tuya"
+    "your_table": "Tuya",
+    "no_orders": "Sin pedidos activos"
   },
   "cashier": {
     "shift_label": "Caja · cobros del turno",
     "charged_total": "Cobrado: {{total}}",
+    "charged_total_label": "Cobrado",
     "orders_title": "PEDIDOS POR COBRAR",
     "no_orders": "No hay pedidos pendientes de cobro",
     "charge_with": "COBRAR CON",

@@ -137,7 +137,9 @@
     "elapsed_label": "{{minutes}} minutes",
     "queue_one": "1 order in queue",
     "queue_many": "{{n}} orders in queue",
-    "tap_for_sound": "Tap to hear the alert"
+    "tap_for_sound": "Tap to hear the alert",
+    "status_received": "Pending",
+    "status_preparing": "Preparing"
   },
   "waiter": {
     "online": "Online",
@@ -147,11 +149,13 @@
     "orders_title": "ACTIVE ORDERS",
     "attend_btn": "Attend table",
     "table_calls": "Table {{n}} calling",
-    "your_table": "Yours"
+    "your_table": "Yours",
+    "no_orders": "No active orders"
   },
   "cashier": {
     "shift_label": "Register · shift charges",
     "charged_total": "Charged: {{total}}",
+    "charged_total_label": "Charged",
     "orders_title": "ORDERS TO CHARGE",
     "no_orders": "No pending orders to charge",
     "charge_with": "CHARGE WITH",

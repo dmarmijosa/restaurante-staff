@@ -33,64 +33,82 @@ import { OrderCardComponent } from '../../shared/order-card/order-card.component
   imports: [StaffTopbarComponent, OfflineBannerComponent, OrderCardComponent, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="flex min-h-dvh flex-col">
+    <div class="flex min-h-dvh flex-col bg-fondo">
       <app-staff-topbar />
-
-      <!-- Banner offline / reconexión (ancho completo, sobre el marco tablet) -->
       <app-offline-banner [fromCache]="usingCache()" [justReconnected]="justReconnected()" />
 
-      <div class="flex flex-1 items-center justify-center px-6 py-9">
-        <div class="w-[1080px] max-w-full rounded-[28px] bg-[#1E150D] p-4 shadow-[0_24px_60px_rgba(36,26,17,.35)]">
-          <div class="flex h-[640px] flex-col overflow-hidden rounded-2xl bg-marfil">
+      <!-- Marco de tablet -->
+      <div class="flex flex-1 items-center justify-center p-3 sm:p-6 lg:p-8">
+        <div class="w-full max-w-[1120px] rounded-[24px] bg-gradient-to-b from-[#231710] to-[#1A0F08]
+                    p-3 shadow-[0_32px_80px_rgba(0,0,0,.5),inset_0_1px_0_rgba(255,255,255,.06)]
+                    sm:rounded-[32px] sm:p-4">
+
+          <!-- Pantalla interna -->
+          <div class="flex flex-col overflow-hidden rounded-[16px] bg-marfil sm:rounded-[22px]"
+               style="min-height: clamp(460px, 70vh, 700px)">
+
             <!-- Cabecera de la tablet -->
-            <header class="flex flex-none items-center gap-3 border-b border-borde px-[22px] py-3.5">
-              <div
-                class="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-avatar-1 text-xs font-bold text-lino-calido"
-              >
+            <header class="flex flex-none items-center gap-3 border-b border-borde bg-papel/80 px-5 py-3">
+              <!-- Avatar + nombre mesero -->
+              <div class="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-cacao text-[11px] font-bold text-lino shadow-sm">
                 {{ initials() }}
               </div>
-              <div>
-                <div class="text-sm font-bold">{{ waiterName() }}</div>
-                <div class="text-[11px] text-tinta-media">{{ 'shift.tarde' | translate }} · 14:00–20:00</div>
+              <div class="min-w-0">
+                <div class="truncate text-[13.5px] font-bold text-tinta">{{ waiterName() }}</div>
+                <div class="text-[10.5px] text-tinta-media">{{ 'shift.tarde' | translate }} · 14:00–20:00</div>
               </div>
               <div class="flex-1"></div>
-              <div class="font-serif text-[15px] font-semibold">{{ store.settings().name }}</div>
-              <div class="text-[11px] text-tinta-media">
-                @if (offline.isOnline()) {
-                  {{ 'waiter.online' | translate }}
-                } @else {
-                  <span class="text-ocre-texto font-semibold">{{ 'pwa.offline_banner' | translate }}</span>
-                }
+              <!-- Restaurante + indicador de red -->
+              <div class="hidden items-center gap-3 sm:flex">
+                <span class="font-serif text-[14px] font-semibold text-tinta">{{ store.settings().name }}</span>
+                <span
+                  class="flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10.5px] font-semibold"
+                  [class]="offline.isOnline() ? 'bg-oliva-bg text-oliva-texto' : 'bg-ocre-bg text-ocre-texto'"
+                >
+                  <span class="h-1.5 w-1.5 rounded-full"
+                        [class]="offline.isOnline() ? 'bg-oliva-texto' : 'bg-ocre-texto'"></span>
+                  {{ offline.isOnline() ? ('waiter.online' | translate) : ('pwa.offline_banner' | translate) }}
+                </span>
               </div>
             </header>
 
-            <div class="grid min-h-0 flex-1 grid-cols-[300px_1fr]">
-              <!-- Llamadas + mesas -->
-              <aside class="overflow-y-auto border-r border-borde p-[18px]">
-                <div class="mb-3 flex items-center gap-2">
-                  <span class="text-xs font-bold tracking-[.05em] text-tinta-media">{{ 'waiter.calls_title' | translate }}</span>
+            <!-- Cuerpo: sidebar izquierda + panel de pedidos -->
+            <div class="grid min-h-0 flex-1 grid-cols-1 sm:grid-cols-[280px_1fr] lg:grid-cols-[300px_1fr]">
+
+              <!-- Sidebar: llamadas + mesas -->
+              <aside class="overflow-y-auto border-b border-borde bg-crema/50 p-4 sm:border-b-0 sm:border-r">
+
+                <!-- Llamadas -->
+                <div class="mb-2.5 flex items-center gap-2">
+                  <span class="text-[11px] font-bold uppercase tracking-wider text-tinta-media">
+                    {{ 'waiter.calls_title' | translate }}
+                  </span>
                   @if (store.pendingCalls().length > 0) {
-                    <span class="rounded-full bg-rojizo px-[7px] py-px text-[10.5px] font-bold text-lino-calido">
+                    <span class="rounded-full bg-rojizo px-2 py-px text-[10px] font-bold text-lino-calido">
                       {{ store.pendingCalls().length }}
                     </span>
                   }
                 </div>
 
                 @if (store.pendingCalls().length > 0) {
-                  <div class="mb-5 flex flex-col gap-2.5">
+                  <div class="mb-5 flex flex-col gap-2">
                     @for (call of store.pendingCalls(); track call.id) {
-                      <div class="rounded-xl border border-rojizo-borde bg-rojizo-bg px-3.5 py-3">
-                        <div class="mb-[9px] flex items-center gap-2">
-                          <span class="animate-pulse-dot h-[9px] w-[9px] rounded-full bg-rojizo"></span>
-                          <span class="text-[13.5px] font-bold">{{ 'waiter.table_calls' | translate: { n: call.tableNumber } }}</span>
-                          <span class="flex-1"></span>
-                          <span class="text-[11px] text-tinta-media">{{ call.createdAt }}</span>
+                      <div class="rounded-[12px] border border-rojizo-borde bg-rojizo-bg px-3.5 py-3
+                                  shadow-[0_1px_4px_rgba(181,73,58,.1)]">
+                        <div class="mb-2 flex items-center gap-2">
+                          <span class="animate-pulse h-2 w-2 rounded-full bg-rojizo"></span>
+                          <span class="flex-1 text-[13px] font-bold text-tinta">
+                            {{ 'waiter.table_calls' | translate: { n: call.tableNumber } }}
+                          </span>
+                          <span class="text-[10.5px] text-tinta-media">{{ call.createdAt }}</span>
                         </div>
                         <button
                           type="button"
                           (click)="store.attendCall(call.id)"
                           [disabled]="!offline.isOnline()"
-                          class="w-full cursor-pointer rounded-[9px] border-none bg-rojizo py-2 text-xs font-bold text-lino-calido hover:bg-rojizo-hover disabled:opacity-50 disabled:cursor-not-allowed"
+                          class="w-full cursor-pointer rounded-[9px] border-none bg-rojizo py-2 text-[11.5px] font-bold
+                                 text-lino-calido transition-colors hover:bg-rojizo-hover
+                                 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           {{ 'waiter.attend_btn' | translate }}
                         </button>
@@ -98,36 +116,48 @@ import { OrderCardComponent } from '../../shared/order-card/order-card.component
                     }
                   </div>
                 } @else {
-                  <div
-                    class="mb-5 rounded-xl border-[1.5px] border-dashed border-borde-punteado p-4 text-center text-xs text-tinta-media"
-                  >
+                  <div class="mb-5 rounded-[12px] border border-dashed border-borde-punteado p-4 text-center text-[11.5px] text-tinta-media">
                     {{ 'waiter.no_calls' | translate }}
                   </div>
                 }
 
-                <div class="mb-3 text-xs font-bold tracking-[.05em] text-tinta-media">{{ 'waiter.tables_title' | translate }}</div>
-                <div class="grid grid-cols-2 gap-2">
+                <!-- Mesas -->
+                <div class="mb-2.5 text-[11px] font-bold uppercase tracking-wider text-tinta-media">
+                  {{ 'waiter.tables_title' | translate }}
+                </div>
+                <div class="grid grid-cols-2 gap-1.5 sm:grid-cols-2">
                   @for (table of store.tables(); track table.id) {
                     <div
-                      class="flex items-center gap-2 rounded-[10px] border px-[11px] py-[9px]"
-                      [class]="table.waiterId === currentId() ? 'border-terracota bg-duna/40' : 'border-borde bg-papel'"
+                      class="flex items-center gap-2 rounded-[10px] border px-2.5 py-2 transition-colors"
+                      [class]="table.waiterId === currentId()
+                        ? 'border-terracota/40 bg-duna/60'
+                        : 'border-borde bg-papel/70'"
                     >
-                      <span class="h-2 w-2 rounded-full" [style.background]="tableUi[table.status].border"></span>
-                      <span class="flex-1 text-xs font-semibold">{{ tableLabel(table.number, table.mergedNumbers) }}</span>
+                      <span
+                        class="h-2 w-2 flex-none rounded-full"
+                        [style.background]="tableUi[table.status].border"
+                      ></span>
+                      <span class="min-w-0 flex-1 truncate text-[11.5px] font-semibold text-tinta">
+                        {{ tableLabel(table.number, table.mergedNumbers) }}
+                      </span>
                       @if (table.waiterId === currentId()) {
-                        <span class="rounded-full bg-terracota px-1.5 py-px text-[9px] font-bold text-lino-calido">{{ 'waiter.your_table' | translate }}</span>
+                        <span class="rounded-full bg-terracota px-1.5 py-px text-[9px] font-bold text-lino-calido">
+                          {{ 'waiter.your_table' | translate }}
+                        </span>
                       } @else {
-                        <span class="text-[10px] text-tinta-media">{{ ('table_status.' + table.status) | translate }}</span>
+                        <span class="text-[9.5px] text-tinta-media">{{ ('table_status.' + table.status) | translate }}</span>
                       }
                     </div>
                   }
                 </div>
               </aside>
 
-              <!-- Pedidos activos -->
-              <section class="overflow-y-auto px-[22px] py-[18px]">
-                <div class="mb-3 text-xs font-bold tracking-[.05em] text-tinta-media">{{ 'waiter.orders_title' | translate }}</div>
-                <div class="grid grid-cols-2 items-start gap-3">
+              <!-- Panel de pedidos activos -->
+              <section class="overflow-y-auto p-4">
+                <div class="mb-3 text-[11px] font-bold uppercase tracking-wider text-tinta-media">
+                  {{ 'waiter.orders_title' | translate }}
+                </div>
+                <div class="grid grid-cols-1 items-start gap-3 sm:grid-cols-2">
                   @for (order of store.activeOrders(); track order.id) {
                     <app-order-card
                       [order]="order"
@@ -138,6 +168,11 @@ import { OrderCardComponent } from '../../shared/order-card/order-card.component
                         : null"
                       (advance)="store.advanceOrder(order.id)"
                     />
+                  }
+                  @if (store.activeOrders().length === 0) {
+                    <div class="col-span-2 rounded-[14px] border border-dashed border-borde-punteado p-8 text-center text-[12px] text-tinta-media">
+                      {{ 'waiter.no_orders' | translate }}
+                    </div>
                   }
                 </div>
               </section>

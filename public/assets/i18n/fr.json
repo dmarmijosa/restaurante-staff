@@ -137,7 +137,9 @@
     "elapsed_label": "Depuis {{minutes}} minutes",
     "queue_one": "1 commande en file",
     "queue_many": "{{n}} commandes en file",
-    "tap_for_sound": "Appuyez pour entendre l'alerte"
+    "tap_for_sound": "Appuyez pour entendre l'alerte",
+    "status_received": "En attente",
+    "status_preparing": "En préparation"
   },
   "waiter": {
     "online": "En ligne",
@@ -147,11 +149,13 @@
     "orders_title": "COMMANDES ACTIVES",
     "attend_btn": "Aller à la table",
     "table_calls": "Table {{n}} appelle",
-    "your_table": "Vôtre"
+    "your_table": "Vôtre",
+    "no_orders": "Aucune commande active"
   },
   "cashier": {
     "shift_label": "Caisse · encaissements du service",
     "charged_total": "Encaissé : {{total}}",
+    "charged_total_label": "Encaissé",
     "orders_title": "COMMANDES À ENCAISSER",
     "no_orders": "Aucune commande en attente d'encaissement",
     "charge_with": "ENCAISSER AVEC",

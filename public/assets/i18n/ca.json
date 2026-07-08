@@ -137,7 +137,9 @@
     "elapsed_label": "Porta {{minutes}} minuts",
     "queue_one": "1 comanda a la cua",
     "queue_many": "{{n}} comandes a la cua",
-    "tap_for_sound": "Toca per escoltar l'avís"
+    "tap_for_sound": "Toca per escoltar l'avís",
+    "status_received": "Pendent",
+    "status_preparing": "Preparant"
   },
   "waiter": {
     "online": "En línia",
@@ -147,11 +149,13 @@
     "orders_title": "COMANDES ACTIVES",
     "attend_btn": "Atendre taula",
     "table_calls": "Taula {{n}} truca",
-    "your_table": "Teva"
+    "your_table": "Teva",
+    "no_orders": "Sense comandes actives"
   },
   "cashier": {
     "shift_label": "Caixa · cobraments del torn",
     "charged_total": "Cobrat: {{total}}",
+    "charged_total_label": "Cobrat",
     "orders_title": "COMANDES PER COBRAR",
     "no_orders": "No hi ha comandes pendents de cobrament",
     "charge_with": "COBRAR AMB",

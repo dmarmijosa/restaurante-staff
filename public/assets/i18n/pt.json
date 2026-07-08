@@ -137,7 +137,9 @@
     "elapsed_label": "Há {{minutes}} minutos",
     "queue_one": "1 pedido na fila",
     "queue_many": "{{n}} pedidos na fila",
-    "tap_for_sound": "Toque para ouvir o aviso"
+    "tap_for_sound": "Toque para ouvir o aviso",
+    "status_received": "Pendente",
+    "status_preparing": "Preparando"
   },
   "waiter": {
     "online": "Online",
@@ -147,11 +149,13 @@
     "orders_title": "PEDIDOS ATIVOS",
     "attend_btn": "Atender mesa",
     "table_calls": "Mesa {{n}} chamando",
-    "your_table": "Sua"
+    "your_table": "Sua",
+    "no_orders": "Sem pedidos ativos"
   },
   "cashier": {
     "shift_label": "Caixa · cobranças do turno",
     "charged_total": "Cobrado: {{total}}",
+    "charged_total_label": "Cobrado",
     "orders_title": "PEDIDOS PARA COBRAR",
     "no_orders": "Não há pedidos pendentes de cobrança",
     "charge_with": "COBRAR COM",

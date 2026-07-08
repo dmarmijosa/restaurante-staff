@@ -37,32 +37,48 @@ const STEP_DEFS: Array<{ key: OrderStatus; label: string; desc: string }> = [
   imports: [MoneyPipe, RouterLink, TranslatePipe, ChipBtnDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="flex min-h-dvh flex-col items-center bg-crema">
-      <div class="relative flex min-h-dvh w-full max-w-[430px] flex-col bg-marfil shadow-[0_0_40px_rgba(36,26,17,.08)]">
-        <!-- Cabecera -->
-        <header class="flex-none px-[18px] pt-8 pb-2.5">
-          <div class="mb-2.5 flex items-center gap-[9px]">
+    <!-- Fondo de escritorio: gradiente cálido detrás del frame -->
+    <div class="flex min-h-dvh flex-col items-center bg-gradient-to-br from-duna via-crema to-lino-calido/60 md:px-4 md:py-10">
+      <!-- Frame principal: phone-frame en desktop con sombra profunda -->
+      <div class="relative flex min-h-dvh w-full max-w-[430px] flex-col overflow-hidden bg-marfil
+                  md:min-h-0 md:rounded-[28px] md:shadow-[0_32px_80px_rgba(36,26,17,.22),0_0_0_1px_rgba(36,26,17,.07)]">
+
+        <!-- Cabecera con wash cálido -->
+        <header class="relative flex-none overflow-hidden px-5 pt-9 pb-3">
+          <!-- Fondo de cabecera -->
+          <div class="pointer-events-none absolute inset-0 bg-gradient-to-b from-duna/70 to-transparent"></div>
+          <!-- Logo + nombre -->
+          <div class="relative mb-3 flex items-center gap-3">
             @if (store.settings().logoUrl; as logo) {
-              <img [src]="logo" alt="Logo del restaurante" class="h-[26px] w-[26px] flex-none rounded-[7px] object-cover" />
+              <img
+                [src]="logo"
+                alt="Logo del restaurante"
+                class="h-9 w-9 flex-none rounded-[10px] object-cover shadow-sm ring-1 ring-borde-suave"
+              />
             } @else {
               <div
-                class="flex h-[26px] w-[26px] items-center justify-center rounded-[7px] bg-terracota font-serif text-[13px] font-bold text-lino-calido"
+                class="flex h-9 w-9 flex-none items-center justify-center rounded-[10px] bg-terracota shadow-sm font-serif text-[15px] font-bold text-lino-calido"
               >
                 {{ store.settings().name.charAt(0) }}
               </div>
             }
-            <h1 class="m-0 flex-1 font-serif text-[21px] font-semibold">{{ store.settings().name }}</h1>
+            <h1 class="m-0 flex-1 font-serif text-[22px] font-semibold leading-tight text-tinta">
+              {{ store.settings().name }}
+            </h1>
           </div>
-          <div class="flex items-center gap-2">
-            <span class="rounded-full bg-duna px-[11px] py-1 text-[11.5px] font-bold text-terracota-profundo">
+          <!-- Mesa + llamar mesero -->
+          <div class="relative flex items-center gap-2">
+            <span class="rounded-full bg-terracota/10 px-3 py-1 text-[11.5px] font-bold text-terracota-profundo ring-1 ring-terracota/20">
               {{ 'admin.orders.mesa' | translate }} {{ mesa() }}
             </span>
             <span class="flex-1 text-[10.5px] text-tinta-media">{{ 'client.via_qr' | translate }}</span>
             <button
               type="button"
               (click)="callWaiter()"
-              class="cursor-pointer rounded-full border-none px-[13px] py-[7px] text-[11.5px] font-bold"
-              [class]="callSent() ? 'bg-oliva-bg text-oliva-texto' : 'bg-cacao text-lino'"
+              class="cursor-pointer rounded-full border-none px-[14px] py-[7px] text-[11.5px] font-bold transition-all duration-200"
+              [class]="callSent()
+                ? 'bg-oliva-bg text-oliva-texto shadow-none'
+                : 'bg-cacao text-lino shadow-[0_2px_8px_rgba(36,26,17,.2)] active:scale-95'"
               data-testid="call-waiter-button"
             >
               {{ callSent() ? ('client.waiter_notified' | translate) : ('client.call_waiter' | translate) }}
@@ -70,13 +86,14 @@ const STEP_DEFS: Array<{ key: OrderStatus; label: string; desc: string }> = [
           </div>
         </header>
 
+        <!-- Divisor sutil -->
+        <div class="mx-5 h-px bg-gradient-to-r from-transparent via-borde-suave to-transparent"></div>
+
         <!-- Cerrado por temporada -->
         @if (!store.acceptingOrders()) {
-          <div class="flex flex-1 flex-col items-center justify-center gap-3 px-9 text-center">
-            <div
-              class="flex h-[54px] w-[54px] items-center justify-center rounded-full bg-duna font-serif text-2xl text-terracota-profundo"
-            >
-              ·
+          <div class="flex flex-1 flex-col items-center justify-center gap-4 px-9 text-center">
+            <div class="flex h-16 w-16 items-center justify-center rounded-full bg-duna text-3xl">
+              🌙
             </div>
             <div class="font-serif text-[26px] leading-tight font-semibold">{{ 'client.closed_season_title' | translate }}</div>
             <div class="text-[13.5px] leading-relaxed text-tinta-media">
@@ -86,150 +103,189 @@ const STEP_DEFS: Array<{ key: OrderStatus; label: string; desc: string }> = [
         } @else {
           @switch (screen()) {
             @case ('menu') {
-              <!-- Chips de categorías -->
-              <div class="flex flex-none gap-1.5 overflow-x-auto px-[18px] pt-1.5 pb-2.5">
-                @for (cat of catChips(); track cat) {
-                  <button chipBtn variant="cacao" [active]="activeCat() === cat" type="button"
-                    (click)="activeCat.set(cat)" class="px-3.5 py-[7px] text-xs whitespace-nowrap">
-                    {{ cat === '__all__' ? ('client.category_all' | translate) : cat }}
-                  </button>
-                }
+              <!-- Chips de categorías con fade lateral -->
+              <div class="relative flex-none pt-3 pb-2.5">
+                <div class="flex gap-1.5 overflow-x-auto px-5 pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  @for (cat of catChips(); track cat) {
+                    <button
+                      chipBtn
+                      variant="cacao"
+                      [active]="activeCat() === cat"
+                      type="button"
+                      (click)="activeCat.set(cat)"
+                      class="px-3.5 py-[7px] text-xs whitespace-nowrap transition-all duration-150"
+                    >
+                      {{ cat === '__all__' ? ('client.category_all' | translate) : cat }}
+                    </button>
+                  }
+                </div>
+                <!-- Fade izquierda/derecha para indicar scroll -->
+                <div class="pointer-events-none absolute inset-y-0 left-0 w-5 bg-gradient-to-r from-marfil to-transparent"></div>
+                <div class="pointer-events-none absolute inset-y-0 right-0 w-5 bg-gradient-to-l from-marfil to-transparent"></div>
               </div>
 
+              <!-- Banner de pedido activo -->
               @if (myOrder(); as order) {
                 <button
                   type="button"
                   (click)="screen.set('status')"
-                  class="mx-[18px] mb-2 flex cursor-pointer gap-1.5 rounded-[10px] border-none bg-duna px-[13px] py-[9px] text-left text-xs font-semibold text-terracota-profundo"
+                  class="mx-5 mb-3 flex cursor-pointer items-center gap-2 rounded-[12px] border-none
+                         bg-gradient-to-r from-terracota/10 to-duna px-4 py-2.5 text-left
+                         ring-1 ring-terracota/20 transition-all duration-150 active:scale-[0.99]"
                 >
-                  <span class="flex-1">{{ 'client.follow_order' | translate }} #{{ order.id }} · {{ statusLabel(order.status) }}</span>
-                  <span>→</span>
+                  <span class="flex h-2 w-2 rounded-full bg-terracota ring-2 ring-terracota/30"></span>
+                  <span class="flex-1 text-[12px] font-semibold text-terracota-profundo">
+                    {{ 'client.follow_order' | translate }} #{{ order.id }} · {{ statusLabel(order.status) }}
+                  </span>
+                  <span class="text-[12px] text-terracota-profundo">→</span>
                 </button>
               }
 
               <!-- Productos -->
-              <main class="flex flex-1 flex-col gap-2.5 overflow-y-auto px-[18px] pt-0.5 pb-[130px]">
+              <main class="flex flex-1 flex-col gap-2 overflow-y-auto px-5 pt-0 pb-[120px]">
                 @for (product of visibleProducts(); track product.id) {
-                  <article class="flex gap-3 rounded-[14px] border border-borde-suave bg-papel p-2.5">
+                  <article
+                    class="flex gap-3 rounded-[16px] border border-borde-suave bg-papel p-3
+                           shadow-[0_1px_4px_rgba(36,26,17,.06)] transition-shadow duration-150
+                           hover:shadow-[0_4px_12px_rgba(36,26,17,.1)]"
+                  >
+                    <!-- Imagen del producto -->
                     @if (product.imageUrl) {
                       <img
                         [src]="product.imageUrl"
                         [alt]="'Foto de ' + product.name"
-                        class="h-16 w-16 flex-none rounded-[10px] object-cover"
+                        class="h-[72px] w-[72px] flex-none rounded-[11px] object-cover"
                       />
                     } @else {
                       <div
-                        class="flex h-16 w-16 flex-none items-center justify-center rounded-[10px] bg-panal font-mono text-[9px] text-tinta-media"
+                        class="flex h-[72px] w-[72px] flex-none items-center justify-center rounded-[11px] bg-gradient-to-br from-panal to-duna/60"
+                        aria-hidden="true"
                       >
-                        foto
+                        <svg class="h-7 w-7 text-borde" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0-4C6.48 4 2 8.48 2 14h20c0-5.52-4.48-10-10-10z"/>
+                        </svg>
                       </div>
                     }
-                    <div class="flex min-w-0 flex-1 flex-col gap-0.5">
-                      <div class="text-[13.5px] font-semibold">{{ product.name }}</div>
-                      <div class="text-[11px] leading-snug text-tinta-media">{{ product.description }}</div>
-                      <div class="mt-auto text-[13px] font-bold">{{ product.price | money }}</div>
+                    <!-- Nombre, descripción, precio -->
+                    <div class="flex min-w-0 flex-1 flex-col justify-between gap-0.5 py-0.5">
+                      <div class="text-[13.5px] font-semibold leading-snug text-tinta">{{ product.name }}</div>
+                      <div class="line-clamp-2 text-[11px] leading-snug text-tinta-media">{{ product.description }}</div>
+                      <div class="text-[13px] font-bold text-terracota-profundo">{{ product.price | money }}</div>
                     </div>
-                    <div class="flex flex-col items-center justify-center gap-1">
+                    <!-- Controles de cantidad -->
+                    <div class="flex flex-col items-center justify-center gap-1.5">
                       @if (qtyOf(product.id) > 0) {
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-1.5 rounded-full bg-panal px-1 py-0.5">
                           <button
                             type="button"
                             (click)="decFromCart(product.id)"
-                            class="h-[26px] w-[26px] cursor-pointer rounded-lg border-[1.5px] border-borde bg-papel text-sm text-tinta"
+                            class="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-none bg-papel text-[15px] font-bold text-tinta shadow-sm transition-all active:scale-90"
                             [attr.aria-label]="'Quitar ' + product.name"
-                          >
-                            −
-                          </button>
-                          <span class="text-[13px] font-bold">{{ qtyOf(product.id) }}</span>
+                          >−</button>
+                          <span class="min-w-5 text-center text-[13px] font-bold text-tinta">{{ qtyOf(product.id) }}</span>
                           <button
                             type="button"
                             (click)="addToCart(product)"
-                            class="h-[26px] w-[26px] cursor-pointer rounded-lg border-none bg-terracota text-sm text-lino-calido"
+                            class="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-none bg-terracota text-[15px] font-bold text-lino-calido shadow-sm transition-all active:scale-90"
                             [attr.aria-label]="'Agregar ' + product.name"
-                          >
-                            +
-                          </button>
+                          >+</button>
                         </div>
                       } @else {
                         <button
                           type="button"
                           (click)="addToCart(product)"
-                          class="h-8 w-8 cursor-pointer rounded-[10px] border-none bg-terracota text-[17px] text-lino-calido hover:bg-terracota-hover"
+                          class="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-none bg-terracota text-[19px] font-bold text-lino-calido
+                                 shadow-[0_2px_8px_rgba(193,104,60,.35)] transition-all duration-150 hover:bg-terracota-hover active:scale-90"
                           [attr.aria-label]="'Agregar ' + product.name"
                           [attr.data-testid]="'add-to-cart-' + product.id"
-                        >
-                          +
-                        </button>
+                        >+</button>
                       }
                     </div>
                   </article>
                 }
               </main>
 
-              <!-- Barra flotante del carrito -->
+              <!-- Barra flotante del carrito con backdrop-blur -->
               @if (cartCount() > 0) {
-                <button
-                  type="button"
-                  (click)="screen.set('cart')"
-                  class="absolute right-[18px] bottom-[70px] left-[18px] flex cursor-pointer items-center gap-2 rounded-[14px] border-none bg-cacao px-[18px] py-[13px] text-lino shadow-[0_12px_28px_rgba(36,26,17,.35)] hover:bg-cacao-claro"
-                  data-testid="cart-bar-button"
-                >
-                  <span class="flex-1 text-left text-[13px] font-bold">
-                    {{ 'client.cart_title' | translate }} · {{ cartCount() }}
-                  </span>
-                  <span class="text-[13px] font-bold">{{ cartTotal() | money }}</span>
-                  <span class="text-[13px]">→</span>
-                </button>
+                <div class="absolute right-4 bottom-[68px] left-4">
+                  <button
+                    type="button"
+                    (click)="screen.set('cart')"
+                    class="flex w-full cursor-pointer items-center gap-3 rounded-[16px] border-none
+                           bg-cacao/95 px-5 py-[14px] text-lino backdrop-blur-sm
+                           shadow-[0_16px_40px_rgba(36,26,17,.4)] transition-all duration-150
+                           hover:bg-cacao active:scale-[0.99]"
+                    data-testid="cart-bar-button"
+                  >
+                    <span class="flex h-6 min-w-6 items-center justify-center rounded-full bg-terracota text-[11px] font-bold text-lino-calido">
+                      {{ cartCount() }}
+                    </span>
+                    <span class="flex-1 text-left text-[13px] font-bold">{{ 'client.cart_title' | translate }}</span>
+                    <span class="text-[13px] font-bold">{{ cartTotal() | money }}</span>
+                    <span class="text-[13px] opacity-70">→</span>
+                  </button>
+                </div>
               }
             }
 
             @case ('cart') {
-              <div class="flex min-h-0 flex-1 flex-col px-[18px]">
-                <div class="flex items-baseline gap-2.5 pt-1.5 pb-3">
+              <div class="flex min-h-0 flex-1 flex-col px-5">
+                <!-- Cabecera del carrito -->
+                <div class="flex items-center gap-3 pt-3 pb-4">
                   <button
                     type="button"
                     (click)="screen.set('menu')"
-                    class="cursor-pointer border-none bg-transparent p-0 text-[12.5px] font-semibold text-terracota-profundo"
+                    class="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border-none bg-panal text-tinta transition-colors hover:bg-duna"
+                    aria-label="Volver al menú"
                   >
-                    {{ 'client.cart_back' | translate }}
+                    ←
                   </button>
-                  <h2 class="m-0 font-serif text-[19px] font-semibold" data-testid="cart-heading">{{ 'client.cart_title' | translate }}</h2>
+                  <h2 class="m-0 font-serif text-[20px] font-semibold" data-testid="cart-heading">
+                    {{ 'client.cart_title' | translate }}
+                  </h2>
                 </div>
-                <div class="flex flex-1 flex-col gap-2.5 overflow-y-auto pb-4">
+
+                <!-- Líneas del carrito -->
+                <div class="flex flex-1 flex-col gap-2 overflow-y-auto pb-4">
                   @for (line of cart(); track line.product.id) {
-                    <div class="flex items-center gap-2.5 rounded-xl border border-borde-suave bg-papel px-[13px] py-[11px]">
+                    <div
+                      class="flex items-center gap-3 rounded-[14px] border border-borde-suave bg-papel px-4 py-3
+                             shadow-[0_1px_4px_rgba(36,26,17,.05)]"
+                    >
                       <div class="min-w-0 flex-1">
-                        <div class="text-[13px] font-semibold">{{ line.product.name }}</div>
+                        <div class="text-[13px] font-semibold text-tinta">{{ line.product.name }}</div>
                         <div class="text-[11.5px] text-tinta-media">{{ line.product.price | money }} c/u</div>
                       </div>
-                      <button
-                        type="button"
-                        (click)="decFromCart(line.product.id)"
-                        class="h-[26px] w-[26px] cursor-pointer rounded-lg border-[1.5px] border-borde bg-papel text-sm text-tinta"
-                      >
-                        −
-                      </button>
-                      <span class="min-w-4 text-center text-[13px] font-bold">{{ line.qty }}</span>
-                      <button
-                        type="button"
-                        (click)="addToCart(line.product)"
-                        class="h-[26px] w-[26px] cursor-pointer rounded-lg border-none bg-terracota text-sm text-lino-calido"
-                      >
-                        +
-                      </button>
+                      <div class="flex items-center gap-1.5 rounded-full bg-panal px-1 py-0.5">
+                        <button
+                          type="button"
+                          (click)="decFromCart(line.product.id)"
+                          class="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-none bg-papel text-[15px] font-bold text-tinta shadow-sm transition-all active:scale-90"
+                        >−</button>
+                        <span class="min-w-5 text-center text-[13px] font-bold text-tinta">{{ line.qty }}</span>
+                        <button
+                          type="button"
+                          (click)="addToCart(line.product)"
+                          class="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-none bg-terracota text-[15px] font-bold text-lino-calido shadow-sm transition-all active:scale-90"
+                        >+</button>
+                      </div>
                     </div>
                   }
                 </div>
-                <div class="flex-none border-t border-borde pt-3.5 pb-6">
-                  <div class="mb-3 flex justify-between text-sm">
-                    <span class="text-tinta-media">{{ 'admin.history.total' | translate }}</span>
-                    <span class="text-base font-bold">{{ cartTotal() | money }}</span>
+
+                <!-- Total + botón de pedido -->
+                <div class="flex-none border-t border-borde pb-8 pt-4">
+                  <div class="mb-4 flex items-center justify-between">
+                    <span class="text-[13.5px] text-tinta-media">{{ 'admin.history.total' | translate }}</span>
+                    <span class="font-serif text-[20px] font-bold text-tinta">{{ cartTotal() | money }}</span>
                   </div>
                   <button
                     type="button"
                     (click)="placeOrder()"
                     [disabled]="cartCount() === 0"
-                    class="w-full cursor-pointer rounded-[13px] border-none bg-terracota py-3.5 text-[14.5px] font-bold text-lino-calido hover:bg-terracota-hover disabled:opacity-50"
+                    class="w-full cursor-pointer rounded-[14px] border-none bg-terracota py-4 text-[15px] font-bold text-lino-calido
+                           shadow-[0_4px_16px_rgba(193,104,60,.4)] transition-all duration-150
+                           hover:bg-terracota-hover active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
                     data-testid="submit-order-button"
                   >
                     {{ 'client.cart_send' | translate }}
@@ -239,84 +295,102 @@ const STEP_DEFS: Array<{ key: OrderStatus; label: string; desc: string }> = [
             }
 
             @case ('status') {
-              <div class="flex min-h-0 flex-1 flex-col overflow-y-auto px-[22px] pt-1">
-                <h2 class="m-0 mb-0.5 font-serif text-[23px] font-semibold" data-testid="order-sent-heading">{{ 'client.order_sent_title' | translate }}</h2>
+              <div class="flex min-h-0 flex-1 flex-col overflow-y-auto px-5 pt-4 pb-8">
+                <h2 class="m-0 mb-1 font-serif text-[24px] font-semibold text-tinta" data-testid="order-sent-heading">
+                  {{ 'client.order_sent_title' | translate }}
+                </h2>
                 @if (myOrder(); as order) {
-                  <div class="mb-5 text-[12.5px] text-tinta-media">
-                    {{ 'client.follow_order' | translate }} #{{ order.id }} · {{ 'admin.orders.mesa' | translate }} {{ mesa() }} · {{ orderTotalOf(order) | money }}
-                  </div>
-                  <div class="flex flex-col">
+                  <p class="mb-6 text-[12.5px] text-tinta-media">
+                    {{ 'client.follow_order' | translate }} #{{ order.id }} ·
+                    {{ 'admin.orders.mesa' | translate }} {{ mesa() }} ·
+                    {{ orderTotalOf(order) | money }}
+                  </p>
+
+                  <!-- Stepper de estado -->
+                  <div class="mb-6 flex flex-col">
                     @for (step of statusSteps(); track step.key; let last = $last) {
-                      <div class="flex gap-3.5">
+                      <div class="flex gap-4">
+                        <!-- Círculo + línea -->
                         <div class="flex flex-col items-center">
                           <div
-                            class="flex h-6 w-6 items-center justify-center rounded-full border-2 text-xs font-bold text-lino-calido"
-                            [style.background]="step.done ? '#C1683C' : '#F5EDDF'"
-                            [style.border-color]="step.done ? '#C1683C' : '#D8CCBC'"
+                            class="flex h-7 w-7 flex-none items-center justify-center rounded-full border-2 text-[12px] font-bold transition-all duration-300"
+                            [class]="step.done
+                              ? 'border-terracota bg-terracota text-lino-calido shadow-[0_2px_8px_rgba(193,104,60,.3)]'
+                              : 'border-borde bg-papel text-tinta-media'"
                           >
                             {{ step.done ? '✓' : '' }}
                           </div>
                           @if (!last) {
-                            <div class="min-h-[22px] w-0.5 flex-1" [style.background]="step.lineDone ? '#C1683C' : '#E5DACA'"></div>
+                            <div
+                              class="w-0.5 flex-1 min-h-[28px] transition-all duration-500"
+                              [class]="step.lineDone ? 'bg-terracota' : 'bg-borde-suave'"
+                            ></div>
                           }
                         </div>
-                        <div class="pb-5">
-                          <div class="text-sm font-bold" [style.color]="step.done ? '#2C2118' : '#A3927F'">
-                            {{ step.label }}
-                          </div>
+                        <!-- Texto -->
+                        <div class="pb-6">
+                          <div
+                            class="text-[13.5px] font-semibold transition-colors duration-300"
+                            [class]="step.done ? 'text-tinta' : 'text-tinta-media'"
+                          >{{ step.label }}</div>
                           <div class="mt-0.5 text-[11.5px] text-tinta-media">{{ step.desc }}</div>
                         </div>
                       </div>
                     }
                   </div>
-                  <div class="mb-4 flex items-center gap-[11px] rounded-xl border border-borde-suave bg-papel px-3.5 py-3">
-                    <div
-                      class="flex h-8 w-8 items-center justify-center rounded-full bg-avatar-1 text-[11px] font-bold text-lino-calido"
-                    >
-                      CM
-                    </div>
-                    <div class="flex-1">
-                      <div class="text-[12.5px] font-semibold">{{ order.waiterName }}</div>
+
+                  <!-- Card del mesero asignado -->
+                  @if (order.waiterName) {
+                    <div class="mb-6 flex items-center gap-3 rounded-[14px] border border-borde-suave bg-papel px-4 py-3
+                                shadow-[0_1px_4px_rgba(36,26,17,.06)]">
+                      <div class="flex h-9 w-9 items-center justify-center rounded-full bg-cacao text-[12px] font-bold text-lino">
+                        {{ order.waiterName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() }}
+                      </div>
+                      <div class="flex-1">
+                        <div class="text-[13px] font-semibold text-tinta">{{ order.waiterName }}</div>
                         <div class="text-[11px] text-tinta-media">{{ 'topbar.area.waiter' | translate }}</div>
+                      </div>
                     </div>
-                  </div>
+                  }
                 }
                 <button
                   type="button"
                   (click)="screen.set('menu')"
-                  class="mb-6 cursor-pointer rounded-xl border-[1.5px] border-tinta bg-transparent py-[11px] text-[13px] font-bold text-tinta hover:bg-crema"
+                  class="cursor-pointer rounded-[14px] border-[1.5px] border-borde bg-transparent py-3 text-[13px] font-bold text-tinta
+                         transition-colors hover:bg-panal"
                 >
-                  {{ 'client.cart_back' | translate }}
+                  ← {{ 'client.cart_back' | translate }}
                 </button>
               </div>
             }
           }
         }
 
-        <!-- Footer con acceso del personal (requisito del producto) -->
-        <footer class="mt-auto flex-none border-t border-borde-suave bg-crema px-[18px] py-4">
+        <!-- Footer con acceso del personal -->
+        <footer class="mt-auto flex-none border-t border-borde-suave bg-gradient-to-b from-marfil to-crema px-5 py-4">
           @if (isDemoMode) {
-            <div class="mb-3 flex items-center gap-2 rounded-xl border border-ocre-bg bg-ocre-bg px-3 py-2.5">
+            <div class="mb-3 flex items-center gap-2 rounded-[12px] bg-ocre-bg px-3.5 py-2.5 ring-1 ring-ocre-bg/50">
               <span class="text-[11px] leading-snug text-ocre-texto">
                 <strong>Modo demo</strong> — los datos no se guardan.
               </span>
               <a
                 routerLink="/instalacion"
-                class="ml-auto whitespace-nowrap rounded-[8px] border-none bg-terracota px-3 py-1.5 text-[11px] font-bold text-lino-calido hover:bg-terracota-hover"
+                class="ml-auto whitespace-nowrap rounded-[8px] border-none bg-terracota px-3 py-1.5 text-[11px] font-bold text-lino-calido
+                       shadow-sm transition-colors hover:bg-terracota-hover"
               >
-                Configurar mi restaurante →
+                Configurar →
               </a>
             </div>
           }
           <div class="flex items-center gap-2.5">
             <div class="flex-1 text-[10.5px] leading-relaxed text-tinta-media">
-              Restaurante Staff · plataforma open source ·
-              <span class="font-semibold">{{ store.settings().name }}</span>
+              <span class="font-semibold">{{ store.settings().name }}</span> · Restaurante Staff
             </div>
             <a
               routerLink="/login"
               data-testid="staff-login-link"
-              class="rounded-full border-[1.5px] border-borde-punteado px-3.5 py-1.5 text-[11.5px] font-bold text-tinta-suave hover:bg-panal"
+              class="rounded-full border border-borde px-3.5 py-1.5 text-[11.5px] font-semibold text-tinta-suave
+                     transition-colors hover:bg-panal"
             >
               {{ 'client.footer_access' | translate }} →
             </a>

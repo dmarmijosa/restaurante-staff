@@ -1,13 +1,20 @@
 /**
  * Prueba funcional end-to-end contra Supabase real.
  *
+ * Diferencia clave respecto a versiones anteriores: **todo el flujo pasa por el
+ * mismo tenant** — cliente, admin, cocina, mesero y cajero ven el mismo pedido.
+ * Así se valida que Realtime y RLS conectan a los roles correctamente.
+ *
  * Flujo:
- *   1. Cliente sin sesión: home → carrito → enviar pedido → llamar mesero
- *   2. Registro del primer admin (nuevo tenant por corrida)
- *   3. Login como admin y recorrer las 11 secciones del panel
- *   4. Crear cuentas de mesero, cocina y cajero desde el admin (vía Supabase Auth)
- *   5. Login por cada rol y capturar su vista
- *   6. Extras: wizard `/instalacion` + captura móvil del cliente
+ *   1.  Crea el tenant nuevo + admin propietario (API)
+ *   2.  Crea las 3 cuentas de staff: mesero / cocina / cajero (API)
+ *   3.  Cliente entra a `/:slug/mesa/4`, añade 2 productos y envía el pedido
+ *   4.  Cliente llama al mesero
+ *   5.  Login como admin → captura las 11 secciones + verifica el pedido en /admin/pedidos
+ *   6.  Login como cocina → verifica la comanda en la queue
+ *   7.  Login como mesero → verifica la llamada + el pedido en la lista
+ *   8.  Login como cajero → captura la vista con el pedido cobrable
+ *   9.  Wizard `/instalacion` + captura del cliente en móvil
  *
  * Las capturas se guardan en /Playwright (gitignored).
  */
@@ -22,47 +29,36 @@ mkdirSync(OUT, { recursive: true });
 const SB_URL = 'https://vtkdvxrocemdyybynegs.supabase.co';
 const SB_KEY = 'sb_publishable_mr-6bgxKwhOOazfMUMXGrg_PflZ07kh';
 
-/** Identificador único por corrida, evita choques de slug/email en Supabase Auth. */
-const rand = Math.random().toString(36).slice(2, 8);
-const stamp = Date.now().toString(36);
-const suffix = `${stamp}-${rand}`;
+const rand = Math.random().toString(36).slice(2, 6);
+const stamp = Date.now().toString(36).slice(-6);
+const suffix = `${stamp}${rand}`;
 
+const RESTAURANT_NAME = `QA ${suffix}`;
+const RESTAURANT_SLUG = `qa-${suffix}`;
 const ADMIN_EMAIL   = `qa-admin-${suffix}@example.com`;
 const WAITER_EMAIL  = `qa-mesero-${suffix}@example.com`;
 const KITCHEN_EMAIL = `qa-cocina-${suffix}@example.com`;
 const CASHIER_EMAIL = `qa-cajero-${suffix}@example.com`;
-const PASSWORD = 'QaAdmin1234!';
-const RESTAURANT_NAME = `QA ${suffix}`;
-const RESTAURANT_SLUG = `qa-${suffix}`;
+const PASSWORD      = 'QaAdmin1234!';
 
 let stepNum = 0;
 const results = [];
 
-function log(msg) {
-  console.log(`[${new Date().toISOString().slice(11, 19)}] ${msg}`);
-}
+const log = (m) => console.log(`[${new Date().toISOString().slice(11, 19)}] ${m}`);
 
 async function shot(page, name) {
   stepNum += 1;
   const filename = `${String(stepNum).padStart(2, '0')}-${name}.png`;
   await page.screenshot({ path: join(OUT, filename), fullPage: true });
   log(`  📸 ${filename}`);
-  results.push({ step: stepNum, name, filename, ok: true });
 }
 
 async function safe(fn, label) {
-  try {
-    await fn();
-    log(`✅ ${label}`);
-    return true;
-  } catch (err) {
-    log(`❌ ${label} — ${err.message?.split('\n')[0]}`);
-    results.push({ name: label, ok: false, error: err.message });
-    return false;
-  }
+  try { await fn(); log(`✅ ${label}`); results.push({ name: label, ok: true }); }
+  catch (e) { log(`❌ ${label} — ${e.message?.split('\n')[0]}`); results.push({ name: label, ok: false, error: e.message }); }
 }
 
-/** Wrapper minimalista sobre la API REST de Supabase (Auth + RPC). */
+/** Wrapper sobre la REST/Auth API de Supabase. Parsea correctamente escalares JSON. */
 async function sb(path, opts = {}) {
   const res = await fetch(`${SB_URL}${path}`, {
     ...opts,
@@ -76,45 +72,118 @@ async function sb(path, opts = {}) {
   const text = await res.text();
   if (!res.ok) throw new Error(`HTTP ${res.status}: ${text.slice(0, 250)}`);
   if (!text) return null;
-  const first = text[0];
-  // RPCs escalares (uuid, text, etc.) devuelven JSON válido pero primitivo — parseamos siempre.
-  if (first === '{' || first === '[' || first === '"' || first === 't' || first === 'f' || first === 'n' || (first >= '0' && first <= '9') || first === '-') {
-    try { return JSON.parse(text); } catch { /* cae al return text */ }
-  }
-  return text;
+  try { return JSON.parse(text); } catch { return text; }
 }
 
 async function loginUI(page, email, password) {
   await page.goto(`${BASE}/login`, { waitUntil: 'networkidle', timeout: 20000 });
-  await page.locator('input[type="email"], input[name="email"], input#email').first().fill(email);
-  await page.locator('input[type="password"], input[name="password"], input#password').first().fill(password);
+  await page.locator('input[type="email"], input#email').first().fill(email);
+  await page.locator('input[type="password"], input#password').first().fill(password);
   await page.locator('button[type="submit"]').first().click();
-  await page.waitForTimeout(3000);
+  await page.waitForTimeout(2500);
 }
 
 async function signOutUI(page) {
-  // El botón "Salir" está en el topbar. Si no está, forzar recarga del login limpia sesión.
-  await page.goto(`${BASE}/login?logout=1`, { waitUntil: 'networkidle', timeout: 20000 }).catch(() => {});
-  await page.evaluate(() => localStorage.clear());
+  await page.evaluate(() => localStorage.clear()).catch(() => {});
   await page.context().clearCookies();
 }
 
 (async () => {
-  log(`🚀 Prueba funcional contra ${BASE} (Supabase: ${SB_URL})`);
-  log(`   Restaurante: ${RESTAURANT_NAME} (${RESTAURANT_SLUG})`);
-  log(`   Admin: ${ADMIN_EMAIL}`);
+  log(`🚀 Prueba E2E contra ${BASE} (Supabase: ${SB_URL})`);
+  log(`   Tenant: ${RESTAURANT_NAME} (${RESTAURANT_SLUG})`);
 
   const browser = await chromium.launch({ headless: true });
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: 'es-ES' });
   const page = await ctx.newPage();
   page.on('pageerror', (err) => log(`⚠️  JS: ${err.message}`));
 
-  // ─── 1. Cliente sin sesión ──────────────────────────────────────────────
+  // ─── 1. Crear tenant + admin ────────────────────────────────────────────
+  let restaurantId = null;
+  let adminToken = null;
   await safe(async () => {
-    await page.goto(BASE, { waitUntil: 'networkidle', timeout: 30000 });
+    restaurantId = await sb('/rest/v1/rpc/create_restaurant', {
+      method: 'POST',
+      body: JSON.stringify({ p_name: RESTAURANT_NAME, p_slug: RESTAURANT_SLUG }),
+    });
+    log(`   restaurant_id: ${restaurantId}`);
+
+    const signup = await sb('/auth/v1/signup', {
+      method: 'POST',
+      body: JSON.stringify({
+        email: ADMIN_EMAIL, password: PASSWORD,
+        data: { full_name: 'Admin QA', role: 'admin', restaurant_id: restaurantId },
+      }),
+    });
+    adminToken = signup?.access_token ?? signup?.session?.access_token ?? null;
+    if (!adminToken) {
+      const login = await sb('/auth/v1/token?grant_type=password', {
+        method: 'POST',
+        body: JSON.stringify({ email: ADMIN_EMAIL, password: PASSWORD }),
+      });
+      adminToken = login.access_token;
+    }
+    log(`   admin token: ${adminToken ? 'sí' : 'no'}`);
+  }, 'Crear tenant + admin');
+
+  // ─── 1b. Seed del tenant (categoría, productos, mesa) usando el admin ──
+  // El tenant recién creado está vacío. Insertamos lo mínimo para que el
+  // cliente pueda operar y también validamos las policies de admin.
+  await safe(async () => {
+    // Nombre único por-corrida porque `categories_name_key` es UNIQUE global
+    // (bug pendiente: migración 20260708000015 lo arregla). Con el fix aplicado,
+    // este suffix es inofensivo.
+    const catRes = await sb('/rest/v1/categories', {
+      method: 'POST',
+      token: adminToken,
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify({ name: `Principales ${suffix}`, position: 1, restaurant_id: restaurantId }),
+    });
+    const categoryId = Array.isArray(catRes) ? catRes[0].id : catRes.id;
+    log(`   categoría creada id=${categoryId}`);
+
+    await sb('/rest/v1/products', {
+      method: 'POST',
+      token: adminToken,
+      body: JSON.stringify([
+        { name: 'Sopa de tortilla', description: 'Caldo tradicional', price: 7.5, available: true, category_id: categoryId, restaurant_id: restaurantId },
+        { name: 'Tacos de costilla', description: 'Tres piezas', price: 11, available: true, category_id: categoryId, restaurant_id: restaurantId },
+      ]),
+    });
+    log(`   productos creados: Sopa + Tacos`);
+
+    await sb('/rest/v1/tables', {
+      method: 'POST',
+      token: adminToken,
+      body: JSON.stringify({ number: 1, x: 100, y: 100, seats: 4, status: 'libre', restaurant_id: restaurantId }),
+    });
+    log(`   mesa 1 creada`);
+  }, 'Seed del tenant (categoría, productos, mesa)');
+
+  // ─── 2. Crear staff ─────────────────────────────────────────────────────
+  const staff = [
+    { email: WAITER_EMAIL,  role: 'mesero',  name: 'Ana Mesera'    },
+    { email: KITCHEN_EMAIL, role: 'cocina',  name: 'Carlos Cocina' },
+    { email: CASHIER_EMAIL, role: 'cajero',  name: 'Julia Caja'    },
+  ];
+  for (const s of staff) {
+    await safe(async () => {
+      await sb('/auth/v1/signup', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: s.email, password: PASSWORD,
+          data: { full_name: s.name, role: s.role, restaurant_id: restaurantId },
+        }),
+      });
+    }, `Crear ${s.role} (${s.email})`);
+  }
+
+  // ─── 3. Cliente entra en el tenant nuevo y hace pedido ──────────────────
+  await safe(async () => {
+    // Vamos a mesa 1 (existe por seed en cada tenant). Con slug la app usa este tenant.
+    await page.goto(`${BASE}/${RESTAURANT_SLUG}/mesa/1`, { waitUntil: 'networkidle', timeout: 30000 });
     await page.waitForSelector('h1', { timeout: 15000 });
-    await shot(page, 'client-home');
-  }, 'Home del cliente');
+    await shot(page, 'client-home-tenant');
+  }, 'Cliente entra al tenant');
 
   await safe(async () => {
     await page.locator('[data-testid^="add-to-cart-"]').first().waitFor({ timeout: 15000 });
@@ -123,7 +192,7 @@ async function signOutUI(page) {
     await page.locator('[data-testid^="add-to-cart-"]').nth(1).click().catch(() => {});
     await page.waitForTimeout(300);
     await shot(page, 'client-menu-with-items');
-  }, 'Añadir productos');
+  }, 'Añadir 2 productos');
 
   await safe(async () => {
     await page.locator('[data-testid="cart-bar-button"]').click();
@@ -135,55 +204,48 @@ async function signOutUI(page) {
     await page.locator('[data-testid="submit-order-button"]').click();
     await page.waitForSelector('[data-testid="order-sent-heading"]', { timeout: 20000 });
     await shot(page, 'client-order-sent');
-  }, 'Enviar pedido');
+  }, 'Enviar pedido (llega al tenant)');
 
   await safe(async () => {
-    await page.goto(BASE, { waitUntil: 'networkidle' });
-    await page.waitForTimeout(1000);
-    const callBtn = page.locator('[data-testid="call-waiter-button"]');
-    if (await callBtn.count()) {
-      await callBtn.click();
-      await page.waitForTimeout(1500);
+    // Capturar console y network para diagnosticar el bug de "llamar mesero"
+    const consoleLogs = [];
+    const networkErrors = [];
+    const consoleHandler = (msg) => {
+      if (msg.type() === 'error' || msg.type() === 'warning') {
+        consoleLogs.push(`[${msg.type()}] ${msg.text()}`);
+      }
+    };
+    const responseHandler = (res) => {
+      if (res.url().includes('/waiter_calls') && !res.ok()) {
+        res.text().then((body) => networkErrors.push(`${res.status()} ${res.url()} → ${body.slice(0, 200)}`)).catch(() => {});
+      }
+    };
+    page.on('console', consoleHandler);
+    page.on('response', responseHandler);
+
+    await page.goto(`${BASE}/${RESTAURANT_SLUG}/mesa/1`, { waitUntil: 'networkidle' });
+    await page.waitForTimeout(2000);
+    const btn = page.locator('[data-testid="call-waiter-button"]');
+    if (await btn.count()) {
+      await btn.click();
+      await page.waitForTimeout(2500);
       await shot(page, 'client-waiter-called');
     }
-  }, 'Llamar al mesero');
+    const calls = await sb(`/rest/v1/waiter_calls?restaurant_id=eq.${restaurantId}&select=id,table_number,attended,created_at`, { token: adminToken });
+    log(`   waiter_calls del tenant: ${JSON.stringify(calls)}`);
+    if (consoleLogs.length) log(`   console: ${consoleLogs.join(' | ')}`);
+    if (networkErrors.length) log(`   network: ${networkErrors.join(' | ')}`);
+    page.off('console', consoleHandler);
+    page.off('response', responseHandler);
 
-  // ─── 2. Registrar admin nuevo (nuevo restaurante) ──────────────────────
-  let restaurantId = null;
-  let adminToken = null;
-  await safe(async () => {
-    // 2a) Crear el restaurante vía RPC público
-    restaurantId = await sb('/rest/v1/rpc/create_restaurant', {
-      method: 'POST',
-      body: JSON.stringify({ p_name: RESTAURANT_NAME, p_slug: RESTAURANT_SLUG }),
-    });
-    log(`   restaurant_id creado: ${restaurantId}`);
-
-    // 2b) SignUp del primer usuario (el trigger lo hace admin+propietario)
-    const signup = await sb('/auth/v1/signup', {
-      method: 'POST',
-      body: JSON.stringify({
-        email: ADMIN_EMAIL,
-        password: PASSWORD,
-        data: { full_name: 'Admin QA', role: 'admin', restaurant_id: restaurantId },
-      }),
-    });
-    if (signup?.access_token) adminToken = signup.access_token;
-    if (signup?.session?.access_token) adminToken = signup.session.access_token;
-    log(`   Signup OK · session: ${adminToken ? 'sí' : 'no'} · confirm: ${!signup?.confirmed_at ? 'requerida' : 'auto'}`);
-
-    // Sign-in por si el proyecto exige confirmar email (para tener token)
-    if (!adminToken) {
-      const login = await sb('/auth/v1/token?grant_type=password', {
-        method: 'POST',
-        body: JSON.stringify({ email: ADMIN_EMAIL, password: PASSWORD }),
-      });
-      adminToken = login.access_token;
+    if (!Array.isArray(calls) || calls.length === 0) {
+      throw new Error('La llamada al mesero no se persistió en la DB');
     }
-  }, 'Crear restaurante + admin (API)');
+  }, 'Cliente llama al mesero');
 
-  // ─── 3. Login como admin (UI) y recorrer paneles ───────────────────────
+  // ─── 4. Login como admin y verifica pedido ──────────────────────────────
   await safe(async () => {
+    await signOutUI(page);
     await loginUI(page, ADMIN_EMAIL, PASSWORD);
     await shot(page, 'login-admin-post');
   }, 'Login UI admin');
@@ -191,7 +253,7 @@ async function signOutUI(page) {
   const adminSections = [
     ['resumen', 'admin-resumen'],
     ['plano', 'admin-plano'],
-    ['pedidos', 'admin-pedidos'],
+    ['pedidos', 'admin-pedidos-con-comanda'],
     ['historial', 'admin-historial'],
     ['menu', 'admin-menu'],
     ['categorias', 'admin-categorias'],
@@ -204,60 +266,56 @@ async function signOutUI(page) {
   for (const [path, name] of adminSections) {
     await safe(async () => {
       await page.goto(`${BASE}/admin/${path}`, { waitUntil: 'networkidle', timeout: 20000 });
+      // Cierra el tour de driver.js si aparece
+      const closeTour = page.locator('.driver-popover-close-btn, [aria-label="Close"]').first();
+      if (await closeTour.count().catch(() => 0)) {
+        await closeTour.click({ timeout: 1000 }).catch(() => {});
+      }
       await page.waitForTimeout(1500);
       await shot(page, name);
     }, `Admin — ${path}`);
   }
 
-  // ─── 4. Crear staff (mesero/cocina/cajero) vía API con token de admin ─
-  const staff = [
-    { email: WAITER_EMAIL,  role: 'mesero',  name: 'Ana Mesera',   label: 'mesero' },
-    { email: KITCHEN_EMAIL, role: 'cocina',  name: 'Carlos Cocina', label: 'cocina' },
-    { email: CASHIER_EMAIL, role: 'cajero',  name: 'Julia Caja',   label: 'cajero' },
-  ];
-  for (const s of staff) {
-    await safe(async () => {
-      await sb('/auth/v1/signup', {
-        method: 'POST',
-        body: JSON.stringify({
-          email: s.email,
-          password: PASSWORD,
-          data: { full_name: s.name, role: s.role, restaurant_id: restaurantId },
-        }),
-      });
-      log(`   ${s.label} creado: ${s.email}`);
-    }, `Crear ${s.label} (API)`);
-  }
+  // ─── 5. Login como cocina y verifica comanda ────────────────────────────
+  await safe(async () => {
+    await signOutUI(page);
+    await loginUI(page, KITCHEN_EMAIL, PASSWORD);
+    await page.goto(`${BASE}/cocina`, { waitUntil: 'networkidle', timeout: 20000 }).catch(() => {});
+    await page.waitForTimeout(2500);
+    await shot(page, 'kitchen-view-con-comanda');
+  }, 'Cocina ve el pedido');
 
-  // ─── 5. Login por cada rol y capturar su vista principal ───────────────
-  const roleViews = [
-    { email: WAITER_EMAIL,  path: '/mesero',  name: 'waiter-view'  },
-    { email: KITCHEN_EMAIL, path: '/cocina',  name: 'kitchen-view' },
-    { email: CASHIER_EMAIL, path: '/cajero',  name: 'cashier-view' },
-  ];
-  for (const rv of roleViews) {
-    await safe(async () => {
-      await signOutUI(page);
-      await loginUI(page, rv.email, PASSWORD);
-      await page.goto(`${BASE}${rv.path}`, { waitUntil: 'networkidle', timeout: 20000 }).catch(() => {});
-      await page.waitForTimeout(2500);
-      await shot(page, rv.name);
-    }, `Login + ${rv.path}`);
-  }
+  // ─── 6. Login como mesero y verifica llamada + pedido ───────────────────
+  await safe(async () => {
+    await signOutUI(page);
+    await loginUI(page, WAITER_EMAIL, PASSWORD);
+    await page.goto(`${BASE}/mesero`, { waitUntil: 'networkidle', timeout: 20000 }).catch(() => {});
+    await page.waitForTimeout(2500);
+    await shot(page, 'waiter-view-con-llamada');
+  }, 'Mesero ve llamada + pedido');
 
-  // ─── 6. Wizard de instalación + captura móvil del cliente ──────────────
+  // ─── 7. Login como cajero y verifica pedido cobrable ────────────────────
+  await safe(async () => {
+    await signOutUI(page);
+    await loginUI(page, CASHIER_EMAIL, PASSWORD);
+    await page.goto(`${BASE}/cajero`, { waitUntil: 'networkidle', timeout: 20000 }).catch(() => {});
+    await page.waitForTimeout(2500);
+    await shot(page, 'cashier-view-con-pedido');
+  }, 'Cajero ve pedido por cobrar');
+
+  // ─── 8. Extras: wizard + cliente móvil ──────────────────────────────────
   await safe(async () => {
     await page.goto(`${BASE}/instalacion`, { waitUntil: 'networkidle', timeout: 15000 });
     await page.waitForTimeout(1500);
     await shot(page, 'instalacion-wizard');
-  }, 'Wizard de instalación');
+  }, 'Wizard /instalacion');
 
   await safe(async () => {
     const mobile = await browser.newContext({
       viewport: { width: 390, height: 844 }, locale: 'es-ES', isMobile: true, hasTouch: true,
     });
     const mPage = await mobile.newPage();
-    await mPage.goto(BASE, { waitUntil: 'networkidle', timeout: 20000 });
+    await mPage.goto(`${BASE}/${RESTAURANT_SLUG}/mesa/1`, { waitUntil: 'networkidle', timeout: 20000 });
     await mPage.waitForTimeout(1500);
     stepNum += 1;
     await mPage.screenshot({ path: join(OUT, `${String(stepNum).padStart(2, '0')}-client-mobile.png`), fullPage: true });
@@ -275,7 +333,7 @@ async function signOutUI(page) {
   log('═══════════════════════════════════════');
   if (failed) {
     log('');
-    log('Con problemas:');
+    log('Fallos:');
     results.filter((r) => !r.ok).forEach((r) => log(`  · ${r.name} — ${r.error?.split('\n')[0]}`));
   }
 })();

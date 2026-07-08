@@ -1,4 +1,14 @@
 -- ============================================================================
+-- Restaurante Staff · Esquema completo
+-- Generado por scripts/build-schema.mjs — no editar a mano.
+-- Migraciones incluidas: 19 (seed demo antes de multi-tenant).
+-- Aplicar en el SQL Editor de tu proyecto Supabase (o con `supabase db push`).
+-- ============================================================================
+
+-- ────────────────────────────────────────────────────────────────────────
+-- Migración: 20260702000001_init.sql
+-- ────────────────────────────────────────────────────────────────────────
+-- ============================================================================
 -- Restaurante Staff · Esquema inicial
 -- Proyecto Supabase: vtkdvxrocemdyybynegs
 -- Aplicar con: supabase db push  (o pegar en el SQL Editor del dashboard)
@@ -99,6 +109,10 @@ alter publication supabase_realtime add table public.orders;
 alter publication supabase_realtime add table public.order_items;
 alter publication supabase_realtime add table public.waiter_calls;
 alter publication supabase_realtime add table public.tables;
+
+-- ────────────────────────────────────────────────────────────────────────
+-- Migración: 20260702000002_rls.sql
+-- ────────────────────────────────────────────────────────────────────────
 -- ============================================================================
 -- Restaurante Staff · Seguridad (RLS)
 --
@@ -246,6 +260,10 @@ $$;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
+
+-- ────────────────────────────────────────────────────────────────────────
+-- Migración: 20260702000003_bootstrap_admin_and_storage.sql
+-- ────────────────────────────────────────────────────────────────────────
 -- ============================================================================
 -- Bootstrap del primer administrador + bucket de imágenes
 -- ============================================================================
@@ -303,9 +321,17 @@ create policy "imagenes admin actualiza" on storage.objects
   for update to authenticated using (bucket_id = 'imagenes' and public.is_admin());
 create policy "imagenes admin borra" on storage.objects
   for delete to authenticated using (bucket_id = 'imagenes' and public.is_admin());
+
+-- ────────────────────────────────────────────────────────────────────────
+-- Migración: 20260702000004_add_logo_url.sql
+-- ────────────────────────────────────────────────────────────────────────
 -- Logo del restaurante (URL en el bucket 'imagenes'); lo sube el admin desde
 -- Ajustes y se muestra en el panel, la tablet del mesero y el menú del cliente.
 alter table public.restaurant_settings add column if not exists logo_url text;
+
+-- ────────────────────────────────────────────────────────────────────────
+-- Migración: 20260702000005_cajero_role_and_payments.sql
+-- ────────────────────────────────────────────────────────────────────────
 -- ============================================================================
 -- Rol Cajero + métodos de pago + cobro de pedidos
 -- ============================================================================
@@ -344,9 +370,17 @@ alter publication supabase_realtime add table public.payment_methods;
 -- Nota: el cobro (orders.paid/payment_method/paid_at) lo hace el personal a
 -- través de la política existente "staff avanza pedidos" (UPDATE para is_staff),
 -- que ya cubre al rol cajero.
+
+-- ────────────────────────────────────────────────────────────────────────
+-- Migración: 20260702000006_order_ready_at.sql
+-- ────────────────────────────────────────────────────────────────────────
 -- Momento en que la cocina marca el pedido como "listo". Sirve para medir el
 -- tiempo de preparación (created_at → ready_at) en el Resumen del admin.
 alter table public.orders add column if not exists ready_at timestamptz;
+
+-- ────────────────────────────────────────────────────────────────────────
+-- Migración: 20260703000007_daily_demo_reset.sql
+-- ────────────────────────────────────────────────────────────────────────
 -- ============================================================================
 -- Reinicio diario de datos de demostración (pg_cron)
 --
@@ -418,6 +452,10 @@ revoke execute on function public.reset_demo_data() from anon, authenticated, pu
 
 -- Programación diaria a las 08:00 UTC. Reprogramable / desactivable con cron.
 select cron.schedule('reset-demo-diario', '0 8 * * *', $$select public.reset_demo_data();$$);
+
+-- ────────────────────────────────────────────────────────────────────────
+-- Migración: 20260703000008_disable_public_signup.sql
+-- ────────────────────────────────────────────────────────────────────────
 -- ============================================================================
 -- Cierre del registro público tras el bootstrap del administrador
 -- ============================================================================
@@ -462,6 +500,47 @@ $$;
 create trigger on_auth_signup_check
   before insert on auth.users
   for each row execute function public.check_signup_allowed();
+
+-- ────────────────────────────────────────────────────────────────────────
+-- Datos de ejemplo (seed) — la migración 9 los adopta al restaurante default
+-- ────────────────────────────────────────────────────────────────────────
+-- ============================================================================
+-- Restaurante Staff · Datos de ejemplo (los mismos del diseño original)
+-- ============================================================================
+
+insert into public.categories (name, position) values
+  ('Entradas', 1), ('Principales', 2), ('Postres', 3), ('Bebidas', 4);
+
+insert into public.products (name, description, price, category_id, available) values
+  ('Tostadas de tinga', 'Pollo deshebrado, crema ácida y aguacate.', 6.50, 1, true),
+  ('Sopa de tortilla', 'Caldo de jitomate, chile pasilla y queso fresco.', 7.00, 1, true),
+  ('Croquetas de elote', 'Con alioli de chipotle ahumado.', 5.00, 1, false),
+  ('Pollo al carbón con mole', 'Media pieza, arroz rojo y tortillas de maíz.', 14.50, 2, true),
+  ('Tacos de costilla', 'Tres piezas, salsa tatemada y cebollitas.', 11.00, 2, true),
+  ('Risotto de hongos', 'Hongos de temporada y parmesano.', 13.00, 2, true),
+  ('Pesca del día a la brasa', 'Con verduras rostizadas y limón quemado.', 16.50, 2, true),
+  ('Flan de la casa', 'Caramelo oscuro y crema batida.', 5.50, 3, true),
+  ('Tarta de elote', 'Con helado de vainilla de vaina.', 6.00, 3, true),
+  ('Agua fresca de jamaica', 'Endulzada con piloncillo.', 3.00, 4, true),
+  ('Limonada de hierbabuena', 'Mineral o natural.', 3.50, 4, true);
+
+insert into public.tables (number, x, y, seats, shape, status) values
+  (1, 40, 40, 4, 'sq', 'libre'),
+  (2, 230, 60, 2, 'rd', 'ocupada'),
+  (3, 400, 40, 4, 'sq', 'ocupada'),
+  (4, 590, 80, 4, 'sq', 'ocupada'),
+  (5, 70, 230, 6, 'sq', 'reservada'),
+  (6, 330, 250, 4, 'rd', 'ocupada'),
+  (7, 600, 280, 2, 'rd', 'ocupada'),
+  (8, 160, 410, 8, 'sq', 'libre');
+
+update public.restaurant_settings
+set season_start = '2026-03-15', season_end = '2026-09-15'
+where id = 1;
+
+-- ────────────────────────────────────────────────────────────────────────
+-- Migración: 20260704000009_multi_restaurante.sql
+-- ────────────────────────────────────────────────────────────────────────
 -- ============================================================================
 -- Multi-restaurante (multi-tenant)
 -- Un despliegue, varios locales.
@@ -494,10 +573,6 @@ create table public.restaurants (
 alter table public.restaurants enable row level security;
 create policy "todos leen restaurantes" on public.restaurants
   for select using (true);
-create policy "admin gestiona su restaurante" on public.restaurants
-  for update using (
-    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin' and restaurant_id = restaurants.id)
-  );
 
 -- ── 2. Crear restaurante por defecto con los datos existentes ─────────────────
 do $$
@@ -552,6 +627,12 @@ begin
   update public.payment_methods set restaurant_id = v_restaurant_id where restaurant_id is null;
 end;
 $$;
+
+-- Requiere profiles.restaurant_id (creada en el bloque anterior).
+create policy "admin gestiona su restaurante" on public.restaurants
+  for update using (
+    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin' and restaurant_id = restaurants.id)
+  );
 
 -- ── 5. Hacer NOT NULL después del backfill ───────────────────────────────────
 alter table public.profiles        alter column restaurant_id set not null;
@@ -840,6 +921,10 @@ as $$
   end;
 $$;
 grant execute on function public.admin_exists(uuid) to anon, authenticated;
+
+-- ────────────────────────────────────────────────────────────────────────
+-- Migración: 20260707000010_work_schedules.sql
+-- ────────────────────────────────────────────────────────────────────────
 -- ============================================================================
 -- Horario de trabajo semanal por empleado (módulo "Horario de trabajo").
 -- Un registro por trabajador con 7 días (lunes→domingo) en JSONB.
@@ -860,40 +945,418 @@ create policy "staff lee horarios" on public.work_schedules
 create policy "admin gestiona horarios" on public.work_schedules
   for all using (public.is_admin() and restaurant_id = public.my_restaurant_id())
   with check (public.is_admin() and restaurant_id = public.my_restaurant_id());
--- ============================================================================
--- Restaurante Staff · Datos de ejemplo (los mismos del diseño original)
--- ============================================================================
 
-insert into public.categories (name, position) values
-  ('Entradas', 1), ('Principales', 2), ('Postres', 3), ('Bebidas', 4);
-
-insert into public.products (name, description, price, category_id, available) values
-  ('Tostadas de tinga', 'Pollo deshebrado, crema ácida y aguacate.', 6.50, 1, true),
-  ('Sopa de tortilla', 'Caldo de jitomate, chile pasilla y queso fresco.', 7.00, 1, true),
-  ('Croquetas de elote', 'Con alioli de chipotle ahumado.', 5.00, 1, false),
-  ('Pollo al carbón con mole', 'Media pieza, arroz rojo y tortillas de maíz.', 14.50, 2, true),
-  ('Tacos de costilla', 'Tres piezas, salsa tatemada y cebollitas.', 11.00, 2, true),
-  ('Risotto de hongos', 'Hongos de temporada y parmesano.', 13.00, 2, true),
-  ('Pesca del día a la brasa', 'Con verduras rostizadas y limón quemado.', 16.50, 2, true),
-  ('Flan de la casa', 'Caramelo oscuro y crema batida.', 5.50, 3, true),
-  ('Tarta de elote', 'Con helado de vainilla de vaina.', 6.00, 3, true),
-  ('Agua fresca de jamaica', 'Endulzada con piloncillo.', 3.00, 4, true),
-  ('Limonada de hierbabuena', 'Mineral o natural.', 3.50, 4, true);
-
-insert into public.tables (number, x, y, seats, shape, status) values
-  (1, 40, 40, 4, 'sq', 'libre'),
-  (2, 230, 60, 2, 'rd', 'ocupada'),
-  (3, 400, 40, 4, 'sq', 'ocupada'),
-  (4, 590, 80, 4, 'sq', 'ocupada'),
-  (5, 70, 230, 6, 'sq', 'reservada'),
-  (6, 330, 250, 4, 'rd', 'ocupada'),
-  (7, 600, 280, 2, 'rd', 'ocupada'),
-  (8, 160, 410, 8, 'sq', 'libre');
-
-update public.restaurant_settings
-set season_start = '2026-03-15', season_end = '2026-09-15'
-where id = 1;
-
--- migration 11: moneda configurable por el admin
+-- ────────────────────────────────────────────────────────────────────────
+-- Migración: 20260708000011_add_currency.sql
+-- ────────────────────────────────────────────────────────────────────────
+-- Añade el símbolo de moneda configurable por el admin.
+-- El valor por defecto '$' mantiene compatibilidad con datos existentes.
 alter table public.restaurant_settings
   add column if not exists currency text not null default '$';
+
+-- ────────────────────────────────────────────────────────────────────────
+-- Migración: 20260708000012_fix_rls_and_settings.sql
+-- ────────────────────────────────────────────────────────────────────────
+-- ============================================================================
+-- Arreglos post multi-restaurante
+--
+-- Problemas detectados en producción:
+--   1. restaurant_settings.id sigue con CHECK (id = 1) y default 1 → no se
+--      puede insertar una segunda fila cuando `create_restaurant()` intenta
+--      crear los ajustes del nuevo tenant. Cambiamos a bigserial.
+--   2. Policies legacy (pre multi-tenant) quedaron activas y hacen referencia a
+--      `is_staff()` desde el rol `public`, lo que falla porque anon no tiene
+--      EXECUTE sobre esa función (permission denied for function is_staff).
+--      Se eliminan.
+--   3. is_staff / is_admin se marcan como accesibles por anon y authenticated
+--      (devolverán false para anon, pero deben poder ejecutarse dentro de
+--      policies evaluadas para ese rol).
+-- ============================================================================
+
+-- ── 1. restaurant_settings.id — quitar singleton y usar bigserial ────────────
+alter table public.restaurant_settings drop constraint if exists restaurant_settings_id_check;
+alter table public.restaurant_settings alter column id drop default;
+
+do $$
+declare
+  v_max bigint;
+begin
+  -- Crear una secuencia y hacer que id la use como default
+  if not exists (select 1 from pg_class where relname = 'restaurant_settings_id_seq') then
+    create sequence public.restaurant_settings_id_seq owned by public.restaurant_settings.id;
+    select coalesce(max(id), 0) + 1 into v_max from public.restaurant_settings;
+    perform setval('public.restaurant_settings_id_seq', v_max, false);
+  end if;
+  alter table public.restaurant_settings
+    alter column id set default nextval('public.restaurant_settings_id_seq'::regclass);
+end;
+$$;
+
+-- ── 2. Eliminar policies legacy pre multi-tenant ─────────────────────────────
+-- orders
+drop policy if exists "cliente crea pedido qr" on public.orders;
+drop policy if exists "todos leen pedidos"      on public.orders;
+drop policy if exists "admin elimina pedidos"   on public.orders;
+
+-- order_items
+drop policy if exists "cliente agrega lineas"   on public.order_items;
+drop policy if exists "todos leen lineas"       on public.order_items;
+drop policy if exists "todos leen items"        on public.order_items;
+drop policy if exists "admin elimina lineas"    on public.order_items;
+
+-- waiter_calls
+drop policy if exists "cliente llama al mesero" on public.waiter_calls;
+drop policy if exists "todos leen llamadas"     on public.waiter_calls;
+
+-- Recrear las policies necesarias, versión multi-tenant sin las legacy
+create policy "anon lee items sus pedidos" on public.order_items
+  for select to anon using (
+    exists (select 1 from public.orders o where o.id = order_id and o.source = 'qr')
+  );
+create policy "staff lee items de su restaurante" on public.order_items
+  for select to authenticated using (
+    exists (
+      select 1 from public.orders o
+      where o.id = order_id and o.restaurant_id = public.my_restaurant_id()
+    )
+  );
+create policy "admin elimina lineas de su restaurante" on public.order_items
+  for delete to authenticated using (
+    public.is_admin() and exists (
+      select 1 from public.orders o
+      where o.id = order_id and o.restaurant_id = public.my_restaurant_id()
+    )
+  );
+create policy "admin elimina pedidos de su restaurante" on public.orders
+  for delete to authenticated using (
+    public.is_admin() and restaurant_id = public.my_restaurant_id()
+  );
+
+-- ── 3. Otorgar EXECUTE a is_staff / is_admin para todos los roles ────────────
+-- Devuelven false para anon (no tiene auth.uid()), pero deben ser INVOCABLES
+-- dentro de las políticas de RLS cuando el planner las evalúa.
+grant execute on function public.is_staff()  to anon, authenticated;
+grant execute on function public.is_admin()  to anon, authenticated;
+-- my_restaurant_id sigue restringida (no la necesitan anon).
+
+-- ── 4. Corregir bug del filtro en policy "anon crea llamadas" ────────────────
+-- La versión anterior tenía `t.restaurant_id = t.restaurant_id` (tautología).
+-- Debe filtrar por el restaurant_id de la fila insertada.
+drop policy if exists "anon crea llamadas" on public.waiter_calls;
+create policy "anon crea llamadas" on public.waiter_calls
+  for insert to anon with check (
+    exists (select 1 from public.restaurants r where r.id = restaurant_id)
+    and exists (
+      select 1 from public.tables t
+      where t.restaurant_id = waiter_calls.restaurant_id
+        and t.number = waiter_calls.table_number
+    )
+  );
+
+-- Idéntico arreglo para "anon crea pedidos qr"
+drop policy if exists "anon crea pedidos qr" on public.orders;
+create policy "anon crea pedidos qr" on public.orders
+  for insert to anon with check (
+    source = 'qr'
+    and exists (select 1 from public.restaurants r where r.id = restaurant_id)
+    and exists (
+      select 1 from public.tables t
+      where t.restaurant_id = orders.restaurant_id
+        and t.number = orders.table_number
+    )
+  );
+
+-- ────────────────────────────────────────────────────────────────────────
+-- Migración: 20260708000013_reapply_signup_triggers.sql
+-- ────────────────────────────────────────────────────────────────────────
+-- ============================================================================
+-- Re-aplicar los triggers de Auth con la versión multi-tenant.
+--
+-- En proyectos ya desplegados que llegaron a la versión multi-tenant a través
+-- de aplicaciones parciales, el trigger `handle_new_user` puede seguir siendo
+-- la versión "pre multi-restaurante" (que no rellena `restaurant_id`). Como
+-- `profiles.restaurant_id` es NOT NULL, cualquier signUp acaba en el genérico
+-- "Database error saving new user" (HTTP 500 de GoTrue).
+--
+-- Esta migración fuerza la versión definitiva de ambos triggers y garantiza
+-- que los disparadores en `auth.users` existan.
+-- ============================================================================
+
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_restaurant_id uuid;
+  v_is_first      boolean;
+begin
+  v_restaurant_id := (new.raw_user_meta_data->>'restaurant_id')::uuid;
+
+  if v_restaurant_id is null then
+    raise exception 'Falta restaurant_id en el registro. Crea tu restaurante primero.';
+  end if;
+
+  select not exists (
+    select 1 from public.profiles where restaurant_id = v_restaurant_id
+  ) into v_is_first;
+
+  insert into public.profiles (id, full_name, email, role, is_owner, restaurant_id)
+  values (
+    new.id,
+    coalesce(new.raw_user_meta_data->>'full_name', split_part(new.email, '@', 1)),
+    new.email,
+    case when v_is_first then 'admin' else coalesce(new.raw_user_meta_data->>'role', 'mesero') end,
+    v_is_first,
+    v_restaurant_id
+  );
+  return new;
+end;
+$$;
+
+create or replace function public.check_signup_allowed()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_restaurant_id uuid;
+begin
+  -- Invitaciones desde el dashboard de Supabase → siempre pasa.
+  if (new.raw_app_meta_data->>'invited_at') is not null then
+    return new;
+  end if;
+
+  v_restaurant_id := (new.raw_user_meta_data->>'restaurant_id')::uuid;
+
+  if v_restaurant_id is null or not exists (
+    select 1 from public.restaurants where id = v_restaurant_id
+  ) then
+    raise exception
+      'Registro no autorizado: crea tu restaurante antes de registrarte.'
+      using errcode = 'P0002';
+  end if;
+
+  return new;
+end;
+$$;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_trigger
+    where tgname = 'on_auth_user_created' and tgrelid = 'auth.users'::regclass
+  ) then
+    create trigger on_auth_user_created
+      after insert on auth.users
+      for each row execute function public.handle_new_user();
+  end if;
+
+  if not exists (
+    select 1 from pg_trigger
+    where tgname = 'on_auth_signup_check' and tgrelid = 'auth.users'::regclass
+  ) then
+    create trigger on_auth_signup_check
+      before insert on auth.users
+      for each row execute function public.check_signup_allowed();
+  end if;
+end
+$$;
+
+-- ────────────────────────────────────────────────────────────────────────
+-- Migración: 20260708000014_grant_my_restaurant_id.sql
+-- ────────────────────────────────────────────────────────────────────────
+-- ============================================================================
+-- Otorgar EXECUTE de my_restaurant_id() al rol authenticated.
+--
+-- La migración multi-tenant revocó EXECUTE de todos los roles pero las
+-- policies RLS de profiles, orders, tables, etc. invocan esta función cuando
+-- el usuario autenticado hace queries. Sin EXECUTE Postgres devuelve
+-- "permission denied for function my_restaurant_id" y todas las lecturas
+-- del panel (profiles, work_schedules, etc.) fallan con 401.
+--
+-- anon NO necesita ejecutarla (usa filtros explícitos por restaurant_id).
+-- ============================================================================
+grant execute on function public.my_restaurant_id() to authenticated;
+
+-- ────────────────────────────────────────────────────────────────────────
+-- Migración: 20260708000015_fix_categories_multitenancy_unique.sql
+-- ────────────────────────────────────────────────────────────────────────
+-- Multi-tenancy: `categories.name` seguía con UNIQUE global heredado de la
+-- migración inicial (`categories_name_key`) y bloqueaba que dos restaurantes
+-- tuvieran categorías con el mismo nombre — descubierto por la prueba E2E al
+-- crear un tenant nuevo con la categoría "Principales" que ya existía en otro.
+--
+-- También hacemos preventivo el UNIQUE(restaurant_id, number) en `tables`
+-- para evitar mesas duplicadas dentro de un mismo tenant.
+
+-- categories: UNIQUE global → UNIQUE per-tenant
+alter table public.categories drop constraint if exists categories_name_key;
+alter table public.categories
+  add constraint categories_restaurant_name_unique unique (restaurant_id, name);
+
+-- tables: nº de mesa único dentro del tenant
+alter table public.tables drop constraint if exists tables_restaurant_number_unique;
+alter table public.tables
+  add constraint tables_restaurant_number_unique unique (restaurant_id, number);
+
+-- ────────────────────────────────────────────────────────────────────────
+-- Migración: 20260708000016_fix_waiter_calls_anon_insert.sql
+-- ────────────────────────────────────────────────────────────────────────
+-- La policy "anon crea llamadas" está bloqueando el INSERT del cliente aunque
+-- restaurant/mesa existan. La versión de la migración 9 tenía tautología en
+-- el subquery; la 12 debía arreglarlo pero al parecer no se aplicó del todo
+-- en el DB remoto — reprodujo 42501 en la prueba E2E aun con la mesa creada.
+--
+-- Aquí forzamos el estado correcto: dropeamos cualquier variante previa y
+-- creamos la policy de una sola vez. Idempotente.
+
+drop policy if exists "cliente llama al mesero" on public.waiter_calls;
+drop policy if exists "anon crea llamadas"       on public.waiter_calls;
+
+create policy "anon crea llamadas" on public.waiter_calls
+  for insert to anon
+  with check (
+    exists (select 1 from public.restaurants r where r.id = waiter_calls.restaurant_id)
+    and exists (
+      select 1 from public.tables t
+      where t.restaurant_id = waiter_calls.restaurant_id
+        and t.number       = waiter_calls.table_number
+    )
+  );
+
+-- Mismo blindaje para el INSERT anónimo de pedidos QR — por si la versión
+-- vigente en el DB también es la antigua tautológica.
+drop policy if exists "cliente crea pedido qr" on public.orders;
+drop policy if exists "anon crea pedidos qr"   on public.orders;
+
+create policy "anon crea pedidos qr" on public.orders
+  for insert to anon
+  with check (
+    source = 'qr'
+    and exists (select 1 from public.restaurants r where r.id = orders.restaurant_id)
+    and exists (
+      select 1 from public.tables t
+      where t.restaurant_id = orders.restaurant_id
+        and t.number       = orders.table_number
+    )
+  );
+
+-- ────────────────────────────────────────────────────────────────────────
+-- Migración: 20260708000017_add_anon_read_waiter_calls.sql
+-- ────────────────────────────────────────────────────────────────────────
+-- Root cause del 42501 al llamar al mesero (bug detectado en la prueba E2E
+-- cruzada): la migración 12 dropeó "todos leen llamadas" sin dejar reemplazo
+-- para el rol anon. Cuando el cliente inserta con `.select().single()` en
+-- supabase-js, PostgREST envía `Prefer: return=representation` y hace un
+-- INSERT + SELECT. Al no haber policy de SELECT para anon, el SELECT falla y
+-- PostgREST devuelve el mismo código 42501 aunque el INSERT sea válido.
+--
+-- Añadimos una policy mínima: anon puede leer llamadas de tenants existentes.
+-- No es sensible (son solo pings del móvil del cliente al mesero) y equivale
+-- al `for select using (true)` previo, pero con sanidad multi-tenant.
+
+drop policy if exists "anon lee sus llamadas"   on public.waiter_calls;
+drop policy if exists "anon lee llamadas"       on public.waiter_calls;
+
+create policy "anon lee llamadas" on public.waiter_calls
+  for select to anon
+  using (
+    exists (select 1 from public.restaurants r where r.id = waiter_calls.restaurant_id)
+  );
+
+-- ────────────────────────────────────────────────────────────────────────
+-- Migración: 20260708000018_fix_payment_methods_unique.sql
+-- ────────────────────────────────────────────────────────────────────────
+-- Mismo patrón que categorias: `payment_methods.name` seguía con UNIQUE global
+-- heredado de la migración 5. Dos tenants no podían tener "Efectivo" a la vez,
+-- lo cual bloquea el arranque del rol Cajero al crear un tenant nuevo.
+
+alter table public.payment_methods drop constraint if exists payment_methods_name_key;
+alter table public.payment_methods
+  add constraint payment_methods_restaurant_name_unique unique (restaurant_id, name);
+
+-- ────────────────────────────────────────────────────────────────────────
+-- Migración: 20260708000019_create_restaurant_seed.sql
+-- ────────────────────────────────────────────────────────────────────────
+-- Descubierto en la prueba E2E: un tenant recién creado por `create_restaurant()`
+-- estaba totalmente vacío — sin categorías, productos, mesas ni métodos de pago —
+-- lo que dejaba al cliente con la home sin menú y al cajero sin poder cobrar.
+--
+-- Reescribimos la función para que además del `restaurants` + `restaurant_settings`
+-- inicial también siembre:
+--   · 4 categorías (Entradas, Principales, Postres, Bebidas)
+--   · 6 productos de ejemplo con precios en la moneda por defecto
+--   · 4 mesas colocadas en cuadrícula 2×2
+--   · 3 métodos de pago (Efectivo, Tarjeta, Transferencia)
+--
+-- Al ejecutarse con SECURITY DEFINER, evita cualquier fricción con RLS. La
+-- función sigue siendo idempotente en lo relativo a UNIQUE(slug); si al usuario
+-- no le gusta el catálogo por defecto, lo edita desde el panel.
+
+create or replace function public.create_restaurant(p_name text, p_slug text)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_restaurant_id uuid;
+  v_slug          text;
+  v_cat_entradas    bigint;
+  v_cat_principales bigint;
+  v_cat_postres     bigint;
+  v_cat_bebidas     bigint;
+begin
+  v_slug := trim(both '-' from regexp_replace(lower(trim(p_slug)), '[^a-z0-9]+', '-', 'g'));
+  if length(v_slug) < 2 then
+    raise exception 'El slug debe tener al menos 2 caracteres.';
+  end if;
+
+  insert into public.restaurants (name, slug)
+  values (trim(p_name), v_slug)
+  returning id into v_restaurant_id;
+
+  -- Ajustes por defecto
+  insert into public.restaurant_settings (restaurant_id, name)
+  values (v_restaurant_id, trim(p_name));
+
+  -- Categorías iniciales
+  insert into public.categories (name, position, restaurant_id) values
+    ('Entradas',    1, v_restaurant_id) returning id into v_cat_entradas;
+  insert into public.categories (name, position, restaurant_id) values
+    ('Principales', 2, v_restaurant_id) returning id into v_cat_principales;
+  insert into public.categories (name, position, restaurant_id) values
+    ('Postres',     3, v_restaurant_id) returning id into v_cat_postres;
+  insert into public.categories (name, position, restaurant_id) values
+    ('Bebidas',     4, v_restaurant_id) returning id into v_cat_bebidas;
+
+  -- Productos de ejemplo (el admin los edita/reemplaza a su gusto)
+  insert into public.products (name, description, price, available, category_id, restaurant_id) values
+    ('Ensalada de la casa',    'Mezcla de hojas frescas con vinagreta',  8.50, true, v_cat_entradas,    v_restaurant_id),
+    ('Sopa del día',           'Preparación diaria del chef',            6.00, true, v_cat_entradas,    v_restaurant_id),
+    ('Pasta al pesto',         'Fettuccine con salsa de albahaca',      12.50, true, v_cat_principales, v_restaurant_id),
+    ('Pollo a la parrilla',    'Con guarnición de verduras',            14.00, true, v_cat_principales, v_restaurant_id),
+    ('Tarta de manzana',       'Casera, servida tibia',                  5.50, true, v_cat_postres,     v_restaurant_id),
+    ('Agua mineral',           'Botella de 500 ml',                      2.50, true, v_cat_bebidas,     v_restaurant_id);
+
+  -- Mesas iniciales (cuadrícula 2×2)
+  insert into public.tables (number, x, y, seats, shape, status, restaurant_id) values
+    (1, 100, 100, 4, 'sq', 'libre', v_restaurant_id),
+    (2, 260, 100, 4, 'sq', 'libre', v_restaurant_id),
+    (3, 100, 240, 4, 'sq', 'libre', v_restaurant_id),
+    (4, 260, 240, 4, 'sq', 'libre', v_restaurant_id);
+
+  -- Métodos de pago por defecto
+  insert into public.payment_methods (name, position, active, restaurant_id) values
+    ('Efectivo',      1, true, v_restaurant_id),
+    ('Tarjeta',       2, true, v_restaurant_id),
+    ('Transferencia', 3, true, v_restaurant_id);
+
+  return v_restaurant_id;
+end;
+$$;
+
+grant execute on function public.create_restaurant(text, text) to anon, authenticated;

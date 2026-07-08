@@ -32,8 +32,13 @@ const BASE = 'http://localhost:4200';
 const OUT = join(process.cwd(), 'Playwright');
 mkdirSync(OUT, { recursive: true });
 
-const SB_URL = 'https://vtkdvxrocemdyybynegs.supabase.co';
-const SB_KEY = 'sb_publishable_mr-6bgxKwhOOazfMUMXGrg_PflZ07kh';
+const SB_URL = process.env.SUPABASE_URL ?? 'https://lytfornfsxgmzanwikci.supabase.co';
+const SB_KEY = process.env.SUPABASE_ANON_KEY ?? 'sb_publishable_i24mUhZzCZHhWrBXhiT63A_4VY-1i5-';
+
+if (!SB_URL || !SB_KEY) {
+  console.error('Faltan SUPABASE_URL y/o SUPABASE_ANON_KEY (variables de entorno o .env local del script).');
+  process.exit(1);
+}
 
 const rand = Math.random().toString(36).slice(2, 6);
 const stamp = Date.now().toString(36).slice(-6);
@@ -41,10 +46,10 @@ const suffix = `${stamp}${rand}`;
 
 const RESTAURANT_NAME = `QA ${suffix}`;
 const RESTAURANT_SLUG = `qa-${suffix}`;
-const ADMIN_EMAIL   = `qa-admin-${suffix}@example.com`;
-const WAITER_EMAIL  = `qa-mesero-${suffix}@example.com`;
-const KITCHEN_EMAIL = `qa-cocina-${suffix}@example.com`;
-const CASHIER_EMAIL = `qa-cajero-${suffix}@example.com`;
+const ADMIN_EMAIL   = `qa-admin-${suffix}@gmail.com`;
+const WAITER_EMAIL  = `qa-mesero-${suffix}@gmail.com`;
+const KITCHEN_EMAIL = `qa-cocina-${suffix}@gmail.com`;
+const CASHIER_EMAIL = `qa-cajero-${suffix}@gmail.com`;
 const PASSWORD      = 'QaAdmin1234!';
 
 let stepNum = 0;

@@ -279,6 +279,14 @@ const TOTAL_STEPS = 6;
               </div>
             }
 
+            <div class="mb-5 rounded-xl border border-borde-suave bg-crema px-4 py-3 text-[12.5px] leading-relaxed text-tinta-media">
+              <strong class="text-tinta">¿Se guarda en un archivo .env?</strong> No.
+              Las claves quedan en <strong>este navegador</strong> (almacenamiento local) y la app
+              se recargará conectada a tu proyecto. Si eres desarrollador y tienes un
+              <code class="rounded bg-panal px-1 py-px font-mono text-[11px]">.env</code>
+              local con otras credenciales, no se modifica: las del wizard tienen prioridad aquí.
+            </div>
+
             <div class="mb-5 rounded-xl border-[1.5px] border-dashed border-borde-punteado p-3.5 text-[12px] leading-relaxed text-tinta-media">
               <strong class="text-tinta">¿Dónde están?</strong> En tu proyecto de Supabase →
               <em>Project Settings → API</em>. La URL termina en <code class="rounded bg-panal px-1 py-px font-mono">.supabase.co</code>
@@ -313,8 +321,16 @@ const TOTAL_STEPS = 6;
             </div>
             <p class="mb-6 text-[13.5px] leading-relaxed text-tinta-media">
               Ahora crearemos todas las tablas de tu base de datos: mesas, productos, pedidos,
-              categorías, personal y más. Solo tienes que copiar y pegar un archivo SQL.
+              categorías, personal y más. <strong class="text-tinta">Es obligatorio</strong> copiar
+              y ejecutar el archivo <code class="rounded bg-panal px-1 py-px font-mono text-[12px]">schema.sql</code>
+              en el SQL Editor de Supabase antes de continuar.
             </p>
+
+            <div class="mb-5 rounded-xl border border-rojizo-borde bg-rojizo-bg px-4 py-3 text-[12.5px] leading-relaxed text-rojizo">
+              <strong>Paso obligatorio:</strong> sin ejecutar <code class="rounded bg-rojizo-borde px-1 font-mono">schema.sql</code>
+              el registro del administrador fallará. Debes ver
+              <em>Success. No rows returned.</em> (o similar) en el SQL Editor.
+            </div>
 
             <div class="mb-5 flex flex-col gap-3">
               @for (substep of sqlSteps; track substep.n) {
@@ -394,6 +410,13 @@ const TOTAL_STEPS = 6;
               Después de esto, nadie más podrá registrarse solo: el acceso del equipo
               lo gestionarás tú desde el panel.
             </p>
+
+            <div class="mb-6 rounded-xl border border-ocre-bg bg-ocre-bg px-4 py-3 text-[12.5px] leading-relaxed text-ocre-texto">
+              <strong>Antes de crear la cuenta:</strong> en Supabase ve a
+              <em>Authentication → Providers → Email</em> y
+              <strong>desactiva «Confirm email»</strong>. Si está activada, el registro
+              quedará pendiente de confirmación y no podrás entrar al panel de inmediato.
+            </div>
 
             <div class="mb-6 rounded-xl border border-borde-suave bg-crema p-5">
               <div class="mb-3 text-[11.5px] font-bold tracking-[.05em] text-tinta-media">QUÉ PASARÁ AL HACER CLIC</div>
@@ -563,6 +586,14 @@ export class SetupWizardComponent implements OnInit {
       linkLabel: null,
       code: null,
     },
+    {
+      n: 4,
+      title: 'Desactiva la confirmación de correo',
+      desc: 'En el menú lateral → <strong>Authentication</strong> → <strong>Providers</strong> → <strong>Email</strong> → desmarca <strong>Confirm email</strong>. Así el primer administrador entra al panel sin revisar el buzón.',
+      link: null,
+      linkLabel: null,
+      code: null,
+    },
   ];
 
   protected readonly keySteps = [
@@ -671,8 +702,14 @@ export class SetupWizardComponent implements OnInit {
 
     this.connectError.set(null);
     saveSupabaseConfig(url, key);
-    this.supabaseConfigured.set(true);
-    this.goTo(4);
+    // Guardamos el paso ANTES de recargar para que el wizard reanude en el 4.
+    // El reload es imprescindible: los repositorios se registran una sola vez
+    // al arrancar la app en función de `isSupabaseConfigured()`. Sin reload,
+    // aunque las credenciales queden en localStorage, la app sigue con los
+    // repositorios en memoria del modo demo y `/nuevo-restaurante` haría el
+    // signUp contra el mock.
+    this.saveStep(4);
+    window.location.reload();
   }
 
   protected markSqlDone(): void {

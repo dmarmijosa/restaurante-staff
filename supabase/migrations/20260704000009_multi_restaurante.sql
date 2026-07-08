@@ -30,10 +30,6 @@ create table public.restaurants (
 alter table public.restaurants enable row level security;
 create policy "todos leen restaurantes" on public.restaurants
   for select using (true);
-create policy "admin gestiona su restaurante" on public.restaurants
-  for update using (
-    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin' and restaurant_id = restaurants.id)
-  );
 
 -- ── 2. Crear restaurante por defecto con los datos existentes ─────────────────
 do $$
@@ -88,6 +84,12 @@ begin
   update public.payment_methods set restaurant_id = v_restaurant_id where restaurant_id is null;
 end;
 $$;
+
+-- Requiere profiles.restaurant_id (creada en el bloque anterior).
+create policy "admin gestiona su restaurante" on public.restaurants
+  for update using (
+    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin' and restaurant_id = restaurants.id)
+  );
 
 -- ── 5. Hacer NOT NULL después del backfill ───────────────────────────────────
 alter table public.profiles        alter column restaurant_id set not null;

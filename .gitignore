@@ -48,6 +48,7 @@ Thumbs.db
 .env.*
 !.env.example
 src/environments/env.generated.ts
+.mcp.json
 
 # Playwright
 /test-results/

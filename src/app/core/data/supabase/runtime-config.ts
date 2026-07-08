@@ -7,7 +7,9 @@
  * en localStorage y, al recargar, la app trabaja contra su base (vacía, desde
  * cero) sin necesidad de recompilar ni tocar `.env`.
  *
- * Prioridad: localStorage (lo que el usuario configuró) → variables del build.
+ * Prioridad: localStorage (wizard / diálogo de conexión) → variables del build
+ * (`.env` → `env.generated.ts`, solo para `npm start` en desarrollo).
+ * El wizard nunca escribe en `.env`.
  */
 import { environment } from '../../../../environments/environment';
 

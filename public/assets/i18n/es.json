@@ -139,7 +139,8 @@
     "queue_many": "{{n}} comandas en cola",
     "tap_for_sound": "Toca para escuchar el aviso",
     "status_received": "Pendiente",
-    "status_preparing": "Preparando"
+    "status_preparing": "Preparando",
+    "min_label": "min"
   },
   "waiter": {
     "online": "En línea",

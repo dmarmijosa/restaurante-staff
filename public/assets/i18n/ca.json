@@ -139,7 +139,8 @@
     "queue_many": "{{n}} comandes a la cua",
     "tap_for_sound": "Toca per escoltar l'avís",
     "status_received": "Pendent",
-    "status_preparing": "Preparant"
+    "status_preparing": "Preparant",
+    "min_label": "min"
   },
   "waiter": {
     "online": "En línia",

@@ -139,7 +139,8 @@
     "queue_many": "{{n}} commandes en file",
     "tap_for_sound": "Appuyez pour entendre l'alerte",
     "status_received": "En attente",
-    "status_preparing": "En préparation"
+    "status_preparing": "En préparation",
+    "min_label": "min"
   },
   "waiter": {
     "online": "En ligne",

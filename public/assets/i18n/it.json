@@ -139,7 +139,8 @@
     "queue_many": "{{n}} ordini in coda",
     "tap_for_sound": "Tocca per sentire l'avviso",
     "status_received": "In attesa",
-    "status_preparing": "In preparazione"
+    "status_preparing": "In preparazione",
+    "min_label": "min"
   },
   "waiter": {
     "online": "Online",

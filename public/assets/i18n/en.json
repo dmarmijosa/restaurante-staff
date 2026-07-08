@@ -139,7 +139,8 @@
     "queue_many": "{{n}} orders in queue",
     "tap_for_sound": "Tap to hear the alert",
     "status_received": "Pending",
-    "status_preparing": "Preparing"
+    "status_preparing": "Preparing",
+    "min_label": "min"
   },
   "waiter": {
     "online": "Online",

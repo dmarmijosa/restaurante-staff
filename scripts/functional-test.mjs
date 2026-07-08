@@ -1,20 +1,26 @@
 /**
  * Prueba funcional end-to-end contra Supabase real.
  *
- * Diferencia clave respecto a versiones anteriores: **todo el flujo pasa por el
- * mismo tenant** — cliente, admin, cocina, mesero y cajero ven el mismo pedido.
- * Así se valida que Realtime y RLS conectan a los roles correctamente.
+ * Cubre el ciclo de vida COMPLETO de un pedido: cliente → cocina → mesero →
+ * cajero → historial del admin. Cada rol ejecuta sus acciones críticas y se
+ * verifica en la DB que el estado transiciona correctamente.
  *
  * Flujo:
  *   1.  Crea el tenant nuevo + admin propietario (API)
  *   2.  Crea las 3 cuentas de staff: mesero / cocina / cajero (API)
- *   3.  Cliente entra a `/:slug/mesa/4`, añade 2 productos y envía el pedido
- *   4.  Cliente llama al mesero
- *   5.  Login como admin → captura las 11 secciones + verifica el pedido en /admin/pedidos
- *   6.  Login como cocina → verifica la comanda en la queue
- *   7.  Login como mesero → verifica la llamada + el pedido en la lista
- *   8.  Login como cajero → captura la vista con el pedido cobrable
- *   9.  Wizard `/instalacion` + captura del cliente en móvil
+ *   3.  Seed con el token del admin: 1 categoría, 2 productos, 1 mesa,
+ *       3 métodos de pago (efectivo / tarjeta / transferencia)
+ *   4.  Cliente entra a `/:slug/mesa/1`, añade productos y envía el pedido
+ *   5.  Cliente llama al mesero
+ *   6.  Admin logueado — captura las 11 secciones del panel
+ *   7.  Cocina logueada — "Empezar a preparar" → "Platillo listo", verificando
+ *       la transición recibido → preparando → listo en la DB
+ *   8.  Mesero logueado — atiende la llamada (attended=true) y marca el pedido
+ *       como Entregado (listo → entregado)
+ *   9.  Cajero logueado — cobra el pedido con Efectivo (paid=true, payment_method)
+ *   10. Admin logueado (segunda pasada) — historial y resumen ya reflejan el
+ *       cobro y las métricas
+ *   11. Wizard `/instalacion` + captura del cliente en móvil
  *
  * Las capturas se guardan en /Playwright (gitignored).
  */
@@ -157,7 +163,21 @@ async function signOutUI(page) {
       body: JSON.stringify({ number: 1, x: 100, y: 100, seats: 4, status: 'libre', restaurant_id: restaurantId }),
     });
     log(`   mesa 1 creada`);
-  }, 'Seed del tenant (categoría, productos, mesa)');
+
+    // Métodos de pago. `payment_methods.name` sigue siendo UNIQUE global
+    // (bug pendiente: migración 20260708000018 lo arregla), así que sufijamos
+    // los nombres por-corrida. En una app real serían "Efectivo/Tarjeta/…".
+    await sb('/rest/v1/payment_methods', {
+      method: 'POST',
+      token: adminToken,
+      body: JSON.stringify([
+        { name: `Efectivo ${suffix}`,     active: true, position: 1, restaurant_id: restaurantId },
+        { name: `Tarjeta ${suffix}`,      active: true, position: 2, restaurant_id: restaurantId },
+        { name: `Transferencia ${suffix}`, active: true, position: 3, restaurant_id: restaurantId },
+      ]),
+    });
+    log(`   3 métodos de pago creados (con suffix ${suffix})`);
+  }, 'Seed del tenant (categoría, productos, mesa, métodos)');
 
   // ─── 2. Crear staff ─────────────────────────────────────────────────────
   const staff = [
@@ -276,34 +296,108 @@ async function signOutUI(page) {
     }, `Admin — ${path}`);
   }
 
-  // ─── 5. Login como cocina y verifica comanda ────────────────────────────
+  // Helper: consulta el estado del último pedido del tenant vía REST + token admin.
+  async function fetchOrderStatus() {
+    const rows = await sb(`/rest/v1/orders?restaurant_id=eq.${restaurantId}&select=id,status,paid,payment_method&order=id.desc&limit=1`, { token: adminToken });
+    return rows?.[0] ?? null;
+  }
+
+  // ─── 5. Cocina: pendiente → preparando → listo ──────────────────────────
   await safe(async () => {
     await signOutUI(page);
     await loginUI(page, KITCHEN_EMAIL, PASSWORD);
     await page.goto(`${BASE}/cocina`, { waitUntil: 'networkidle', timeout: 20000 }).catch(() => {});
     await page.waitForTimeout(2500);
-    await shot(page, 'kitchen-view-con-comanda');
-  }, 'Cocina ve el pedido');
+    await shot(page, 'kitchen-recibido');
 
-  // ─── 6. Login como mesero y verifica llamada + pedido ───────────────────
+    // Click "Empezar a preparar"
+    const startBtn = page.locator('button', { hasText: /Empezar a preparar/i }).first();
+    await startBtn.waitFor({ timeout: 10000 });
+    await startBtn.click();
+    await page.waitForTimeout(2000);
+    await shot(page, 'kitchen-preparando');
+
+    const afterStart = await fetchOrderStatus();
+    log(`   estado en DB tras "Empezar a preparar": ${afterStart?.status}`);
+    if (afterStart?.status !== 'preparando') throw new Error(`Esperaba estado 'preparando', encontré '${afterStart?.status}'`);
+
+    // Click "Platillo listo"
+    const readyBtn = page.locator('button', { hasText: /Platillo listo/i }).first();
+    await readyBtn.waitFor({ timeout: 10000 });
+    await readyBtn.click();
+    await page.waitForTimeout(2000);
+    await shot(page, 'kitchen-listo');
+
+    const afterReady = await fetchOrderStatus();
+    log(`   estado en DB tras "Platillo listo": ${afterReady?.status}`);
+    if (afterReady?.status !== 'listo') throw new Error(`Esperaba estado 'listo', encontré '${afterReady?.status}'`);
+  }, 'Cocina prepara y marca listo');
+
+  // ─── 6. Mesero: atiende llamada + marca entregado ───────────────────────
   await safe(async () => {
     await signOutUI(page);
     await loginUI(page, WAITER_EMAIL, PASSWORD);
     await page.goto(`${BASE}/mesero`, { waitUntil: 'networkidle', timeout: 20000 }).catch(() => {});
     await page.waitForTimeout(2500);
-    await shot(page, 'waiter-view-con-llamada');
-  }, 'Mesero ve llamada + pedido');
+    await shot(page, 'waiter-con-llamada-y-listo');
 
-  // ─── 7. Login como cajero y verifica pedido cobrable ────────────────────
+    // Atender llamada — botón "Atender mesa" (waiter.attend_btn)
+    const attendBtn = page.locator('button', { hasText: /Atender mesa/i }).first();
+    if (await attendBtn.count()) {
+      await attendBtn.click();
+      await page.waitForTimeout(1500);
+    }
+    const callsAfter = await sb(`/rest/v1/waiter_calls?restaurant_id=eq.${restaurantId}&select=id,attended`, { token: adminToken });
+    log(`   waiter_calls tras atender: ${JSON.stringify(callsAfter)}`);
+    if (!callsAfter?.every((c) => c.attended === true)) throw new Error('La llamada no quedó atendida');
+
+    // Marcar entregado — botón "Marcar Entregado" (listo_next)
+    const deliverBtn = page.locator('button', { hasText: /Marcar Entregado/i }).first();
+    await deliverBtn.waitFor({ timeout: 10000 });
+    await deliverBtn.click();
+    await page.waitForTimeout(2000);
+    await shot(page, 'waiter-entregado');
+
+    const afterDeliver = await fetchOrderStatus();
+    log(`   estado en DB tras "Marcar Entregado": ${afterDeliver?.status}`);
+    if (afterDeliver?.status !== 'entregado') throw new Error(`Esperaba 'entregado', encontré '${afterDeliver?.status}'`);
+  }, 'Mesero atiende y entrega');
+
+  // ─── 7. Cajero cobra el pedido ──────────────────────────────────────────
   await safe(async () => {
     await signOutUI(page);
     await loginUI(page, CASHIER_EMAIL, PASSWORD);
     await page.goto(`${BASE}/cajero`, { waitUntil: 'networkidle', timeout: 20000 }).catch(() => {});
     await page.waitForTimeout(2500);
-    await shot(page, 'cashier-view-con-pedido');
-  }, 'Cajero ve pedido por cobrar');
+    await shot(page, 'cashier-por-cobrar');
 
-  // ─── 8. Extras: wizard + cliente móvil ──────────────────────────────────
+    // Click en el método "Efectivo …" (nombre sufijado en el seed)
+    const cashBtn = page.locator('button', { hasText: /Efectivo/i }).first();
+    await cashBtn.waitFor({ timeout: 10000 });
+    await cashBtn.click();
+    await page.waitForTimeout(2000);
+    await shot(page, 'cashier-cobrado');
+
+    const afterCharge = await fetchOrderStatus();
+    log(`   pedido tras cobro: paid=${afterCharge?.paid} method=${afterCharge?.payment_method}`);
+    if (!afterCharge?.paid) throw new Error('El pedido no quedó marcado como pagado');
+    if (!afterCharge?.payment_method?.startsWith('Efectivo')) throw new Error(`Método de pago inesperado: ${afterCharge?.payment_method}`);
+  }, 'Cajero cobra con Efectivo');
+
+  // ─── 8. Admin (segunda pasada): historial + resumen con datos reales ───
+  await safe(async () => {
+    await signOutUI(page);
+    await loginUI(page, ADMIN_EMAIL, PASSWORD);
+    await page.goto(`${BASE}/admin/historial`, { waitUntil: 'networkidle', timeout: 20000 });
+    await page.waitForTimeout(2000);
+    await shot(page, 'admin-historial-con-cobro');
+
+    await page.goto(`${BASE}/admin/resumen`, { waitUntil: 'networkidle', timeout: 20000 });
+    await page.waitForTimeout(2000);
+    await shot(page, 'admin-resumen-con-metricas');
+  }, 'Admin ve historial y resumen actualizados');
+
+  // ─── 9. Extras: wizard + cliente móvil ──────────────────────────────────
   await safe(async () => {
     await page.goto(`${BASE}/instalacion`, { waitUntil: 'networkidle', timeout: 15000 });
     await page.waitForTimeout(1500);

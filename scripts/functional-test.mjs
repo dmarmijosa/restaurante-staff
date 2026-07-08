@@ -86,6 +86,14 @@ async function sb(path, opts = {}) {
   try { return JSON.parse(text); } catch { return text; }
 }
 
+/** Credenciales de Supabase en el navegador (prioridad sobre .env del build). */
+async function injectSupabaseConfig(context) {
+  await context.addInitScript(({ url, key }) => {
+    localStorage.setItem('rs-supabase-url', url);
+    localStorage.setItem('rs-supabase-anon-key', key);
+  }, { url: SB_URL, key: SB_KEY });
+}
+
 async function loginUI(page, email, password) {
   await page.goto(`${BASE}/login`, { waitUntil: 'networkidle', timeout: 20000 });
   await page.locator('input[type="email"], input#email').first().fill(email);
@@ -95,7 +103,16 @@ async function loginUI(page, email, password) {
 }
 
 async function signOutUI(page) {
-  await page.evaluate(() => localStorage.clear()).catch(() => {});
+  // Conservar credenciales del wizard/localStorage; si no, la app vuelve al .env del build.
+  await page.evaluate(() => {
+    const url = localStorage.getItem('rs-supabase-url');
+    const key = localStorage.getItem('rs-supabase-anon-key');
+    const setupStep = localStorage.getItem('rs_setup_step');
+    localStorage.clear();
+    if (url) localStorage.setItem('rs-supabase-url', url);
+    if (key) localStorage.setItem('rs-supabase-anon-key', key);
+    if (setupStep) localStorage.setItem('rs_setup_step', setupStep);
+  }).catch(() => {});
   await page.context().clearCookies();
 }
 
@@ -105,6 +122,7 @@ async function signOutUI(page) {
 
   const browser = await chromium.launch({ headless: true });
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: 'es-ES' });
+  await injectSupabaseConfig(ctx);
   const page = await ctx.newPage();
   page.on('pageerror', (err) => log(`⚠️  JS: ${err.message}`));
 
@@ -381,6 +399,7 @@ async function signOutUI(page) {
     const mobile = await browser.newContext({
       viewport: { width: 390, height: 844 }, locale: 'es-ES', isMobile: true, hasTouch: true,
     });
+    await injectSupabaseConfig(mobile);
     const mPage = await mobile.newPage();
     await mPage.goto(`${BASE}/${RESTAURANT_SLUG}/mesa/1`, { waitUntil: 'networkidle', timeout: 20000 });
     await mPage.waitForTimeout(1500);

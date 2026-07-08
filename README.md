@@ -35,7 +35,7 @@ Arranca en **modo demo** (sin cuenta, sin configurar nada) en menos de un minuto
 
 ---
 
-## Estado — v0.10 · 2026-07-08
+## Estado — v0.11 · 2026-07-08
 
 **43 unitarias** (Vitest) · **29 E2E de UI** (Playwright, escritorio + móvil) · **1 E2E funcional contra Supabase real** (28 asserts, 0 fallos) · Build limpio
 
@@ -140,6 +140,17 @@ Angular 22 (standalone + signals) · Tailwind CSS 4 · Supabase (Postgres, Auth,
 ---
 
 ## Changelog
+
+### 2026-07-08 — v0.11
+- **feat(cocina):** pantalla `/cocina` y `/cocina/:slug` **sin login** — kiosk abierto para la tablet de cocina; migración `22_kitchen_kiosk` (`anon avanza pedidos cocina`); parche `public/setup/patch-kitchen-kiosk.sql`
+- **feat(personal):** el admin **asigna y restablece contraseñas** del equipo desde Meseros y Ajustes (modal con copiar + icono mostrar/ocultar); RPC `admin_set_staff_password` (migración 21 + parche SQL); página **`/perfil`** para que cada empleado cambie la suya
+- **feat(cliente):** alta de empleados con contraseña opcional; ya no se da de alta rol Cocina (solo mesero y cajero)
+- **fix(cliente):** llamar mesero y enviar pedido usan **cliente Supabase anon** aunque haya sesión staff abierta; migración `20_qr_insert_authenticated` para INSERT como `authenticated`
+- **fix(cliente):** eliminada tarjeta “Mesero” en el seguimiento del pedido; **scroll completo en Chrome móvil** (`viewport-fit=cover`, scroll de página en lugar de contenedor `h-dvh`)
+- **fix(mesero):** llamadas **atendidas** visibles en sección verde; lista de llamadas del turno (24 h)
+- **fix(caja):** al cobrar, la **mesa pasa a libre** si no quedan pedidos abiertos en ella
+- **fix(admin):** editar/eliminar productos, `restaurant_id` en altas de mesa, repos dinámicos tras wizard, registro admin y validación de contraseñas
+- **chore:** `schema.sql` regenerado (22 migraciones); parches `patch-admin-set-staff-password.sql` y `patch-kitchen-kiosk.sql` para bases ya desplegadas
 
 ### 2026-07-08 — v0.10 (continuación)
 - **docs:** wizard aclara que pegar credenciales es **temporal en el navegador** y remite al [manual.md](manual.md) para instalación completa (`.env` + `npm run build`); manual actualizado a v0.10 (19 migraciones, confirmación de correo, `reset-and-schema.sql`, modo demo recuperable)

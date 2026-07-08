@@ -14,6 +14,7 @@ import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Va
 import { Router, RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { AuthService } from '../../core/auth/auth.service';
+import { isDemoMode } from '../../core/data/supabase/runtime-config';
 
 function passwordsMatch(control: AbstractControl): ValidationErrors | null {
   const password = control.get('password')?.value;
@@ -66,6 +67,18 @@ function passwordsMatch(control: AbstractControl): ValidationErrors | null {
           <p class="mt-1 mb-5 text-[13px] leading-relaxed text-tinta-media">
             {{ 'register.subtitle' | translate }}
           </p>
+
+          @if (demoMode()) {
+            <div
+              class="mb-4 rounded-[9px] border border-terracota/30 bg-duna px-3.5 py-3 text-[12.5px] leading-relaxed text-tinta"
+              role="alert"
+            >
+              {{ 'register.err_demo_mode' | translate }}
+              <a routerLink="/instalacion" class="mt-2 block font-bold text-terracota-profundo hover:underline">
+                {{ 'register.go_setup' | translate }}
+              </a>
+            </div>
+          }
 
           <!-- Nombre del restaurante -->
           <label class="mb-1.5 block text-[11.5px] font-semibold text-tinta-media" for="restaurantName">
@@ -156,7 +169,7 @@ function passwordsMatch(control: AbstractControl): ValidationErrors | null {
             formControlName="email"
             autocomplete="email"
             required
-            placeholder="correo@restaurante.mx"
+            placeholder="correo@restaurante.com"
             (blur)="emailTouched.set(true)"
             [attr.aria-invalid]="emailInvalid()"
             [attr.aria-describedby]="emailInvalid() ? 'email-error' : null"
@@ -184,6 +197,7 @@ function passwordsMatch(control: AbstractControl): ValidationErrors | null {
               autocomplete="new-password"
               required
               placeholder="Mínimo 8 caracteres"
+              (input)="onPasswordFieldInput()"
               (blur)="passwordTouched.set(true)"
               [attr.aria-invalid]="passwordInvalid()"
               [attr.aria-describedby]="passwordInvalid() ? 'password-error' : null"
@@ -221,6 +235,7 @@ function passwordsMatch(control: AbstractControl): ValidationErrors | null {
               autocomplete="new-password"
               required
               placeholder="Repite tu contraseña"
+              (input)="onPasswordFieldInput()"
               (blur)="confirmPasswordTouched.set(true)"
               [attr.aria-invalid]="confirmPasswordInvalid()"
               [attr.aria-describedby]="confirmPasswordInvalid() ? 'confirm-error' : null"
@@ -272,6 +287,8 @@ export class RegisterAdminComponent {
   protected readonly error = signal<string | null>(null);
   protected readonly done = signal(false);
   protected readonly showPassword = signal(false);
+  /** Evaluado en cada detección de cambios (no cachear en signal). */
+  protected readonly demoMode = isDemoMode;
 
   protected readonly restaurantNameTouched = signal(false);
   protected readonly slugTouched = signal(false);
@@ -279,6 +296,8 @@ export class RegisterAdminComponent {
   protected readonly emailTouched = signal(false);
   protected readonly passwordTouched = signal(false);
   protected readonly confirmPasswordTouched = signal(false);
+  /** Fuerza reevaluación de validación cruzada al escribir en los campos de contraseña. */
+  private readonly passwordFieldsRevision = signal(0);
 
   protected readonly form = this.fb.nonNullable.group({
     restaurantName: ['', [Validators.required, Validators.minLength(2)]],
@@ -296,11 +315,18 @@ export class RegisterAdminComponent {
   protected nameInvalid = computed(() => this.nameTouched() && this.form.controls.fullName.invalid);
   protected emailInvalid = computed(() => this.emailTouched() && this.form.controls.email.invalid);
   protected passwordInvalid = computed(() => this.passwordTouched() && this.form.controls.password.invalid);
-  protected confirmPasswordInvalid = computed(
-    () =>
-      this.confirmPasswordTouched() &&
-      (this.form.controls.confirmPassword.invalid || this.form.hasError('passwordsMismatch')),
-  );
+  protected confirmPasswordInvalid = computed(() => {
+    this.passwordFieldsRevision();
+    if (!this.confirmPasswordTouched()) return false;
+    const { password, confirmPassword } = this.form.getRawValue();
+    if (!confirmPassword) return this.form.controls.confirmPassword.hasError('required');
+    return password !== confirmPassword;
+  });
+
+  protected onPasswordFieldInput(): void {
+    this.form.updateValueAndValidity({ emitEvent: false });
+    this.passwordFieldsRevision.update((n) => n + 1);
+  }
 
   /** Genera automáticamente el slug desde el nombre del restaurante. */
   protected autoSlug(): void {
@@ -323,10 +349,22 @@ export class RegisterAdminComponent {
     this.confirmPasswordTouched.set(true);
 
     if (this.form.invalid) {
-      const firstInvalid = (['restaurantName', 'slug', 'fullName', 'email', 'password'] as const).find(
-        (k) => this.form.controls[k].invalid,
-      );
-      document.getElementById(firstInvalid === 'restaurantName' ? 'restaurantName' : (firstInvalid ?? 'fullName'))?.focus();
+      if (this.confirmPasswordInvalid()) {
+        document.getElementById('confirmPassword')?.focus();
+        return;
+      }
+      const fieldIds: Record<string, string> = {
+        restaurantName: 'restaurantName',
+        slug: 'slug',
+        fullName: 'fullName',
+        email: 'email',
+        password: 'password',
+        confirmPassword: 'confirmPassword',
+      };
+      const firstInvalid = (
+        ['restaurantName', 'slug', 'fullName', 'email', 'password', 'confirmPassword'] as const
+      ).find((k) => this.form.controls[k].invalid);
+      document.getElementById(fieldIds[firstInvalid ?? 'fullName'])?.focus();
       return;
     }
 
@@ -347,16 +385,59 @@ export class RegisterAdminComponent {
         this.done.set(true);
       }
     } catch (e) {
-      const message = e instanceof Error ? e.message : '';
-      this.error.set(
-        message.includes('already registered') || message.includes('registrado')
-          ? 'register.err_already_registered'
-          : message.includes('duplicate') || message.includes('slug')
-            ? 'register.err_slug_taken'
-            : 'register.err_unknown',
-      );
+      console.error('[register-admin] Error al crear restaurante:', e);
+      this.error.set(this.mapRegisterError(e));
     } finally {
       this.loading.set(false);
     }
+  }
+
+  private mapRegisterError(e: unknown): string {
+    const message = this.extractErrorMessage(e).toLowerCase();
+
+    if (message.includes('modo demo')) return 'register.err_reload_required';
+    if (
+      message.includes('already registered') ||
+      message.includes('user already registered') ||
+      message.includes('email address is already')
+    ) {
+      return 'register.err_already_registered';
+    }
+    if (
+      message.includes('duplicate') ||
+      message.includes('slug') ||
+      message.includes('restaurants_slug')
+    ) {
+      return 'register.err_slug_taken';
+    }
+    if (message.includes('database error saving new user') || message.includes('handle_new_user')) {
+      return 'register.err_database';
+    }
+    if (message.includes('registro no autorizado') || message.includes('restaurant_id')) {
+      return 'register.err_signup_order';
+    }
+    if (
+      message.includes('does not exist') ||
+      message.includes('could not find the function') ||
+      message.includes('create_restaurant')
+    ) {
+      return 'register.err_schema';
+    }
+    if (message.includes('invalid api key') || message.includes('jwt')) {
+      return 'register.err_connection';
+    }
+
+    return 'register.err_unknown';
+  }
+
+  private extractErrorMessage(e: unknown): string {
+    if (e instanceof Error) return e.message;
+    if (typeof e === 'object' && e !== null) {
+      const obj = e as Record<string, unknown>;
+      if (typeof obj['message'] === 'string') return obj['message'];
+      if (typeof obj['error_description'] === 'string') return obj['error_description'];
+      if (typeof obj['msg'] === 'string') return obj['msg'];
+    }
+    return String(e ?? '');
   }
 }

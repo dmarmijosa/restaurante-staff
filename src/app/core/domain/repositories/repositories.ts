@@ -35,6 +35,11 @@ export abstract class MenuRepository {
     categoryId: number | null;
     description?: string;
   }): Promise<Product>;
+  abstract updateProduct(
+    id: number,
+    input: { name: string; price: number; categoryId: number | null; description?: string },
+  ): Promise<Product>;
+  abstract deleteProduct(id: number): Promise<void>;
   abstract setProductAvailability(id: number, available: boolean): Promise<void>;
   /** Asocia (o quita) la foto de un producto tras subirla a Storage. */
   abstract setProductImage(id: number, imageUrl: string | null): Promise<void>;
@@ -66,15 +71,28 @@ export abstract class PaymentsRepository {
 }
 
 export abstract class CallsRepository {
-  abstract getPendingCalls(): Promise<WaiterCall[]>;
+  /** Llamadas del turno (pendientes y atendidas recientes). */
+  abstract getCalls(): Promise<WaiterCall[]>;
   abstract createCall(tableNumber: number): Promise<WaiterCall>;
   abstract attendCall(id: number): Promise<void>;
   abstract onChange(listener: () => void): () => void;
 }
 
+export interface AddStaffResult {
+  member: StaffMember;
+  /** Contraseña generada al crear la cuenta en Supabase Auth (mostrar una sola vez). */
+  initialPassword?: string;
+}
+
 export abstract class StaffRepository {
   abstract getStaff(): Promise<StaffMember[]>;
-  abstract addStaff(input: { fullName: string; email: string; role: StaffRole; shift?: Shift }): Promise<StaffMember>;
+  abstract addStaff(input: {
+    fullName: string;
+    email: string;
+    role: StaffRole;
+    shift?: Shift;
+    password?: string;
+  }): Promise<AddStaffResult>;
   abstract updateStaff(id: string, patch: Partial<Pick<StaffMember, 'role' | 'shift' | 'status'>>): Promise<void>;
   /**
    * Eliminación PERMANENTE del perfil (derecho de supresión / protección de
@@ -82,6 +100,8 @@ export abstract class StaffRepository {
    * propietaria.
    */
   abstract deleteStaffPermanently(id: string): Promise<void>;
+  /** El admin fija una contraseña nueva para un miembro del equipo. */
+  abstract setStaffPassword(staffId: string, newPassword: string): Promise<void>;
 }
 
 export abstract class SettingsRepository {
@@ -122,6 +142,8 @@ export abstract class AuthRepository {
     password: string;
     restaurantId: string;
   }): Promise<SessionUser | null>;
+  /** El usuario autenticado cambia su propia contraseña. */
+  abstract changeOwnPassword(currentPassword: string, newPassword: string): Promise<void>;
 }
 
 /**

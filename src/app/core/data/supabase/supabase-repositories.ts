@@ -7,6 +7,16 @@
  * se hacen las llamadas.
  */
 import { Injectable, inject } from '@angular/core';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { getSupabaseConfig } from './runtime-config';
+
+/** Cliente sin sesión: el menú QR debe operar como rol `anon` aunque haya staff logueado. */
+function createQrClient(): SupabaseClient {
+  const { url, anonKey } = getSupabaseConfig();
+  return createClient(url, anonKey, {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+  });
+}
 import type {
   Category,
   Order,
@@ -31,6 +41,7 @@ import {
   RestaurantRepository,
   SettingsRepository,
   StaffRepository,
+  type AddStaffResult,
   StorageRepository,
   TablesRepository,
   WorkScheduleRepository,
@@ -125,6 +136,39 @@ export class SupabaseMenuRepository extends MenuRepository {
     };
   }
 
+  async updateProduct(
+    id: number,
+    input: { name: string; price: number; categoryId: number | null; description?: string },
+  ): Promise<Product> {
+    const { data, error } = await this.supabase.client
+      .from('products')
+      .update({
+        name: input.name,
+        price: input.price,
+        category_id: input.categoryId,
+        description: input.description ?? 'Nuevo platillo de la casa.',
+      })
+      .eq('id', id)
+      .select('id, name, description, price, available, image_url, category_id, categories(name)')
+      .single();
+    if (error) throw error;
+    return {
+      id: data.id,
+      name: data.name,
+      description: data.description,
+      price: Number(data.price),
+      categoryId: data.category_id,
+      categoryName: (data.categories as unknown as { name: string } | null)?.name ?? '',
+      available: data.available,
+      imageUrl: data.image_url,
+    };
+  }
+
+  async deleteProduct(id: number): Promise<void> {
+    const { error } = await this.supabase.client.from('products').delete().eq('id', id);
+    if (error) throw error;
+  }
+
   async setProductAvailability(id: number, available: boolean): Promise<void> {
     const { error } = await this.supabase.client.from('products').update({ available }).eq('id', id);
     if (error) throw error;
@@ -182,6 +226,7 @@ export class SupabaseTablesRepository extends TablesRepository {
   }
 
   async addTable(table: Omit<RestaurantTable, 'id'>): Promise<RestaurantTable> {
+    const rId = this.context.restaurantId();
     const { data, error } = await this.supabase.client
       .from('tables')
       .insert({
@@ -191,6 +236,7 @@ export class SupabaseTablesRepository extends TablesRepository {
         seats: table.seats,
         shape: table.shape,
         status: table.status,
+        restaurant_id: rId,
       })
       .select()
       .single();
@@ -210,9 +256,9 @@ export class SupabaseOrdersRepository extends OrdersRepository {
   private context = inject(RestaurantContextService);
 
   async getOrders(): Promise<Order[]> {
-    // No se incrusta profiles(full_name): privacidad del personal.
     const rId = this.context.restaurantId();
-    const base = this.supabase.client
+    const client = await this.clientForOrders();
+    const base = client
       .from('orders')
       .select(
         'id, table_number, waiter_id, status, created_at, ready_at, paid, payment_method, paid_at, order_items(product_id, product_name, unit_price, quantity)',
@@ -243,13 +289,15 @@ export class SupabaseOrdersRepository extends OrdersRepository {
 
   async placeOrder(tableNumber: number, items: OrderItem[]): Promise<Order> {
     const rId = this.context.restaurantId();
-    const { data, error } = await this.supabase.client
+    if (!rId) throw new Error('No hay restaurante en contexto');
+    const qr = createQrClient();
+    const { data, error } = await qr
       .from('orders')
       .insert({ table_number: tableNumber, source: 'qr', restaurant_id: rId })
       .select()
       .single();
     if (error) throw error;
-    const { error: itemsError } = await this.supabase.client.from('order_items').insert(
+    const { error: itemsError } = await qr.from('order_items').insert(
       items.map((it) => ({
         order_id: data.id,
         product_id: it.productId,
@@ -275,11 +323,17 @@ export class SupabaseOrdersRepository extends OrdersRepository {
   }
 
   async setStatus(orderId: number, status: OrderStatus): Promise<void> {
-    // Al pasar a "listo" se sella ready_at para medir el tiempo de cocina.
     const patch: Record<string, unknown> = { status };
     if (status === 'listo') patch['ready_at'] = new Date().toISOString();
-    const { error } = await this.supabase.client.from('orders').update(patch).eq('id', orderId);
+    const client = await this.clientForOrders();
+    const { error } = await client.from('orders').update(patch).eq('id', orderId);
     if (error) throw error;
+  }
+
+  /** Cocina sin login usa cliente anon; el personal autenticado usa su sesión. */
+  private async clientForOrders() {
+    const { data } = await this.supabase.client.auth.getSession();
+    return data.session ? this.supabase.client : createQrClient();
   }
 
   async chargeOrder(orderId: number, paymentMethod: string): Promise<void> {
@@ -307,13 +361,14 @@ export class SupabaseCallsRepository extends CallsRepository {
   private supabase = inject(SupabaseClientService);
   private context = inject(RestaurantContextService);
 
-  async getPendingCalls(): Promise<WaiterCall[]> {
+  async getCalls(): Promise<WaiterCall[]> {
     const rId = this.context.restaurantId();
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     const base = this.supabase.client
       .from('waiter_calls')
       .select('*')
-      .eq('attended', false)
-      .order('created_at');
+      .gte('created_at', since)
+      .order('created_at', { ascending: false });
     const { data, error } = await (rId ? base.eq('restaurant_id', rId) : base);
     if (error) throw error;
     return (data ?? []).map((row) => ({
@@ -326,13 +381,30 @@ export class SupabaseCallsRepository extends CallsRepository {
 
   async createCall(tableNumber: number): Promise<WaiterCall> {
     const rId = this.context.restaurantId();
-    const { data, error } = await this.supabase.client
+    if (!rId) throw new Error('No hay restaurante en contexto');
+
+    const qr = createQrClient();
+    const { data: table, error: tableError } = await qr
+      .from('tables')
+      .select('id')
+      .eq('restaurant_id', rId)
+      .eq('number', tableNumber)
+      .maybeSingle();
+    if (tableError) throw tableError;
+    if (!table) {
+      throw new Error(`La mesa ${tableNumber} no existe. Usa una mesa del plano o abre /tu-slug/mesa/N.`);
+    }
+
+    const { error } = await qr
       .from('waiter_calls')
-      .insert({ table_number: tableNumber, restaurant_id: rId })
-      .select()
-      .single();
+      .insert({ table_number: tableNumber, restaurant_id: rId });
     if (error) throw error;
-    return { id: data.id, tableNumber, attended: false, createdAt: 'ahora' };
+    return {
+      id: -Date.now(),
+      tableNumber,
+      attended: false,
+      createdAt: 'ahora',
+    };
   }
 
   async attendCall(id: number): Promise<void> {
@@ -360,7 +432,9 @@ export class SupabaseStaffRepository extends StaffRepository {
   private context = inject(RestaurantContextService);
 
   async getStaff(): Promise<StaffMember[]> {
-    const { data, error } = await this.supabase.client.from('profiles').select('*').order('created_at');
+    const rId = this.context.restaurantId();
+    const base = this.supabase.client.from('profiles').select('*').order('created_at');
+    const { data, error } = await (rId ? base.eq('restaurant_id', rId) : base);
     if (error) throw error;
     return (data ?? []).map((row) => ({
       id: row.id,
@@ -375,34 +449,74 @@ export class SupabaseStaffRepository extends StaffRepository {
   }
 
   /**
-   * El alta real de credenciales se hace en Supabase Auth (dashboard o
-   * invitación); aquí solo se registra el perfil operativo para que el admin
-   * gestione rol y turno.
+   * Crea la cuenta en Supabase Auth (trigger `handle_new_user` → perfil) sin
+   * cerrar la sesión del admin (cliente efímero sin persistir sesión).
    */
-  async addStaff(input: { fullName: string; email: string; role: StaffRole; shift?: Shift }): Promise<StaffMember> {
+  async addStaff(input: {
+    fullName: string;
+    email: string;
+    role: StaffRole;
+    shift?: Shift;
+    password?: string;
+  }): Promise<AddStaffResult> {
     const rId = this.context.restaurantId();
-    const { data, error } = await this.supabase.client
+    const email = input.email.trim();
+    if (!rId) throw new Error('No hay restaurante en contexto');
+    if (!email) throw new Error('El correo es obligatorio para dar de alta al personal');
+
+    const initialPassword = input.password?.trim() || randomStaffPassword();
+    const { url, anonKey } = getSupabaseConfig();
+    const signupClient = createClient(url, anonKey, {
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+    });
+
+    const { data, error } = await signupClient.auth.signUp({
+      email,
+      password: initialPassword,
+      options: {
+        data: {
+          full_name: input.fullName,
+          role: input.role,
+          restaurant_id: rId,
+        },
+      },
+    });
+    if (error) {
+      const msg = error.message.toLowerCase();
+      if (msg.includes('already registered') || msg.includes('already been registered')) {
+        throw new Error('Ese correo ya tiene una cuenta. Usa otro correo o invítalo desde Supabase.');
+      }
+      throw error;
+    }
+    if (!data.user) throw new Error('No se pudo crear la cuenta del empleado');
+
+    if (input.shift) {
+      const { error: shiftError } = await this.supabase.client
+        .from('profiles')
+        .update({ shift: input.shift })
+        .eq('id', data.user.id);
+      if (shiftError) throw shiftError;
+    }
+
+    const { data: profile, error: profileError } = await this.supabase.client
       .from('profiles')
-      .insert({
-        id: crypto.randomUUID(),
-        full_name: input.fullName,
-        email: input.email,
-        role: input.role,
-        shift: input.shift ?? null,
-        restaurant_id: rId,
-      })
-      .select()
+      .select('*')
+      .eq('id', data.user.id)
       .single();
-    if (error) throw error;
+    if (profileError) throw profileError;
+
     return {
-      id: data.id,
-      fullName: data.full_name,
-      email: data.email ?? '',
-      role: data.role,
-      shift: data.shift,
-      status: data.status,
-      isOwner: data.is_owner,
-      tables: [],
+      member: {
+        id: profile.id,
+        fullName: profile.full_name,
+        email: profile.email ?? email,
+        role: profile.role as StaffRole,
+        shift: profile.shift as Shift | null,
+        status: profile.status,
+        isOwner: profile.is_owner,
+        tables: [],
+      },
+      initialPassword: input.password?.trim() ? undefined : initialPassword,
     };
   }
 
@@ -416,6 +530,14 @@ export class SupabaseStaffRepository extends StaffRepository {
 
   async deleteStaffPermanently(id: string): Promise<void> {
     const { error } = await this.supabase.client.from('profiles').delete().eq('id', id);
+    if (error) throw error;
+  }
+
+  async setStaffPassword(staffId: string, newPassword: string): Promise<void> {
+    const { error } = await this.supabase.client.rpc('admin_set_staff_password', {
+      p_user_id: staffId,
+      p_new_password: newPassword,
+    });
     if (error) throw error;
   }
 }
@@ -521,6 +643,25 @@ export class SupabaseAuthRepository extends AuthRepository {
     if (error) throw error;
     if (!data.session || !data.user) return null;
     return this.toSessionUser(data.user.id, data.user.email ?? input.email);
+  }
+
+  async changeOwnPassword(currentPassword: string, newPassword: string): Promise<void> {
+    const { data } = await this.supabase.client.auth.getUser();
+    const email = data.user?.email;
+    if (!email) throw new Error('No hay sesión activa');
+
+    const { url, anonKey } = getSupabaseConfig();
+    const verifyClient = createClient(url, anonKey, {
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+    });
+    const { error: verifyError } = await verifyClient.auth.signInWithPassword({
+      email,
+      password: currentPassword,
+    });
+    if (verifyError) throw new Error('La contraseña actual no es correcta');
+
+    const { error } = await this.supabase.client.auth.updateUser({ password: newPassword });
+    if (error) throw error;
   }
 }
 
@@ -635,4 +776,10 @@ export class SupabaseWorkScheduleRepository extends WorkScheduleRepository {
       );
     if (error) throw error;
   }
+}
+
+/** Contraseña temporal que cumple requisitos mínimos de Supabase Auth. */
+function randomStaffPassword(): string {
+  const base = crypto.randomUUID().replace(/-/g, '').slice(0, 10);
+  return `${base}Aa1!`;
 }

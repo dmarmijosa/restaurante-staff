@@ -87,6 +87,11 @@ export class AuthService {
     this.context.clear();
   }
 
+  /** Cambia la contraseña del usuario en sesión (verifica la actual antes). */
+  async changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    await this.repo.changeOwnPassword(currentPassword, newPassword);
+  }
+
   /** ¿Puede el usuario actual entrar a una vista del rol dado? El admin entra a todas. */
   canAccess(required: StaffRole): boolean {
     const role = this.role();

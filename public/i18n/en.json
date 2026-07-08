@@ -122,7 +122,13 @@
     "err_password": "Password must be at least 8 characters.",
     "err_already_registered": "That email already has an account. Sign in.",
     "err_slug_taken": "That slug is already taken. Choose another URL name.",
-    "err_unknown": "Could not create the restaurant. Please try again."
+    "err_demo_mode": "Not connected to Supabase. Complete the wizard at /instalacion: paste URL and key, run schema.sql in the SQL Editor, then reload the page.",
+    "go_setup": "Go to setup wizard →",
+    "err_database": "Database error while creating the account. Run public/setup/schema.sql in Supabase and disable email confirmation (Authentication → Providers → Email).",
+    "err_signup_order": "Could not register the account. Try again with a different slug or verify schema.sql is applied.",
+    "err_schema": "Database schema missing. Run public/setup/schema.sql in your Supabase SQL Editor.",
+    "err_connection": "Could not connect to Supabase. Check URL and key in /instalacion.",
+    "err_unknown": "Could not create the restaurant. Open the browser console (F12) for details and try again."
   },
   "kitchen": {
     "title": "Kitchen",

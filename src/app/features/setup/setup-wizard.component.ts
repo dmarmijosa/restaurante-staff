@@ -481,6 +481,21 @@ const TOTAL_STEPS = 6;
       <!-- ═══════════════════════════════════════════════════════════════════ -->
       @if (step() === 6) {
         <div class="mx-auto max-w-2xl">
+          @if (!supabaseConfigured()) {
+            <div class="rounded-2xl border border-rojizo-borde bg-rojizo-bg p-8 text-center shadow-sm">
+              <h1 class="m-0 font-serif text-2xl font-semibold text-rojizo">Falta conectar Supabase</h1>
+              <p class="mt-2 mb-6 text-[14px] leading-relaxed text-tinta-media">
+                Aún no hay credenciales guardadas. Vuelve al paso de conexión y pega la URL y la clave de tu proyecto.
+              </p>
+              <button
+                type="button"
+                (click)="goTo(3)"
+                class="cursor-pointer rounded-[10px] border-none bg-terracota px-6 py-3 text-[14px] font-bold text-lino-calido hover:bg-terracota-hover"
+              >
+                Conectar Supabase →
+              </button>
+            </div>
+          } @else {
           <div class="rounded-2xl border border-borde bg-papel p-8 text-center shadow-sm">
             <!-- Icono de éxito -->
             <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-oliva-bg">
@@ -549,6 +564,7 @@ const TOTAL_STEPS = 6;
               Volver al inicio
             </button>
           </div>
+          }
         </div>
       }
     </div>
@@ -679,8 +695,12 @@ export class SetupWizardComponent implements OnInit {
     const configured = isSupabaseConfigured();
     this.supabaseConfigured.set(configured);
 
-    // Reanudar desde donde se dejó
-    const saved = this.loadStep();
+    let saved = this.loadStep();
+    if (saved >= 4 && !configured) {
+      saved = 3;
+      this.saveStep(3);
+    }
+
     if (saved > 1) {
       this.step.set(saved);
     } else if (configured) {

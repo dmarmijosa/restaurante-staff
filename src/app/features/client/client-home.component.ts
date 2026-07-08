@@ -13,6 +13,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { RestaurantStore } from '../../core/application/restaurant.store';
 import { RestaurantContextService } from '../../core/application/restaurant-context.service';
 import { RestaurantRepository } from '../../core/domain/repositories/repositories';
+import { AuthService } from '../../core/auth/auth.service';
 import { MoneyPipe } from '../../shared/money.pipe';
 import { ChipBtnDirective } from '../../shared/chip-btn.directive';
 import { isSupabaseConfigured } from '../../core/data/supabase/runtime-config';
@@ -36,15 +37,17 @@ const STEP_DEFS: Array<{ key: OrderStatus; label: string; desc: string }> = [
   selector: 'app-client-home',
   imports: [MoneyPipe, RouterLink, TranslatePipe, ChipBtnDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { class: 'block min-h-dvh' },
   template: `
-    <!-- Fondo de escritorio: gradiente cálido detrás del frame -->
-    <div class="flex min-h-dvh flex-col items-center bg-gradient-to-br from-duna via-crema to-lino-calido/60 md:px-4 md:py-10">
-      <!-- Frame principal: phone-frame en desktop con sombra profunda -->
-      <div class="relative flex min-h-dvh w-full max-w-[430px] flex-col overflow-hidden bg-marfil
-                  md:min-h-0 md:rounded-[28px] md:shadow-[0_32px_80px_rgba(36,26,17,.22),0_0_0_1px_rgba(36,26,17,.07)]">
+    <div class="min-h-dvh bg-marfil md:flex md:items-start md:justify-center md:bg-gradient-to-br md:from-duna md:via-crema md:to-lino-calido/60 md:px-4 md:py-10">
+    <!-- Móvil: scroll de página entera (fiable en Chrome). Desktop: frame tipo teléfono. -->
+    <div class="mx-auto flex w-full max-w-[430px] flex-col bg-marfil
+                min-h-dvh
+                md:min-h-0 md:max-h-[min(900px,92dvh)] md:overflow-hidden md:rounded-[28px]
+                md:shadow-[0_32px_80px_rgba(36,26,17,.22),0_0_0_1px_rgba(36,26,17,.07)]">
 
-        <!-- Cabecera con wash cálido -->
-        <header class="relative flex-none overflow-hidden px-5 pt-9 pb-3">
+        <!-- Cabecera -->
+        <header class="sticky top-0 z-20 relative flex-none overflow-hidden bg-marfil/95 px-5 pt-[max(2.25rem,env(safe-area-inset-top))] pb-3 backdrop-blur-sm">
           <!-- Fondo de cabecera -->
           <div class="pointer-events-none absolute inset-0 bg-gradient-to-b from-duna/70 to-transparent"></div>
           <!-- Logo + nombre -->
@@ -101,8 +104,10 @@ const STEP_DEFS: Array<{ key: OrderStatus; label: string; desc: string }> = [
             </div>
           </div>
         } @else {
+          <div class="flex flex-col md:min-h-0 md:flex-1">
           @switch (screen()) {
             @case ('menu') {
+              <div class="relative flex flex-col md:min-h-0 md:flex-1">
               <!-- Chips de categorías con fade lateral -->
               <div class="relative flex-none pt-3 pb-2.5">
                 <div class="flex gap-1.5 overflow-x-auto px-5 pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -141,11 +146,14 @@ const STEP_DEFS: Array<{ key: OrderStatus; label: string; desc: string }> = [
                 </button>
               }
 
-              <!-- Productos -->
-              <main class="flex flex-1 flex-col gap-2 overflow-y-auto px-5 pt-0 pb-[120px]">
+              <!-- Productos: en móvil fluyen con la página; en desktop scroll interno -->
+              <main
+                class="px-5 pt-0 pb-[calc(11rem+env(safe-area-inset-bottom,0px))]
+                       md:min-h-0 md:flex-1 md:overflow-y-auto md:overscroll-contain md:pb-36"
+              >
                 @for (product of visibleProducts(); track product.id) {
                   <article
-                    class="flex gap-3 rounded-[16px] border border-borde-suave bg-papel p-3
+                    class="mb-2 flex gap-3 rounded-[16px] border border-borde-suave bg-papel p-3
                            shadow-[0_1px_4px_rgba(36,26,17,.06)] transition-shadow duration-150
                            hover:shadow-[0_4px_12px_rgba(36,26,17,.1)]"
                   >
@@ -207,7 +215,11 @@ const STEP_DEFS: Array<{ key: OrderStatus; label: string; desc: string }> = [
 
               <!-- Barra flotante del carrito con backdrop-blur -->
               @if (cartCount() > 0) {
-                <div class="absolute right-4 bottom-[68px] left-4">
+                <div
+                  class="fixed inset-x-0 z-30 mx-auto max-w-[430px] px-4
+                         bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))]
+                         md:absolute md:inset-x-4 md:bottom-[68px] md:left-4 md:right-4"
+                >
                   <button
                     type="button"
                     (click)="screen.set('cart')"
@@ -226,6 +238,7 @@ const STEP_DEFS: Array<{ key: OrderStatus; label: string; desc: string }> = [
                   </button>
                 </div>
               }
+              </div>
             }
 
             @case ('cart') {
@@ -338,20 +351,6 @@ const STEP_DEFS: Array<{ key: OrderStatus; label: string; desc: string }> = [
                       </div>
                     }
                   </div>
-
-                  <!-- Card del mesero asignado -->
-                  @if (order.waiterName) {
-                    <div class="mb-6 flex items-center gap-3 rounded-[14px] border border-borde-suave bg-papel px-4 py-3
-                                shadow-[0_1px_4px_rgba(36,26,17,.06)]">
-                      <div class="flex h-9 w-9 items-center justify-center rounded-full bg-cacao text-[12px] font-bold text-lino">
-                        {{ order.waiterName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() }}
-                      </div>
-                      <div class="flex-1">
-                        <div class="text-[13px] font-semibold text-tinta">{{ order.waiterName }}</div>
-                        <div class="text-[11px] text-tinta-media">{{ 'topbar.area.waiter' | translate }}</div>
-                      </div>
-                    </div>
-                  }
                 }
                 <button
                   type="button"
@@ -364,10 +363,11 @@ const STEP_DEFS: Array<{ key: OrderStatus; label: string; desc: string }> = [
               </div>
             }
           }
+          </div>
         }
 
-        <!-- Footer con acceso del personal -->
-        <footer class="mt-auto flex-none border-t border-borde-suave bg-gradient-to-b from-marfil to-crema px-5 py-4">
+        <!-- Footer -->
+        <footer class="mt-auto flex-none border-t border-borde-suave bg-gradient-to-b from-marfil to-crema px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))]">
           @if (isDemoMode) {
             <div class="mb-3 flex items-center gap-2 rounded-[12px] bg-ocre-bg px-3.5 py-2.5 ring-1 ring-ocre-bg/50">
               <span class="text-[11px] leading-snug text-ocre-texto">
@@ -406,6 +406,7 @@ export class ClientHomeComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly restaurantRepo = inject(RestaurantRepository);
   private readonly context = inject(RestaurantContextService);
+  private readonly auth = inject(AuthService);
 
   /** Número de mesa que codifica el QR (`/mesa/:numero` o `/r/:slug/mesa/:numero`); 4 por defecto. */
   readonly numero = input(4, { transform: numberAttribute });
@@ -452,16 +453,25 @@ export class ClientHomeComponent implements OnInit {
   });
 
   async ngOnInit(): Promise<void> {
-    if (!this.context.restaurantId()) {
-      const slug = this.route.snapshot.paramMap.get('slug');
-      // Ruta /r/:slug/mesa/... → resuelve el slug al restaurant_id
-      // Ruta / o /mesa/... → cae en el primer restaurante disponible (mono-tenant).
-      const restaurant = slug
-        ? await this.restaurantRepo.getBySlug(slug)
-        : await this.restaurantRepo.getFirstAvailable();
-      if (restaurant) this.context.set(restaurant.id);
+    if (!this.auth.ready()) {
+      await this.auth.restoreSession();
     }
-    void this.store.init();
+
+    const slug = this.route.snapshot.paramMap.get('slug');
+    if (slug) {
+      const restaurant = await this.restaurantRepo.getBySlug(slug);
+      if (restaurant) this.context.set(restaurant.id);
+    } else if (!this.context.restaurantId()) {
+      const fromAuth = this.auth.restaurantId();
+      if (fromAuth) {
+        this.context.set(fromAuth);
+      } else {
+        const restaurant = await this.restaurantRepo.getFirstAvailable();
+        if (restaurant) this.context.set(restaurant.id);
+      }
+    }
+
+    await this.store.init();
   }
 
   protected qtyOf(productId: number): number {

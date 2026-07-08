@@ -67,6 +67,7 @@ export class MockApiService {
   private methods = clone(DEMO_PAYMENT_METHODS);
   private schedules = clone(DEMO_SCHEDULES);
   private current: SessionUser | null = null;
+  private readonly passwords = new Map(DEMO_USERS.map((u) => [u.email, u.password]));
 
   readonly orders$ = new Emitter();
   readonly calls$ = new Emitter();
@@ -106,6 +107,27 @@ export class MockApiService {
     };
     this.products.push(product);
     return this.respond(product);
+  }
+  async updateProduct(
+    id: number,
+    input: { name: string; price: number; categoryId: number | null; description?: string },
+  ): Promise<Product> {
+    const idx = this.products.findIndex((p) => p.id === id);
+    if (idx < 0) throw new Error('Producto no encontrado');
+    const updated: Product = {
+      ...this.products[idx],
+      name: input.name,
+      price: input.price,
+      categoryId: input.categoryId,
+      categoryName: this.categories.find((c) => c.id === input.categoryId)?.name ?? '',
+      description: input.description ?? this.products[idx].description,
+    };
+    this.products[idx] = updated;
+    return this.respond(updated);
+  }
+  async deleteProduct(id: number): Promise<void> {
+    this.products = this.products.filter((p) => p.id !== id);
+    await this.respond(null);
   }
   async setProductAvailability(id: number, available: boolean): Promise<void> {
     const p = this.products.find((x) => x.id === id);
@@ -186,8 +208,8 @@ export class MockApiService {
   }
 
   // ── Llamadas ──
-  getPendingCalls() {
-    return this.respond(this.calls.filter((c) => !c.attended));
+  getCalls() {
+    return this.respond([...this.calls].sort((a, b) => b.id - a.id));
   }
   async createCall(tableNumber: number): Promise<WaiterCall> {
     const call: WaiterCall = { id: Math.max(0, ...this.calls.map((c) => c.id)) + 1, tableNumber, attended: false, createdAt: 'ahora' };
@@ -206,7 +228,13 @@ export class MockApiService {
   getStaff() {
     return this.respond(this.staff);
   }
-  async addStaff(input: { fullName: string; email: string; role: StaffRole; shift?: Shift }): Promise<StaffMember> {
+  async addStaff(input: {
+    fullName: string;
+    email: string;
+    role: StaffRole;
+    shift?: Shift;
+    password?: string;
+  }): Promise<StaffMember> {
     const member: StaffMember = {
       id: 'u' + Date.now(),
       fullName: input.fullName,
@@ -218,6 +246,7 @@ export class MockApiService {
       tables: [],
     };
     this.staff.push(member);
+    this.passwords.set(input.email, input.password?.trim() || 'demo12345');
     return this.respond(member);
   }
   async updateStaff(id: string, patch: Partial<Pick<StaffMember, 'role' | 'shift' | 'status'>>): Promise<void> {
@@ -227,7 +256,14 @@ export class MockApiService {
   async deleteStaff(id: string): Promise<void> {
     const member = this.staff.find((s) => s.id === id);
     if (member?.isOwner) throw new Error('La cuenta propietaria no puede eliminarse');
+    if (member) this.passwords.delete(member.email);
     this.staff = this.staff.filter((s) => s.id !== id);
+    await this.respond(null);
+  }
+  async setStaffPassword(staffId: string, newPassword: string): Promise<void> {
+    const member = this.staff.find((s) => s.id === staffId);
+    if (!member) throw new Error('Empleado no encontrado');
+    this.passwords.set(member.email, newPassword);
     await this.respond(null);
   }
 
@@ -273,12 +309,20 @@ export class MockApiService {
   // ── Auth ──
   async signIn(email: string, password: string): Promise<SessionUser> {
     await new Promise((r) => setTimeout(r, 40));
-    const match = DEMO_USERS.find((u) => u.email === email && u.password === password);
-    if (!match) throw new Error('Credenciales incorrectas');
+    const stored = this.passwords.get(email);
+    const match = DEMO_USERS.find((u) => u.email === email);
+    if (!stored || stored !== password || !match) throw new Error('Credenciales incorrectas');
     const staff = this.staff.find((s) => s.id === match.staffId)!;
     this.current = { id: staff.id, email: staff.email, fullName: staff.fullName, role: staff.role, restaurantId: DEMO_RESTAURANT_ID };
     sessionStorage.setItem('demo-session', JSON.stringify(this.current));
     return clone(this.current);
+  }
+  async changeOwnPassword(email: string, currentPassword: string, newPassword: string): Promise<void> {
+    if (this.passwords.get(email) !== currentPassword) {
+      throw new Error('La contraseña actual no es correcta');
+    }
+    this.passwords.set(email, newPassword);
+    await this.respond(null);
   }
   signOut(): void {
     this.current = null;

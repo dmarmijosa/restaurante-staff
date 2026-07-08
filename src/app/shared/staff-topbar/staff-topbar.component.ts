@@ -73,6 +73,12 @@ interface AreaLink {
         </select>
       </div>
       @if (auth.user(); as user) {
+        <a
+          routerLink="/perfil"
+          class="text-[11px] text-lino-gris hover:text-lino hover:underline"
+        >
+          {{ 'topbar.profile' | translate }}
+        </a>
         <button
           type="button"
           (click)="signOut()"
@@ -108,7 +114,7 @@ export class StaffTopbarComponent {
     const links: Array<{ labelKey: string; deviceKey: string; path: string }> = [];
     if (role === 'admin') links.push({ labelKey: 'topbar.area.admin', deviceKey: 'topbar.area.desktop', path: '/admin' });
     if (role === 'admin' || role === 'mesero') links.push({ labelKey: 'topbar.area.waiter', deviceKey: 'topbar.area.tablet', path: '/mesero' });
-    if (role === 'admin' || role === 'cocina') links.push({ labelKey: 'topbar.area.kitchen', deviceKey: 'topbar.area.screen', path: '/cocina' });
+    links.push({ labelKey: 'topbar.area.kitchen', deviceKey: 'topbar.area.screen', path: '/cocina' });
     if (role === 'admin' || role === 'cajero') links.push({ labelKey: 'topbar.area.cashier', deviceKey: 'topbar.area.register', path: '/cajero' });
     links.push({ labelKey: 'topbar.area.client', deviceKey: 'topbar.area.mobile_qr', path: '/' });
     return links;

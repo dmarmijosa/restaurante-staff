@@ -1,12 +1,11 @@
 /**
  * Selección de implementación de repositorios.
  *
- * ¿Por qué aquí? Es el único punto de la app que conoce ambas capas de datos.
- * Si hay claves de Supabase se usan los repositorios reales; si no, la app
- * funciona en modo demo (en memoria) para que el proyecto open source se pueda
- * probar sin configurar nada.
+ * Los repositorios demo y Supabase coexisten; en cada llamada se elige según
+ * `isSupabaseConfigured()` (localStorage del wizard o `.env` del build). Así
+ * no hace falta recargar la página al pegar credenciales en /instalacion.
  */
-import type { Provider } from '@angular/core';
+import type { AbstractType, Provider, Type } from '@angular/core';
 import {
   AuthRepository,
   CallsRepository,
@@ -46,21 +45,43 @@ import {
   SupabaseTablesRepository,
   SupabaseWorkScheduleRepository,
 } from './data/supabase/supabase-repositories';
-import { isSupabaseConfigured } from './data/supabase/supabase-client.service';
+import { isSupabaseConfigured } from './data/supabase/runtime-config';
+
+function dynamicRepo<T extends object>(
+  token: Type<T> | AbstractType<T>,
+  DemoImpl: Type<T>,
+  SupabaseImpl: Type<T>,
+): Provider[] {
+  return [
+    { provide: DemoImpl, useClass: DemoImpl },
+    { provide: SupabaseImpl, useClass: SupabaseImpl },
+    {
+      provide: token,
+      useFactory: (demo: T, supa: T) =>
+        new Proxy({} as T, {
+          get(_target, prop) {
+            const impl = isSupabaseConfigured() ? supa : demo;
+            const value = (impl as Record<string | symbol, unknown>)[prop];
+            return typeof value === 'function' ? value.bind(impl) : value;
+          },
+        }),
+      deps: [DemoImpl, SupabaseImpl],
+    },
+  ];
+}
 
 export function provideRepositories(): Provider[] {
-  const useSupabase = isSupabaseConfigured();
   return [
-    { provide: MenuRepository, useClass: useSupabase ? SupabaseMenuRepository : DemoMenuRepository },
-    { provide: TablesRepository, useClass: useSupabase ? SupabaseTablesRepository : DemoTablesRepository },
-    { provide: OrdersRepository, useClass: useSupabase ? SupabaseOrdersRepository : DemoOrdersRepository },
-    { provide: CallsRepository, useClass: useSupabase ? SupabaseCallsRepository : DemoCallsRepository },
-    { provide: StaffRepository, useClass: useSupabase ? SupabaseStaffRepository : DemoStaffRepository },
-    { provide: SettingsRepository, useClass: useSupabase ? SupabaseSettingsRepository : DemoSettingsRepository },
-    { provide: AuthRepository, useClass: useSupabase ? SupabaseAuthRepository : DemoAuthRepository },
-    { provide: StorageRepository, useClass: useSupabase ? SupabaseStorageRepository : DemoStorageRepository },
-    { provide: PaymentsRepository, useClass: useSupabase ? SupabasePaymentsRepository : DemoPaymentsRepository },
-    { provide: RestaurantRepository, useClass: useSupabase ? SupabaseRestaurantRepository : DemoRestaurantRepository },
-    { provide: WorkScheduleRepository, useClass: useSupabase ? SupabaseWorkScheduleRepository : DemoWorkScheduleRepository },
+    ...dynamicRepo(MenuRepository, DemoMenuRepository, SupabaseMenuRepository),
+    ...dynamicRepo(TablesRepository, DemoTablesRepository, SupabaseTablesRepository),
+    ...dynamicRepo(OrdersRepository, DemoOrdersRepository, SupabaseOrdersRepository),
+    ...dynamicRepo(CallsRepository, DemoCallsRepository, SupabaseCallsRepository),
+    ...dynamicRepo(StaffRepository, DemoStaffRepository, SupabaseStaffRepository),
+    ...dynamicRepo(SettingsRepository, DemoSettingsRepository, SupabaseSettingsRepository),
+    ...dynamicRepo(AuthRepository, DemoAuthRepository, SupabaseAuthRepository),
+    ...dynamicRepo(StorageRepository, DemoStorageRepository, SupabaseStorageRepository),
+    ...dynamicRepo(PaymentsRepository, DemoPaymentsRepository, SupabasePaymentsRepository),
+    ...dynamicRepo(RestaurantRepository, DemoRestaurantRepository, SupabaseRestaurantRepository),
+    ...dynamicRepo(WorkScheduleRepository, DemoWorkScheduleRepository, SupabaseWorkScheduleRepository),
   ];
 }

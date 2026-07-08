@@ -12,6 +12,7 @@ import { cropImageSquare } from '../../../shared/image-utils';
 import { MoneyPipe } from '../../../shared/money.pipe';
 import { ChipBtnDirective } from '../../../shared/chip-btn.directive';
 import { ToastService } from '../../../shared/toast/toast.service';
+import type { Product } from '../../../core/domain/entities/entities';
 
 @Component({
   selector: 'app-menu-products',
@@ -117,30 +118,84 @@ import { ToastService } from '../../../shared/toast/toast.service';
               </label>
             </div>
             <div class="px-3.5 pt-3 pb-3.5">
-              <div class="flex items-baseline justify-between gap-2">
-                <span class="text-sm font-semibold">{{ product.name }}</span>
-                <span class="text-sm font-bold">{{ product.price | money }}</span>
-              </div>
-              <div class="mt-1 mb-3 text-[11.5px] leading-snug text-tinta-media">{{ product.description }}</div>
-              <div class="flex items-center justify-between">
-                <span class="rounded-full bg-crema px-[9px] py-[3px] text-[10.5px] font-semibold text-tinta-suave">
-                  {{ product.categoryName }}
-                </span>
-                <button
-                  type="button"
-                  role="switch"
-                  [attr.aria-checked]="product.available"
-                  [attr.aria-label]="'Disponibilidad de ' + product.name"
-                  (click)="store.toggleProductAvailability(product.id)"
-                  class="relative h-5 w-9 cursor-pointer rounded-full border-none p-0"
-                  [style.background]="product.available ? '#7C905F' : '#D8CCBC'"
-                >
-                  <span
-                    class="absolute top-0.5 h-4 w-4 rounded-full bg-papel transition-[left] duration-150"
-                    [style.left.px]="product.available ? 18 : 2"
-                  ></span>
-                </button>
-              </div>
+              @if (editingId() === product.id) {
+                <input
+                  [(ngModel)]="editName"
+                  aria-label="Nombre del producto"
+                  class="mb-2 w-full rounded-[9px] border-[1.5px] border-borde bg-papel px-2.5 py-1.5 text-[13px] font-semibold text-tinta outline-none focus:border-terracota"
+                />
+                <input
+                  [(ngModel)]="editPrice"
+                  aria-label="Precio del producto"
+                  class="mb-2 w-full rounded-[9px] border-[1.5px] border-borde bg-papel px-2.5 py-1.5 text-[13px] text-tinta outline-none focus:border-terracota"
+                />
+                <textarea
+                  [(ngModel)]="editDescription"
+                  rows="2"
+                  aria-label="Descripción del producto"
+                  class="mb-2 w-full resize-none rounded-[9px] border-[1.5px] border-borde bg-papel px-2.5 py-1.5 text-[12px] text-tinta outline-none focus:border-terracota"
+                ></textarea>
+                <div class="mb-3 flex flex-wrap gap-1">
+                  @for (cat of store.categories(); track cat.id) {
+                    <button chipBtn [active]="editCategoryId() === cat.id" type="button"
+                      (click)="editCategoryId.set(cat.id)" class="px-2.5 py-1 text-[10.5px]">
+                      {{ cat.name }}
+                    </button>
+                  }
+                </div>
+                <div class="flex gap-2">
+                  <button type="button" (click)="saveEdit(product.id)"
+                    class="cursor-pointer rounded-[9px] border-none bg-tinta px-3 py-1.5 text-[11.5px] font-semibold text-lino">
+                    Guardar
+                  </button>
+                  <button type="button" (click)="cancelEdit()"
+                    class="cursor-pointer rounded-[9px] border border-borde bg-transparent px-3 py-1.5 text-[11.5px] font-semibold text-tinta-suave">
+                    Cancelar
+                  </button>
+                </div>
+              } @else {
+                <div class="flex items-baseline justify-between gap-2">
+                  <span class="text-sm font-semibold">{{ product.name }}</span>
+                  <span class="text-sm font-bold">{{ product.price | money }}</span>
+                </div>
+                <div class="mt-1 mb-3 text-[11.5px] leading-snug text-tinta-media">{{ product.description }}</div>
+                <div class="flex items-center justify-between">
+                  <span class="rounded-full bg-crema px-[9px] py-[3px] text-[10.5px] font-semibold text-tinta-suave">
+                    {{ product.categoryName }}
+                  </span>
+                  <button
+                    type="button"
+                    role="switch"
+                    [attr.aria-checked]="product.available"
+                    [attr.aria-label]="'Disponibilidad de ' + product.name"
+                    (click)="store.toggleProductAvailability(product.id)"
+                    class="relative h-5 w-9 cursor-pointer rounded-full border-none p-0"
+                    [style.background]="product.available ? '#7C905F' : '#D8CCBC'"
+                  >
+                    <span
+                      class="absolute top-0.5 h-4 w-4 rounded-full bg-papel transition-[left] duration-150"
+                      [style.left.px]="product.available ? 18 : 2"
+                    ></span>
+                  </button>
+                </div>
+                <div class="mt-3 flex gap-2 border-t border-panal pt-2.5">
+                  <button
+                    type="button"
+                    (click)="startEdit(product)"
+                    class="cursor-pointer border-none bg-transparent p-0 text-[11.5px] font-semibold text-terracota-profundo hover:underline"
+                  >
+                    Editar
+                  </button>
+                  <button
+                    type="button"
+                    (click)="requestDelete(product.id)"
+                    class="cursor-pointer border-none bg-transparent p-0 text-[11.5px] font-semibold"
+                    [class]="confirmingDeleteId() === product.id ? 'text-rojizo' : 'text-tinta-media hover:text-rojizo'"
+                  >
+                    {{ confirmingDeleteId() === product.id ? '¿Eliminar? Confirmar' : 'Eliminar' }}
+                  </button>
+                </div>
+              }
             </div>
           </article>
         }
@@ -164,9 +219,15 @@ export class MenuProductsComponent {
   protected readonly filterId = signal<number | 'todas'>('todas');
   protected readonly cropOpen = signal(false);
   protected readonly cropImageUrl = signal<string | null>(null);
+  protected readonly editingId = signal<number | null>(null);
+  protected readonly confirmingDeleteId = signal<number | null>(null);
   protected draftName = '';
   protected draftPrice = '';
+  protected editName = '';
+  protected editPrice = '';
+  protected editDescription = '';
   protected readonly draftCategoryId = signal<number | null>(null);
+  protected readonly editCategoryId = signal<number | null>(null);
   private pendingImageProductId: number | null = null;
   private pendingImageFile: File | null = null;
 
@@ -193,6 +254,44 @@ export class MenuProductsComponent {
     this.draftName = '';
     this.draftPrice = '';
     this.showForm.set(false);
+  }
+
+  protected startEdit(product: Product): void {
+    this.confirmingDeleteId.set(null);
+    this.editingId.set(product.id);
+    this.editName = product.name;
+    this.editPrice = String(product.price);
+    this.editDescription = product.description;
+    this.editCategoryId.set(product.categoryId);
+  }
+
+  protected cancelEdit(): void {
+    this.editingId.set(null);
+  }
+
+  protected async saveEdit(id: number): Promise<void> {
+    const name = this.editName.trim();
+    if (!name) {
+      this.toast.show('Ponle nombre al producto');
+      return;
+    }
+    await this.store.updateProduct(id, {
+      name,
+      price: parseFloat(this.editPrice) || 0,
+      categoryId: this.editCategoryId() ?? this.store.categories()[0]?.id ?? null,
+      description: this.editDescription.trim() || 'Nuevo platillo de la casa.',
+    });
+    this.editingId.set(null);
+  }
+
+  protected async requestDelete(id: number): Promise<void> {
+    if (this.confirmingDeleteId() !== id) {
+      this.confirmingDeleteId.set(id);
+      this.editingId.set(null);
+      return;
+    }
+    this.confirmingDeleteId.set(null);
+    await this.store.deleteProduct(id);
   }
 
   /** Sube la foto elegida y la asocia al producto. */

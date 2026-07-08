@@ -229,7 +229,7 @@ export class KitchenComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    void this.store.init();
+    void this.store.init().then(() => this.store.refreshOperationalData());
     const timer = setInterval(() => this.now.set(Date.now()), 30_000);
     this.destroyRef.onDestroy(() => clearInterval(timer));
   }

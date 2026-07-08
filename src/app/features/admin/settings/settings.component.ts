@@ -7,13 +7,15 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { FormsModule } from '@angular/forms';
 import { RestaurantStore } from '../../../core/application/restaurant.store';
 import { ImageCropperModalComponent, type CropSelection } from '../../../shared/image-cropper-modal.component';
+import { PasswordDialogComponent } from '../../../shared/password-dialog/password-dialog.component';
+import { PasswordFieldComponent } from '../../../shared/password-field/password-field.component';
 import { cropImageSquare } from '../../../shared/image-utils';
 import { ToastService } from '../../../shared/toast/toast.service';
 import { AVATAR_PALETTE, initialsOf } from '../../../shared/ui-maps';
 
 @Component({
   selector: 'app-settings',
-  imports: [FormsModule, ImageCropperModalComponent],
+  imports: [FormsModule, ImageCropperModalComponent, PasswordDialogComponent, PasswordFieldComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="max-w-[640px]" data-testid="admin-ajustes">
@@ -115,9 +117,17 @@ import { AVATAR_PALETTE, initialsOf } from '../../../shared/ui-maps';
             />
             <input
               [(ngModel)]="draftEmail"
-              placeholder="correo@restaurante.mx"
+              placeholder="correo@restaurante.com"
               aria-label="Correo"
               class="min-w-[160px] flex-1 rounded-[9px] border-[1.5px] border-borde bg-papel px-3 py-[9px] text-[13px] text-tinta outline-none focus:border-terracota"
+            />
+            <app-password-field
+              class="min-w-[160px] flex-1"
+              inputId="admin-draft-password"
+              [(value)]="draftPassword"
+              placeholder="Contraseña (opcional)"
+              ariaLabel="Contraseña inicial"
+              autocomplete="new-password"
             />
             <button
               type="button"
@@ -150,6 +160,13 @@ import { AVATAR_PALETTE, initialsOf } from '../../../shared/ui-maps';
               </span>
               <button
                 type="button"
+                (click)="openSetPassword(admin)"
+                class="cursor-pointer border-none bg-transparent text-[11.5px] font-semibold text-terracota-profundo hover:underline"
+              >
+                Contraseña
+              </button>
+              <button
+                type="button"
                 (click)="requestDelete(admin.id, admin.isOwner)"
                 class="cursor-pointer border-none bg-transparent text-[11.5px] font-semibold text-rojizo hover:underline"
               >
@@ -159,9 +176,20 @@ import { AVATAR_PALETTE, initialsOf } from '../../../shared/ui-maps';
           }
         </div>
         <div class="mt-2.5 text-[11px] text-tinta-media">
-          Cada administrador inicia sesión con su correo. La cuenta propietaria no puede eliminarse.
+          Cada administrador inicia sesión con su correo. Usa «Contraseña» para asignar una nueva. La cuenta propietaria no puede eliminarse.
         </div>
       </div>
+
+      <app-password-dialog
+        [open]="pwdDialogOpen()"
+        [mode]="pwdDialogMode()"
+        [title]="pwdDialogTitle()"
+        [subtitle]="pwdDialogSubtitle()"
+        [email]="pwdDialogEmail()"
+        [password]="pwdDialogPassword()"
+        (saved)="onPasswordSaved($event)"
+        (closed)="closePasswordDialog()"
+      />
 
       <app-image-cropper-modal
         [open]="cropOpen()"
@@ -198,7 +226,15 @@ export class SettingsComponent {
   protected readonly cropImageUrl = signal<string | null>(null);
   protected draftName = '';
   protected draftEmail = '';
+  protected draftPassword = '';
   protected readonly confirmingId = signal<string | null>(null);
+  protected readonly pwdDialogOpen = signal(false);
+  protected readonly pwdDialogMode = signal<'reveal' | 'set'>('set');
+  protected readonly pwdDialogTitle = signal('Contraseña');
+  protected readonly pwdDialogSubtitle = signal('');
+  protected readonly pwdDialogEmail = signal('');
+  protected readonly pwdDialogPassword = signal('');
+  private pwdTargetId: string | null = null;
   private pendingLogoFile: File | null = null;
 
   /** Sube el logo elegido a Storage. */
@@ -238,14 +274,73 @@ export class SettingsComponent {
 
   protected async save(): Promise<void> {
     const name = this.draftName.trim();
+    const email = this.draftEmail.trim();
+    const password = this.draftPassword.trim() || undefined;
     if (!name) {
       this.toast.show('Escribe el nombre del administrador');
       return;
     }
-    await this.store.addAdmin(name, this.draftEmail.trim());
-    this.draftName = '';
-    this.draftEmail = '';
-    this.showForm.set(false);
+    if (!email) {
+      this.toast.show('Escribe el correo del administrador');
+      return;
+    }
+    if (password && password.length < 8) {
+      this.toast.show('La contraseña debe tener al menos 8 caracteres');
+      return;
+    }
+    try {
+      const tempPassword = await this.store.addAdmin(name, email, password);
+      if (tempPassword) {
+        this.showReveal(email, tempPassword);
+      } else {
+        this.toast.show('Administrador creado con la contraseña que definiste.');
+      }
+      this.draftName = '';
+      this.draftEmail = '';
+      this.draftPassword = '';
+      this.showForm.set(false);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'No se pudo dar de alta al administrador';
+      this.toast.show(message);
+    }
+  }
+
+  protected openSetPassword(admin: { id: string; fullName: string; email: string }): void {
+    this.pwdTargetId = admin.id;
+    this.pwdDialogMode.set('set');
+    this.pwdDialogTitle.set(`Contraseña de ${admin.fullName}`);
+    this.pwdDialogSubtitle.set('Podrá entrar en /login con su correo y esta contraseña.');
+    this.pwdDialogEmail.set(admin.email);
+    this.pwdDialogPassword.set('');
+    this.pwdDialogOpen.set(true);
+  }
+
+  protected showReveal(email: string, password: string): void {
+    this.pwdTargetId = null;
+    this.pwdDialogMode.set('reveal');
+    this.pwdDialogTitle.set('Cuenta creada');
+    this.pwdDialogSubtitle.set('Copia la contraseña y compártela con el administrador.');
+    this.pwdDialogEmail.set(email);
+    this.pwdDialogPassword.set(password);
+    this.pwdDialogOpen.set(true);
+  }
+
+  protected closePasswordDialog(): void {
+    this.pwdDialogOpen.set(false);
+    this.pwdTargetId = null;
+  }
+
+  protected async onPasswordSaved(password: string): Promise<void> {
+    if (!this.pwdTargetId) {
+      this.closePasswordDialog();
+      return;
+    }
+    try {
+      await this.store.setStaffPassword(this.pwdTargetId, password);
+      this.closePasswordDialog();
+    } catch (e) {
+      this.toast.show(e instanceof Error ? e.message : 'No se pudo cambiar la contraseña');
+    }
   }
 
   protected async requestDelete(id: string, isOwner: boolean): Promise<void> {

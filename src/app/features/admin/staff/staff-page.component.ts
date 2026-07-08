@@ -1,31 +1,26 @@
 /**
  * Meseros y turnos: altas, vacaciones, rotación de turno y baja del equipo.
- *
- * Ampliación sobre el diseño (requisito del producto): el admin asigna el ROL
- * de cada cuenta (mesero/cocina/admin) y la baja es una eliminación
- * PERMANENTE de los datos (derecho de supresión, protección de datos), con
- * confirmación explícita.
  */
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RestaurantStore } from '../../../core/application/restaurant.store';
 import { ToastService } from '../../../shared/toast/toast.service';
 import { ChipBtnDirective } from '../../../shared/chip-btn.directive';
+import { PasswordDialogComponent } from '../../../shared/password-dialog/password-dialog.component';
+import { PasswordFieldComponent } from '../../../shared/password-field/password-field.component';
 import { AVATAR_PALETTE, SHIFT_HOURS, SHIFT_LABELS, initialsOf } from '../../../shared/ui-maps';
 import type { Shift, StaffRole } from '../../../core/domain/entities/entities';
 
 const SHIFTS: Shift[] = ['manana', 'tarde', 'noche'];
 const ROLES: StaffRole[] = ['mesero', 'cocina', 'cajero', 'admin'];
-/** Roles operativos que se pueden dar de alta desde aquí (admin va en Ajustes). */
-const TEAM_ROLES: Array<{ key: 'mesero' | 'cocina' | 'cajero'; label: string }> = [
+const TEAM_ROLES: Array<{ key: 'mesero' | 'cajero'; label: string }> = [
   { key: 'mesero', label: 'Mesero' },
-  { key: 'cocina', label: 'Cocina' },
   { key: 'cajero', label: 'Cajero' },
 ];
 
 @Component({
   selector: 'app-staff-page',
-  imports: [FormsModule, ChipBtnDirective],
+  imports: [FormsModule, ChipBtnDirective, PasswordDialogComponent, PasswordFieldComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="max-w-[880px]" data-testid="admin-meseros">
@@ -33,7 +28,8 @@ const TEAM_ROLES: Array<{ key: 'mesero' | 'cocina' | 'cajero'; label: string }> 
         <div class="flex-1">
           <h1 class="m-0 font-serif text-[27px] font-semibold">Meseros y turnos</h1>
           <p class="mt-1 mb-0 text-[13px] text-tinta-media">
-            Altas, bajas, vacaciones y rotación de turnos del equipo de sala, cocina y caja.
+            Altas, bajas, vacaciones y rotación de turnos del equipo de sala y caja.
+            La cocina se abre en /cocina sin iniciar sesión.
           </p>
         </div>
         <button
@@ -53,6 +49,26 @@ const TEAM_ROLES: Array<{ key: 'mesero' | 'cocina' | 'cajero'; label: string }> 
             aria-label="Nombre completo"
             class="min-w-[200px] flex-1 rounded-[9px] border-[1.5px] border-borde bg-papel px-3 py-[9px] text-[13px] text-tinta outline-none focus:border-terracota"
           />
+          <input
+            [(ngModel)]="draftEmail"
+            type="email"
+            inputmode="email"
+            autocomplete="email"
+            placeholder="correo@empleado.com"
+            aria-label="Correo del empleado"
+            class="min-w-[200px] flex-1 rounded-[9px] border-[1.5px] border-borde bg-papel px-3 py-[9px] text-[13px] text-tinta outline-none focus:border-terracota"
+          />
+          <app-password-field
+            class="min-w-[180px] flex-1"
+            inputId="staff-draft-password"
+            [(value)]="draftPassword"
+            placeholder="Contraseña (opcional)"
+            ariaLabel="Contraseña inicial"
+            autocomplete="new-password"
+          />
+          <div class="w-full text-[11px] text-tinta-media">
+            Si dejas la contraseña vacía se generará una automática que podrás copiar al guardar.
+          </div>
           <div class="flex gap-[5px]" role="group" aria-label="Rol del empleado">
             @for (role of teamRoles; track role.key) {
               <button chipBtn variant="terracota" [active]="draftRole() === role.key" type="button"
@@ -79,7 +95,6 @@ const TEAM_ROLES: Array<{ key: 'mesero' | 'cocina' | 'cajero'; label: string }> 
         </div>
       }
 
-      <!-- Resumen de turnos -->
       <div class="mb-5 grid grid-cols-3 gap-3">
         @for (summary of shiftSummary(); track summary.shift) {
           <div class="rounded-xl bg-panal px-4 py-3">
@@ -92,22 +107,21 @@ const TEAM_ROLES: Array<{ key: 'mesero' | 'cocina' | 'cajero'; label: string }> 
         }
       </div>
 
-      <!-- Lista del personal -->
       <div class="overflow-hidden rounded-[14px] border border-borde bg-papel">
         @for (member of teamRows(); track member.id) {
-          <div class="flex items-center gap-3.5 border-b border-panal px-[18px] py-3.5" data-testid="staff-row">
+          <div class="flex flex-wrap items-center gap-3.5 border-b border-panal px-[18px] py-3.5" data-testid="staff-row">
             <div
               class="flex h-[38px] w-[38px] flex-none items-center justify-center rounded-full text-[13px] font-bold text-lino-calido"
               [style.background]="member.avatarColor"
             >
               {{ member.initials }}
             </div>
-            <div class="min-w-0 flex-1">
+            <div class="min-w-[140px] flex-1">
               <div class="text-sm font-semibold">{{ member.fullName }}</div>
-              <div class="mt-0.5 text-[11.5px] text-tinta-media">{{ member.tablesLabel }}</div>
+              <div class="mt-0.5 text-[11.5px] text-tinta-media">{{ member.email }}</div>
+              <div class="mt-0.5 text-[11px] text-tinta-suave">{{ member.tablesLabel }}</div>
             </div>
 
-            <!-- Rol asignable por el admin -->
             <label class="sr-only" [for]="'rol-' + member.id">Rol de {{ member.fullName }}</label>
             <select
               [id]="'rol-' + member.id"
@@ -137,6 +151,13 @@ const TEAM_ROLES: Array<{ key: 'mesero' | 'cocina' | 'cajero'; label: string }> 
             }
             <button
               type="button"
+              (click)="openSetPassword(member)"
+              class="cursor-pointer border-none bg-transparent text-[11.5px] font-semibold text-terracota-profundo hover:underline"
+            >
+              Contraseña
+            </button>
+            <button
+              type="button"
               (click)="store.toggleVacation(member.id)"
               class="cursor-pointer border-none bg-transparent text-[11.5px] font-semibold text-tinta-suave hover:underline"
             >
@@ -153,9 +174,19 @@ const TEAM_ROLES: Array<{ key: 'mesero' | 'cocina' | 'cajero'; label: string }> 
         }
       </div>
       <div class="mt-2.5 text-[11px] text-tinta-media">
-        “Dar de baja” elimina de forma permanente los datos del empleado (protección de datos). La acción pide
-        una segunda confirmación y no puede deshacerse.
+        Usa «Contraseña» para asignar una nueva al empleado. «Dar de baja» elimina sus datos de forma permanente.
       </div>
+
+      <app-password-dialog
+        [open]="pwdDialogOpen()"
+        [mode]="pwdDialogMode()"
+        [title]="pwdDialogTitle()"
+        [subtitle]="pwdDialogSubtitle()"
+        [email]="pwdDialogEmail()"
+        [password]="pwdDialogPassword()"
+        (saved)="onPasswordSaved($event)"
+        (closed)="closePasswordDialog()"
+      />
     </div>
   `,
 })
@@ -177,16 +208,24 @@ export class StaffPageComponent {
 
   protected readonly showForm = signal(false);
   protected draftName = '';
-  protected readonly draftRole = signal<'mesero' | 'cocina' | 'cajero'>('mesero');
+  protected draftEmail = '';
+  protected draftPassword = '';
+  protected readonly draftRole = signal<'mesero' | 'cajero'>('mesero');
   protected readonly draftShift = signal<Shift>('manana');
-  /** Doble clic para confirmar la eliminación permanente. */
   protected readonly confirmingId = signal<string | null>(null);
 
-  /** Equipo operativo (meseros y cocina); los admins se gestionan en Ajustes. */
+  protected readonly pwdDialogOpen = signal(false);
+  protected readonly pwdDialogMode = signal<'reveal' | 'set'>('set');
+  protected readonly pwdDialogTitle = signal('Contraseña');
+  protected readonly pwdDialogSubtitle = signal('');
+  protected readonly pwdDialogEmail = signal('');
+  protected readonly pwdDialogPassword = signal('');
+  private pwdTargetId: string | null = null;
+
   protected readonly teamRows = computed(() =>
     this.store
       .staff()
-      .filter((s) => s.role !== 'admin')
+      .filter((s) => s.role !== 'admin' && s.role !== 'cocina')
       .map((member, i) => ({
         ...member,
         initials: initialsOf(member.fullName),
@@ -214,21 +253,83 @@ export class StaffPageComponent {
     }),
   );
 
+  protected openSetPassword(member: { id: string; fullName: string; email: string }): void {
+    this.pwdTargetId = member.id;
+    this.pwdDialogMode.set('set');
+    this.pwdDialogTitle.set(`Contraseña de ${member.fullName}`);
+    this.pwdDialogSubtitle.set('El empleado entrará en /login con su correo y esta contraseña.');
+    this.pwdDialogEmail.set(member.email);
+    this.pwdDialogPassword.set('');
+    this.pwdDialogOpen.set(true);
+  }
+
+  protected showReveal(email: string, password: string): void {
+    this.pwdTargetId = null;
+    this.pwdDialogMode.set('reveal');
+    this.pwdDialogTitle.set('Cuenta creada');
+    this.pwdDialogSubtitle.set('Copia la contraseña y compártela con el empleado.');
+    this.pwdDialogEmail.set(email);
+    this.pwdDialogPassword.set(password);
+    this.pwdDialogOpen.set(true);
+  }
+
+  protected closePasswordDialog(): void {
+    this.pwdDialogOpen.set(false);
+    this.pwdTargetId = null;
+  }
+
+  protected async onPasswordSaved(password: string): Promise<void> {
+    if (this.pwdTargetId) {
+      try {
+        await this.store.setStaffPassword(this.pwdTargetId, password);
+        this.closePasswordDialog();
+      } catch (e) {
+        this.toast.show(e instanceof Error ? e.message : 'No se pudo cambiar la contraseña');
+      }
+      return;
+    }
+    this.closePasswordDialog();
+  }
+
   protected async save(): Promise<void> {
     const name = this.draftName.trim();
+    const email = this.draftEmail.trim();
+    const password = this.draftPassword.trim() || undefined;
     if (!name) {
       this.toast.show('Escribe el nombre del empleado');
       return;
     }
-    await this.store.addTeamMember(name, this.draftRole(), this.draftShift());
-    this.draftName = '';
-    this.showForm.set(false);
+    if (!email) {
+      this.toast.show('Escribe el correo del empleado');
+      return;
+    }
+    if (password && password.length < 8) {
+      this.toast.show('La contraseña debe tener al menos 8 caracteres');
+      return;
+    }
+    try {
+      const tempPassword = await this.store.addTeamMember(
+        name,
+        email,
+        this.draftRole(),
+        this.draftShift(),
+        password,
+      );
+      if (tempPassword) {
+        this.showReveal(email, tempPassword);
+      } else {
+        this.toast.show('Cuenta creada. El empleado puede entrar con la contraseña que definiste.');
+      }
+      this.draftName = '';
+      this.draftEmail = '';
+      this.draftPassword = '';
+      this.showForm.set(false);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'No se pudo dar de alta al empleado';
+      this.toast.show(message);
+    }
   }
 
-  /**
-   * La eliminación es permanente, así que exige dos clics: el primero arma la
-   * confirmación y el segundo ejecuta el borrado definitivo.
-   */
   protected async requestDelete(id: string): Promise<void> {
     if (this.confirmingId() !== id) {
       this.confirmingId.set(id);

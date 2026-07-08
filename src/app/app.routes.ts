@@ -1,5 +1,7 @@
 import { Routes } from '@angular/router';
 import { roleGuard } from './core/auth/role.guard';
+import { authGuard } from './core/auth/auth.guard';
+import { kitchenGuard } from './core/auth/kitchen.guard';
 import { bootstrapGuard } from './core/auth/bootstrap.guard';
 
 /**
@@ -24,6 +26,11 @@ export const routes: Routes = [
   {
     path: 'login',
     loadComponent: () => import('./features/auth/login.component').then((m) => m.LoginComponent),
+  },
+  {
+    path: 'perfil',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/auth/profile.component').then((m) => m.ProfileComponent),
   },
   {
     path: 'instalacion',
@@ -53,7 +60,12 @@ export const routes: Routes = [
   },
   {
     path: 'cocina',
-    canActivate: [roleGuard('cocina')],
+    canActivate: [kitchenGuard],
+    loadComponent: () => import('./features/kitchen/kitchen.component').then((m) => m.KitchenComponent),
+  },
+  {
+    path: 'cocina/:slug',
+    canActivate: [kitchenGuard],
     loadComponent: () => import('./features/kitchen/kitchen.component').then((m) => m.KitchenComponent),
   },
   {

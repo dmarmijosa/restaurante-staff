@@ -30,6 +30,7 @@ import {
   RestaurantRepository,
   SettingsRepository,
   StaffRepository,
+  type AddStaffResult,
   StorageRepository,
   TablesRepository,
   WorkScheduleRepository,
@@ -55,6 +56,15 @@ export class DemoMenuRepository extends MenuRepository {
   }
   addProduct(input: { name: string; price: number; categoryId: number | null; description?: string }): Promise<Product> {
     return this.api.addProduct(input);
+  }
+  updateProduct(
+    id: number,
+    input: { name: string; price: number; categoryId: number | null; description?: string },
+  ): Promise<Product> {
+    return this.api.updateProduct(id, input);
+  }
+  deleteProduct(id: number): Promise<void> {
+    return this.api.deleteProduct(id);
   }
   setProductAvailability(id: number, available: boolean): Promise<void> {
     return this.api.setProductAvailability(id, available);
@@ -104,8 +114,8 @@ export class DemoOrdersRepository extends OrdersRepository {
 @Injectable()
 export class DemoCallsRepository extends CallsRepository {
   private api = inject(MockApiService);
-  getPendingCalls(): Promise<WaiterCall[]> {
-    return this.api.getPendingCalls();
+  getCalls(): Promise<WaiterCall[]> {
+    return this.api.getCalls();
   }
   createCall(tableNumber: number): Promise<WaiterCall> {
     return this.api.createCall(tableNumber);
@@ -124,14 +134,21 @@ export class DemoStaffRepository extends StaffRepository {
   getStaff(): Promise<StaffMember[]> {
     return this.api.getStaff();
   }
-  addStaff(input: { fullName: string; email: string; role: StaffRole; shift?: Shift }): Promise<StaffMember> {
-    return this.api.addStaff(input);
+  addStaff(input: { fullName: string; email: string; role: StaffRole; shift?: Shift; password?: string }): Promise<AddStaffResult> {
+    const pwd = input.password?.trim();
+    return this.api.addStaff(input).then((member) => ({
+      member,
+      initialPassword: pwd ? undefined : 'demo12345',
+    }));
   }
   updateStaff(id: string, patch: Partial<Pick<StaffMember, 'role' | 'shift' | 'status'>>): Promise<void> {
     return this.api.updateStaff(id, patch);
   }
   deleteStaffPermanently(id: string): Promise<void> {
     return this.api.deleteStaff(id);
+  }
+  setStaffPassword(staffId: string, newPassword: string): Promise<void> {
+    return this.api.setStaffPassword(staffId, newPassword);
   }
 }
 
@@ -169,12 +186,17 @@ export class DemoAuthRepository extends AuthRepository {
   async getCurrentUser(): Promise<SessionUser | null> {
     return this.api.getCurrentUser();
   }
-  /** En demo siempre hay un admin de ejemplo, así que el registro inicial no aplica. */
+  /** En demo no hay bootstrap real; no saltar el wizard a «listo». */
   async adminExists(_restaurantId?: string): Promise<boolean> {
-    return true;
+    return false;
   }
   async signUpFirstAdmin(): Promise<SessionUser | null> {
     throw new Error('El registro inicial no está disponible en modo demo');
+  }
+  async changeOwnPassword(currentPassword: string, newPassword: string): Promise<void> {
+    const user = await this.api.getCurrentUser();
+    if (!user) throw new Error('No hay sesión activa');
+    await this.api.changeOwnPassword(user.email, currentPassword, newPassword);
   }
 }
 

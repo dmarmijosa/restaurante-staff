@@ -116,8 +116,27 @@ import { OrderCardComponent } from '../../shared/order-card/order-card.component
                     }
                   </div>
                 } @else {
-                  <div class="mb-5 rounded-[12px] border border-dashed border-borde-punteado p-4 text-center text-[11.5px] text-tinta-media">
+                  <div class="mb-3 rounded-[12px] border border-dashed border-borde-punteado p-4 text-center text-[11.5px] text-tinta-media">
                     {{ 'waiter.no_calls' | translate }}
+                  </div>
+                }
+
+                @if (store.attendedCalls().length > 0) {
+                  <div class="mb-5">
+                    <div class="mb-2 text-[10.5px] font-bold uppercase tracking-wider text-tinta-suave">
+                      {{ 'waiter.attended_title' | translate }}
+                    </div>
+                    <div class="flex flex-col gap-1.5">
+                      @for (call of store.attendedCalls(); track call.id) {
+                        <div class="flex items-center gap-2 rounded-[10px] border border-borde bg-oliva-bg px-3 py-2.5">
+                          <span class="text-[12px] text-oliva-texto" aria-hidden="true">✓</span>
+                          <span class="flex-1 text-[12px] font-semibold text-oliva-texto">
+                            {{ 'waiter.attended_label' | translate: { n: call.tableNumber } }}
+                          </span>
+                          <span class="text-[10px] text-tinta-media">{{ call.createdAt }}</span>
+                        </div>
+                      }
+                    </div>
                   </div>
                 }
 
@@ -237,6 +256,10 @@ export class WaiterComponent implements OnInit, OnDestroy {
   }
 
   async ngOnInit(): Promise<void> {
+    if (!this.auth.ready()) {
+      await this.auth.restoreSession();
+    }
+
     if (!this.offline.isOnline()) {
       // Sin red: intentamos cargar el caché para no mostrar la pantalla vacía.
       const snapshot = this.cache.load();
@@ -248,6 +271,7 @@ export class WaiterComponent implements OnInit, OnDestroy {
       }
     } else {
       await this.store.init();
+      await this.store.refreshOperationalData();
     }
   }
 

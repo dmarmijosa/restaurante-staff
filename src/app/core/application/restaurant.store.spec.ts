@@ -135,7 +135,7 @@ describe('RestaurantStore', () => {
   });
 
   it('da de alta un cajero y aparece en el equipo', async () => {
-    await store.addTeamMember('Paco Caja', 'cajero', 'noche');
+    await store.addTeamMember('Paco Caja', 'paco@example.com', 'cajero', 'noche');
     const cajeros = store.staff().filter((s) => s.role === 'cajero');
     expect(cajeros.some((c) => c.fullName === 'Paco Caja')).toBe(true);
   });

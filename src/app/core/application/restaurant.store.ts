@@ -40,6 +40,7 @@ import {
 import { ToastService } from '../../shared/toast/toast.service';
 import { CurrencyService } from '../../shared/currency.service';
 import { compressImage } from '../../shared/image-utils';
+import { RestaurantContextService } from './restaurant-context.service';
 
 /** Orden natural del flujo de una comanda. */
 const ORDER_CHAIN: OrderStatus[] = ['recibido', 'preparando', 'listo', 'entregado'];
@@ -64,6 +65,7 @@ export class RestaurantStore {
   private scheduleRepo = inject(WorkScheduleRepository);
   private toast = inject(ToastService);
   private currencyService = inject(CurrencyService);
+  private context = inject(RestaurantContextService);
 
   readonly settings = signal<RestaurantSettings>({
     name: 'Casa Nogal',
@@ -84,10 +86,14 @@ export class RestaurantStore {
   readonly schedules = signal<WorkSchedule[]>([]);
   readonly loaded = signal(false);
 
+  /** Último restaurante con el que se cargó el store (detecta cambios de tenant). */
+  private syncedRestaurantId: string | null | undefined;
+
   /** El menú QR solo acepta pedidos con el restaurante abierto. */
   readonly acceptingOrders = computed(() => isAcceptingOrders(this.settings()));
   readonly activeOrders = computed(() => this.orders().filter((o) => o.status !== 'entregado'));
   readonly pendingCalls = computed(() => this.calls().filter((c) => !c.attended));
+  readonly attendedCalls = computed(() => this.calls().filter((c) => c.attended));
   readonly kitchenOrders = computed(() =>
     this.orders().filter((o) => o.status === 'recibido' || o.status === 'preparando'),
   );
@@ -106,13 +112,20 @@ export class RestaurantStore {
    * sin duplicar suscripciones.
    */
   async init(): Promise<void> {
-    if (this.loaded()) return;
+    const rId = this.context.restaurantId();
+    const needsRefresh = !this.loaded() || this.syncedRestaurantId !== rId;
+    if (!needsRefresh) return;
+
+    this.syncedRestaurantId = rId;
     await this.refreshAll();
-    this.unsubscribers.push(
-      this.ordersRepo.onChange(() => void this.refreshOrders()),
-      this.callsRepo.onChange(() => void this.refreshCalls()),
-    );
-    this.loaded.set(true);
+
+    if (!this.loaded()) {
+      this.unsubscribers.push(
+        this.ordersRepo.onChange(() => void this.refreshOrders()),
+        this.callsRepo.onChange(() => void this.refreshCalls()),
+      );
+      this.loaded.set(true);
+    }
   }
 
   async refreshAll(): Promise<void> {
@@ -126,7 +139,7 @@ export class RestaurantStore {
         this.menuRepo.getProducts(),
         this.tablesRepo.getTables(),
         this.ordersRepo.getOrders(),
-        this.callsRepo.getPendingCalls(),
+        this.callsRepo.getCalls(),
         this.staffRepo.getStaff(),
         this.paymentsRepo.getMethods(),
         this.scheduleRepo.getSchedules().catch(() => [] as WorkSchedule[]),
@@ -175,7 +188,12 @@ export class RestaurantStore {
   }
 
   private async refreshCalls(): Promise<void> {
-    this.calls.set(await this.callsRepo.getPendingCalls());
+    this.calls.set(await this.callsRepo.getCalls());
+  }
+
+  /** Pedidos y llamadas en vivo — refrescar al entrar a cocina, mesero o caja. */
+  async refreshOperationalData(): Promise<void> {
+    await Promise.all([this.refreshOrders(), this.refreshCalls()]);
   }
 
   // ────────────────────────── Plano del salón ──────────────────────────
@@ -294,11 +312,30 @@ export class RestaurantStore {
 
   /** Registra el cobro de un pedido (lo hace el cajero) con el método elegido. */
   async chargeOrder(orderId: number, paymentMethod: string): Promise<void> {
+    const order = this.orders().find((o) => o.id === orderId);
     this.orders.update((os) =>
       os.map((o) => (o.id === orderId ? { ...o, paid: true, paymentMethod, paidAt: 'ahora' } : o)),
     );
     await this.ordersRepo.chargeOrder(orderId, paymentMethod);
+    if (order) {
+      await this.freeTableIfSettled(order.tableNumber);
+    }
     this.toast.show('toast.order_charged', { id: orderId });
+  }
+
+  /** Deja la mesa libre si ya no quedan pedidos abiertos (sin cobrar) en ella. */
+  private async freeTableIfSettled(tableNumber: number): Promise<void> {
+    const hasOpen = this.orders().some((o) => o.tableNumber === tableNumber && !o.paid);
+    if (hasOpen) return;
+    const table = this.findTableByNumber(tableNumber);
+    if (!table || table.status === 'libre') return;
+    await this.setTableStatus(table.id, 'libre');
+  }
+
+  private findTableByNumber(tableNumber: number): RestaurantTable | undefined {
+    return this.tables().find(
+      (t) => t.number === tableNumber || (t.mergedNumbers?.includes(tableNumber) ?? false),
+    );
   }
 
   // ────────────────────────── Métodos de pago (admin) ──────────────────────────
@@ -372,6 +409,22 @@ export class RestaurantStore {
     this.toast.show('toast.product_added');
   }
 
+  async updateProduct(
+    id: number,
+    input: { name: string; price: number; categoryId: number | null; description?: string },
+  ): Promise<void> {
+    const updated = await this.menuRepo.updateProduct(id, input);
+    this.products.update((ps) => ps.map((p) => (p.id === id ? updated : p)));
+    this.toast.show('toast.product_updated', { name: updated.name });
+  }
+
+  async deleteProduct(id: number): Promise<void> {
+    const product = this.products().find((p) => p.id === id);
+    await this.menuRepo.deleteProduct(id);
+    this.products.update((ps) => ps.filter((p) => p.id !== id));
+    this.toast.show('toast.product_deleted', { name: product?.name ?? '' });
+  }
+
   /**
    * Sube una foto a Storage y la asocia al producto. El menú del cliente la
    * muestra al instante (actualización optimista del signal).
@@ -412,25 +465,32 @@ export class RestaurantStore {
 
   // ────────────────────────── Personal ──────────────────────────
 
-  async addWaiter(fullName: string, shift: Shift): Promise<void> {
-    await this.addTeamMember(fullName, 'mesero', shift);
+  async addWaiter(fullName: string, email: string, shift: Shift): Promise<string | undefined> {
+    return this.addTeamMember(fullName, email, 'mesero', shift);
   }
 
   /**
-   * Alta de personal operativo (mesero, cocina o cajero) con turno. Los tres se
-   * gestionan igual desde "Meseros y turnos".
+   * Alta de personal operativo (mesero o cajero) con turno.
    */
-  async addTeamMember(fullName: string, role: 'mesero' | 'cocina' | 'cajero', shift: Shift): Promise<void> {
-    const created = await this.staffRepo.addStaff({ fullName, email: '', role, shift });
-    this.staff.update((ss) => [...ss, created]);
-    const key = role === 'mesero' ? 'toast.staff_waiter_added' : role === 'cocina' ? 'toast.staff_cook_added' : 'toast.staff_cashier_added';
+  async addTeamMember(
+    fullName: string,
+    email: string,
+    role: 'mesero' | 'cajero',
+    shift: Shift,
+    password?: string,
+  ): Promise<string | undefined> {
+    const { member, initialPassword } = await this.staffRepo.addStaff({ fullName, email, role, shift, password });
+    this.staff.update((ss) => [...ss, member]);
+    const key = role === 'mesero' ? 'toast.staff_waiter_added' : 'toast.staff_cashier_added';
     this.toast.show(key);
+    return initialPassword;
   }
 
-  async addAdmin(fullName: string, email: string): Promise<void> {
-    const created = await this.staffRepo.addStaff({ fullName, email, role: 'admin' });
-    this.staff.update((ss) => [...ss, created]);
+  async addAdmin(fullName: string, email: string, password?: string): Promise<string | undefined> {
+    const { member, initialPassword } = await this.staffRepo.addStaff({ fullName, email, role: 'admin', password });
+    this.staff.update((ss) => [...ss, member]);
     this.toast.show('toast.staff_admin_added');
+    return initialPassword;
   }
 
   async rotateShift(id: string): Promise<void> {
@@ -471,6 +531,12 @@ export class RestaurantStore {
     await this.staffRepo.deleteStaffPermanently(id);
     this.staff.update((ss) => ss.filter((s) => s.id !== id));
     this.toast.show('toast.staff_deleted', { name: member.fullName });
+  }
+
+  /** El admin asigna una contraseña nueva a un empleado. */
+  async setStaffPassword(staffId: string, newPassword: string): Promise<void> {
+    await this.staffRepo.setStaffPassword(staffId, newPassword);
+    this.toast.show('toast.password_updated');
   }
 
   // ────────────────────────── Ajustes ──────────────────────────

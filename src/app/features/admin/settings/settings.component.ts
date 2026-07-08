@@ -3,7 +3,7 @@
  * administración — según el diseño. La cuenta propietaria no puede
  * eliminarse; el resto de administradores sí (eliminación permanente).
  */
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RestaurantStore } from '../../../core/application/restaurant.store';
 import { ImageCropperModalComponent, type CropSelection } from '../../../shared/image-cropper-modal.component';
@@ -12,6 +12,9 @@ import { PasswordFieldComponent } from '../../../shared/password-field/password-
 import { cropImageSquare } from '../../../shared/image-utils';
 import { ToastService } from '../../../shared/toast/toast.service';
 import { AVATAR_PALETTE, initialsOf } from '../../../shared/ui-maps';
+import { RestaurantRepository } from '../../../core/domain/repositories/repositories';
+import { RestaurantContextService } from '../../../core/application/restaurant-context.service';
+import { isKitchenPinValid, resolveKitchenLinks } from '../../../core/auth/kitchen-auth';
 
 @Component({
   selector: 'app-settings',
@@ -92,6 +95,47 @@ import { AVATAR_PALETTE, initialsOf } from '../../../shared/ui-maps';
           Seleccionada: <span class="font-bold text-tinta">{{ store.settings().currency }}</span>
           — los importes se verán como <span class="font-bold text-tinta">{{ store.settings().currency }}12.50</span>
         </div>
+      </div>
+
+      <!-- Tablet de cocina -->
+      <div class="mb-3.5 rounded-[14px] border border-borde bg-papel px-5 py-[18px]">
+        <div class="mb-1 text-[13px] font-semibold">Tablet de cocina</div>
+        <p class="mt-0 mb-3.5 text-[11px] text-tinta-media">
+          La cocina entra con un PIN de 6 dígitos. La tablet queda conectada sin pedir correo.
+        </p>
+        <div class="mb-3 rounded-[9px] bg-panal px-3 py-2.5 font-mono text-[12px] text-tinta">
+          {{ kitchenUrl() }}
+        </div>
+        <div class="flex flex-wrap items-end gap-2.5">
+          <div class="min-w-[140px] flex-1">
+            <label class="mb-1 block text-[11px] font-semibold text-tinta-media" for="kitchen-pin">
+              {{ store.settings().kitchenPinSet ? 'Nuevo PIN' : 'PIN de cocina' }}
+            </label>
+            <input
+              id="kitchen-pin"
+              type="password"
+              inputmode="numeric"
+              pattern="[0-9]*"
+              maxlength="6"
+              [(ngModel)]="kitchenPinDraft"
+              placeholder="6 dígitos"
+              autocomplete="new-password"
+              class="w-full rounded-[9px] border-[1.5px] border-borde bg-papel px-3 py-[9px] text-[13px] tracking-widest text-tinta outline-none focus:border-terracota"
+            />
+          </div>
+          <button
+            type="button"
+            (click)="saveKitchenPin()"
+            class="cursor-pointer rounded-[9px] border-none bg-terracota px-4 py-[9px] text-[12.5px] font-semibold text-lino-calido hover:bg-terracota-hover"
+          >
+            {{ store.settings().kitchenPinSet ? 'Rotar PIN' : 'Guardar PIN' }}
+          </button>
+        </div>
+        @if (!store.settings().kitchenPinSet) {
+          <p class="mt-2.5 text-[11px] font-medium text-rojizo">
+            Configura el PIN antes de abrir la tablet en {{ kitchenUrl() }}.
+          </p>
+        }
       </div>
 
       <!-- Administradores -->
@@ -201,9 +245,34 @@ import { AVATAR_PALETTE, initialsOf } from '../../../shared/ui-maps';
     </div>
   `,
 })
-export class SettingsComponent {
+export class SettingsComponent implements OnInit {
   protected readonly store = inject(RestaurantStore);
   private toast = inject(ToastService);
+  private restaurantRepo = inject(RestaurantRepository);
+  private context = inject(RestaurantContextService);
+
+  protected readonly kitchenUrl = signal('/cocina');
+  protected kitchenPinDraft = '';
+
+  async ngOnInit(): Promise<void> {
+    const rId = this.context.restaurantId();
+    if (!rId) return;
+    const restaurant = await this.restaurantRepo.getById(rId);
+    if (restaurant) {
+      const links = await resolveKitchenLinks(this.restaurantRepo, restaurant);
+      this.kitchenUrl.set(links.kitchen);
+    }
+  }
+
+  protected async saveKitchenPin(): Promise<void> {
+    const pin = this.kitchenPinDraft.trim();
+    if (!isKitchenPinValid(pin)) {
+      this.toast.show('toast.kitchen_pin_invalid');
+      return;
+    }
+    await this.store.setKitchenPin(pin);
+    this.kitchenPinDraft = '';
+  }
 
   /** Monedas disponibles: símbolo + nombre corto. */
   protected readonly currencies = [

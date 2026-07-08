@@ -150,6 +150,9 @@ export class DemoStaffRepository extends StaffRepository {
   setStaffPassword(staffId: string, newPassword: string): Promise<void> {
     return this.api.setStaffPassword(staffId, newPassword);
   }
+  setKitchenPin(pin: string): Promise<void> {
+    return this.api.setKitchenPin(pin);
+  }
 }
 
 @Injectable()
@@ -171,6 +174,9 @@ export class DemoSettingsRepository extends SettingsRepository {
   }
   updateSettings(patch: Partial<RestaurantSettings>): Promise<void> {
     return this.api.updateSettings(patch);
+  }
+  isKitchenPinSet(): Promise<boolean> {
+    return this.api.isKitchenPinSet();
   }
 }
 
@@ -198,6 +204,9 @@ export class DemoAuthRepository extends AuthRepository {
     if (!user) throw new Error('No hay sesión activa');
     await this.api.changeOwnPassword(user.email, currentPassword, newPassword);
   }
+  signInKitchen(restaurantId: string, pin: string): Promise<SessionUser> {
+    return this.api.signInKitchen(restaurantId, pin);
+  }
 }
 
 @Injectable()
@@ -209,6 +218,20 @@ export class DemoRestaurantRepository extends RestaurantRepository {
     return { id: DEMO_RESTAURANT_ID, name: 'Casa Nogal (demo)', slug: 'demo' };
   }
   async getFirstAvailable(): Promise<{ id: string; name: string; slug: string }> {
+    return { id: DEMO_RESTAURANT_ID, name: 'Casa Nogal (demo)', slug: 'demo' };
+  }
+  async getById(id: string): Promise<{ id: string; name: string; slug: string } | null> {
+    return id === DEMO_RESTAURANT_ID
+      ? { id: DEMO_RESTAURANT_ID, name: 'Casa Nogal (demo)', slug: 'demo' }
+      : null;
+  }
+  async countRestaurants(): Promise<number> {
+    return 1;
+  }
+  async countKitchenTenants(): Promise<number> {
+    return 1;
+  }
+  async resolveForKitchen(_slug?: string | null): Promise<{ id: string; name: string; slug: string }> {
     return { id: DEMO_RESTAURANT_ID, name: 'Casa Nogal (demo)', slug: 'demo' };
   }
 }

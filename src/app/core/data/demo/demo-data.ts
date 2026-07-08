@@ -119,6 +119,7 @@ export const DEMO_SETTINGS: RestaurantSettings = {
   seasonEnd: '2026-09-15',
   logoUrl: null,
   currency: '$',
+  kitchenPinSet: true,
 };
 
 /** Horarios semanales de ejemplo (lunes→domingo). */

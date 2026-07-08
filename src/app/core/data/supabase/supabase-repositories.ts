@@ -49,6 +49,7 @@ import {
 } from '../../domain/repositories/repositories';
 import { SupabaseClientService } from './supabase-client.service';
 import { RestaurantContextService } from '../../application/restaurant-context.service';
+import { buildKitchenAccountEmail, isKitchenSystemEmail } from '../../auth/kitchen-auth';
 
 /** Formatea la hora de creación como la muestra el diseño (HH:MM). */
 function toTimeLabel(iso: string): string {
@@ -330,10 +331,13 @@ export class SupabaseOrdersRepository extends OrdersRepository {
     if (error) throw error;
   }
 
-  /** Cocina sin login usa cliente anon; el personal autenticado usa su sesión. */
+  /** Solo personal autenticado puede leer o avanzar comandas (cocina, mesero, admin, cajero). */
   private async clientForOrders() {
     const { data } = await this.supabase.client.auth.getSession();
-    return data.session ? this.supabase.client : createQrClient();
+    if (!data.session) {
+      throw new Error('Se requiere sesión de personal para operar pedidos');
+    }
+    return this.supabase.client;
   }
 
   async chargeOrder(orderId: number, paymentMethod: string): Promise<void> {
@@ -436,7 +440,9 @@ export class SupabaseStaffRepository extends StaffRepository {
     const base = this.supabase.client.from('profiles').select('*').order('created_at');
     const { data, error } = await (rId ? base.eq('restaurant_id', rId) : base);
     if (error) throw error;
-    return (data ?? []).map((row) => ({
+    return (data ?? [])
+      .filter((row) => !isKitchenSystemEmail(row.email ?? ''))
+      .map((row) => ({
       id: row.id,
       fullName: row.full_name,
       email: row.email ?? '',
@@ -540,6 +546,17 @@ export class SupabaseStaffRepository extends StaffRepository {
     });
     if (error) throw error;
   }
+
+  /** El admin define el PIN de la tablet de cocina (6 dígitos). */
+  async setKitchenPin(pin: string): Promise<void> {
+    const { error } = await this.supabase.client.rpc('admin_set_kitchen_pin', { p_pin: pin });
+    if (error) throw error;
+    // Asegura identity de login tras crear la cuenta cocina.
+    const rId = this.context.restaurantId();
+    if (rId) {
+      await this.supabase.client.rpc('ensure_kitchen_account', { p_restaurant_id: rId });
+    }
+  }
 }
 
 @Injectable()
@@ -561,7 +578,13 @@ export class SupabaseSettingsRepository extends SettingsRepository {
       seasonEnd: data.season_end,
       logoUrl: data.logo_url ?? null,
       currency: data.currency ?? '$',
+      kitchenPinSet: Boolean(data.kitchen_pin_set),
     };
+  }
+
+  async isKitchenPinSet(): Promise<boolean> {
+    const settings = await this.getSettings();
+    return settings.kitchenPinSet;
   }
 
   async updateSettings(patch: Partial<RestaurantSettings>): Promise<void> {
@@ -663,6 +686,32 @@ export class SupabaseAuthRepository extends AuthRepository {
     const { error } = await this.supabase.client.auth.updateUser({ password: newPassword });
     if (error) throw error;
   }
+
+  async signInKitchen(restaurantId: string, pin: string): Promise<SessionUser> {
+    const email = buildKitchenAccountEmail(restaurantId);
+    const { error: ensureError } = await this.supabase.client.rpc('ensure_kitchen_account', {
+      p_restaurant_id: restaurantId,
+    });
+    if (ensureError) throw ensureError;
+
+    const { data: pinOk, error: pinError } = await this.supabase.client.rpc('kitchen_pin_is_valid', {
+      p_restaurant_id: restaurantId,
+      p_pin: pin,
+    });
+    if (pinError) throw pinError;
+    if (!pinOk) {
+      throw new Error('PIN incorrecto. Vuelve a guardarlo en Admin → Ajustes → Tablet de cocina.');
+    }
+
+    await this.supabase.client.auth.signOut();
+    const { data, error } = await this.supabase.client.auth.signInWithPassword({ email, password: pin });
+    if (error || !data.user) {
+      throw new Error(
+        'No se pudo abrir sesión de cocina. Ejecuta public/setup/patch-kitchen-identity-fix.sql en Supabase.',
+      );
+    }
+    return this.toSessionUser(data.user.id, data.user.email ?? email);
+  }
 }
 
 @Injectable()
@@ -700,6 +749,40 @@ export class SupabaseRestaurantRepository extends RestaurantRepository {
       .maybeSingle();
     if (error) throw error;
     return data ?? null;
+  }
+
+  async getById(id: string): Promise<{ id: string; name: string; slug: string } | null> {
+    const { data, error } = await this.supabase.client
+      .from('restaurants')
+      .select('id, name, slug')
+      .eq('id', id)
+      .maybeSingle();
+    if (error) throw error;
+    return data ?? null;
+  }
+
+  async countRestaurants(): Promise<number> {
+    const { data, error } = await this.supabase.client.rpc('count_operational_restaurants');
+    if (error) throw error;
+    return (data as number) ?? 0;
+  }
+
+  async countKitchenTenants(): Promise<number> {
+    const { data, error } = await this.supabase.client.rpc('count_kitchen_url_tenants');
+    if (!error && data != null) return data as number;
+    return 1;
+  }
+
+  async resolveForKitchen(slug?: string | null): Promise<{ id: string; name: string; slug: string } | null> {
+    const { data, error } = await this.supabase.client.rpc('resolve_kitchen_restaurant', {
+      p_slug: slug ?? null,
+    });
+    if (error) {
+      if (slug) return this.getBySlug(slug);
+      return this.getFirstAvailable();
+    }
+    const row = (data as Array<{ id: string; name: string; slug: string }> | null)?.[0];
+    return row ?? null;
   }
 }
 

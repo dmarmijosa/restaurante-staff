@@ -156,6 +156,8 @@ export interface RestaurantSettings {
    * Lo configura el admin en Ajustes; el MoneyPipe lo lee automáticamente.
    */
   currency: string;
+  /** El admin configuró el PIN de la tablet de cocina. */
+  kitchenPinSet: boolean;
 }
 
 /** Restaurante registrado en la plataforma (tenant). */

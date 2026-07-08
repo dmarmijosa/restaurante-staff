@@ -75,6 +75,7 @@ export class RestaurantStore {
     seasonEnd: null,
     logoUrl: null,
     currency: '$',
+    kitchenPinSet: false,
   });
   readonly categories = signal<Category[]>([]);
   readonly products = signal<Product[]>([]);
@@ -537,6 +538,13 @@ export class RestaurantStore {
   async setStaffPassword(staffId: string, newPassword: string): Promise<void> {
     await this.staffRepo.setStaffPassword(staffId, newPassword);
     this.toast.show('toast.password_updated');
+  }
+
+  /** El admin define el PIN de la tablet de cocina. */
+  async setKitchenPin(pin: string): Promise<void> {
+    await this.staffRepo.setKitchenPin(pin);
+    this.settings.update((s) => ({ ...s, kitchenPinSet: true }));
+    this.toast.show('toast.kitchen_pin_updated');
   }
 
   // ────────────────────────── Ajustes ──────────────────────────

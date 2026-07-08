@@ -29,7 +29,7 @@ const TEAM_ROLES: Array<{ key: 'mesero' | 'cajero'; label: string }> = [
           <h1 class="m-0 font-serif text-[27px] font-semibold">Meseros y turnos</h1>
           <p class="mt-1 mb-0 text-[13px] text-tinta-media">
             Altas, bajas, vacaciones y rotación de turnos del equipo de sala y caja.
-            La cocina se abre en /cocina sin iniciar sesión.
+            La tablet de cocina se configura en Ajustes (PIN de 6 dígitos).
           </p>
         </div>
         <button

@@ -102,11 +102,15 @@ export abstract class StaffRepository {
   abstract deleteStaffPermanently(id: string): Promise<void>;
   /** El admin fija una contraseña nueva para un miembro del equipo. */
   abstract setStaffPassword(staffId: string, newPassword: string): Promise<void>;
+  /** El admin define el PIN de la tablet de cocina (6 dígitos). */
+  abstract setKitchenPin(pin: string): Promise<void>;
 }
 
 export abstract class SettingsRepository {
   abstract getSettings(): Promise<RestaurantSettings>;
   abstract updateSettings(patch: Partial<RestaurantSettings>): Promise<void>;
+  /** ¿El admin ya configuró el PIN de la tablet de cocina? */
+  abstract isKitchenPinSet(): Promise<boolean>;
 }
 
 export abstract class WorkScheduleRepository {
@@ -144,6 +148,8 @@ export abstract class AuthRepository {
   }): Promise<SessionUser | null>;
   /** El usuario autenticado cambia su propia contraseña. */
   abstract changeOwnPassword(currentPassword: string, newPassword: string): Promise<void>;
+  /** Acceso de la tablet de cocina con PIN (cuenta interna del tenant). */
+  abstract signInKitchen(restaurantId: string, pin: string): Promise<SessionUser>;
 }
 
 /**
@@ -159,6 +165,14 @@ export abstract class RestaurantRepository {
    * accede sin slug — despliegues mono-tenant o setups iniciales).
    */
   abstract getFirstAvailable(): Promise<Restaurant | null>;
+  /** Datos del restaurante por UUID (slug para enlaces de cocina). */
+  abstract getById(id: string): Promise<Restaurant | null>;
+  /** Cuántos tenants operativos hay (restaurantes con admin). */
+  abstract countRestaurants(): Promise<number>;
+  /** Cuántos tenants deben usar slug en las URLs de cocina. */
+  abstract countKitchenTenants(): Promise<number>;
+  /** Restaurante de la tablet de cocina (prioriza el que tiene PIN). */
+  abstract resolveForKitchen(slug?: string | null): Promise<Restaurant | null>;
 }
 
 /**

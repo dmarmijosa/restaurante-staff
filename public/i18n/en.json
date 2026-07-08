@@ -142,7 +142,15 @@
     "mark_ready": "Dish ready",
     "elapsed_label": "{{minutes}} minutes",
     "queue_one": "1 order in queue",
-    "queue_many": "{{n}} orders in queue"
+    "queue_many": "{{n}} orders in queue",
+    "tap_for_sound": "Tap to hear the alert",
+    "status_received": "Pending",
+    "status_preparing": "Preparing",
+    "min_label": "min",
+    "access_title": "Kitchen",
+    "pin_label": "Access PIN",
+    "pin_clear": "Clear",
+    "access_demo_hint": "Demo mode: PIN 123456"
   },
   "waiter": {
     "online": "Online",

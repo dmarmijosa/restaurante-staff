@@ -3,6 +3,8 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { AuthService } from '../../core/auth/auth.service';
+import { resolveKitchenLinks } from '../../core/auth/kitchen-auth';
+import { RestaurantRepository } from '../../core/domain/repositories/repositories';
 import { enterDemoMode, isDemoMode } from '../../core/data/supabase/runtime-config';
 
 @Component({
@@ -178,6 +180,7 @@ export class LoginComponent implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private fb = inject(FormBuilder);
+  private restaurantRepo = inject(RestaurantRepository);
 
   ngOnInit(): void {}
 
@@ -219,10 +222,7 @@ export class LoginComponent implements OnInit {
     this.error.set(null);
     try {
       const user = await this.auth.signIn(email, password);
-      const homeByRole: Record<string, string> = {
-        admin: '/admin', mesero: '/mesero', cocina: '/cocina', cajero: '/cajero',
-      };
-      await this.router.navigateByUrl(homeByRole[user.role] ?? '/');
+      await this.router.navigateByUrl(await this.homeForRole(user.role, user.restaurantId));
     } catch {
       this.error.set('login.error_invalid');
     } finally {
@@ -245,14 +245,27 @@ export class LoginComponent implements OnInit {
       const { email, password } = this.form.getRawValue();
       const user = await this.auth.signIn(email, password);
       const redirect = this.route.snapshot.queryParamMap.get('redirect');
-      const homeByRole: Record<string, string> = {
-        admin: '/admin', mesero: '/mesero', cocina: '/cocina', cajero: '/cajero',
-      };
-      await this.router.navigateByUrl(redirect ?? homeByRole[user.role] ?? '/');
+      await this.router.navigateByUrl(redirect ?? (await this.homeForRole(user.role, user.restaurantId)));
     } catch {
       this.error.set('login.error_invalid');
     } finally {
       this.loading.set(false);
     }
+  }
+
+  private async homeForRole(role: string, restaurantId?: string): Promise<string> {
+    if (role === 'cocina') {
+      const restaurant = restaurantId
+        ? await this.restaurantRepo.getById(restaurantId)
+        : await this.restaurantRepo.getFirstAvailable();
+      const links = await resolveKitchenLinks(this.restaurantRepo, restaurant);
+      return links.kitchen;
+    }
+    const homeByRole: Record<string, string> = {
+      admin: '/admin',
+      mesero: '/mesero',
+      cajero: '/cajero',
+    };
+    return homeByRole[role] ?? '/';
   }
 }

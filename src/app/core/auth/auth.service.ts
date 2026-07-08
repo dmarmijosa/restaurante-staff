@@ -92,9 +92,22 @@ export class AuthService {
     await this.repo.changeOwnPassword(currentPassword, newPassword);
   }
 
+  /** Acceso de la tablet de cocina con PIN del restaurante. */
+  async signInKitchen(restaurantId: string, pin: string): Promise<SessionUser> {
+    const user = await this.repo.signInKitchen(restaurantId, pin);
+    this._user.set(user);
+    if (user.restaurantId) this.context.set(user.restaurantId);
+    return user;
+  }
+
   /** ¿Puede el usuario actual entrar a una vista del rol dado? El admin entra a todas. */
   canAccess(required: StaffRole): boolean {
     const role = this.role();
     return role === 'admin' || role === required;
+  }
+
+  /** Cocina exige sesión con rol `cocina` (PIN en tablet); el admin no entra sin PIN. */
+  canAccessKitchen(): boolean {
+    return this.role() === 'cocina';
   }
 }

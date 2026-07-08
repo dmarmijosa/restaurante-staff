@@ -4,11 +4,14 @@
  * aparecen las áreas permitidas por el rol de la sesión; "Cliente" siempre
  * está disponible porque es la vista pública.
  */
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { AuthService } from '../../core/auth/auth.service';
+import { resolveKitchenLinks } from '../../core/auth/kitchen-auth';
 import { RestaurantStore } from '../../core/application/restaurant.store';
+import { RestaurantContextService } from '../../core/application/restaurant-context.service';
+import { RestaurantRepository } from '../../core/domain/repositories/repositories';
 import { LanguageService, LANG_LABELS, type SupportedLang } from '../../core/i18n/language.service';
 
 interface AreaLink {
@@ -91,12 +94,27 @@ interface AreaLink {
     </div>
   `,
 })
-export class StaffTopbarComponent {
+export class StaffTopbarComponent implements OnInit {
   protected readonly auth = inject(AuthService);
   protected readonly lang = inject(LanguageService);
   protected readonly langLabels = LANG_LABELS;
   private store = inject(RestaurantStore);
   private router = inject(Router);
+  private context = inject(RestaurantContextService);
+  private restaurantRepo = inject(RestaurantRepository);
+
+  private readonly kitchenScreenPath = signal('/cocina');
+  private readonly kitchenAccessLink = signal('/cocina/acceso');
+
+  async ngOnInit(): Promise<void> {
+    const rId = this.context.restaurantId();
+    const restaurant = rId
+      ? await this.restaurantRepo.getById(rId)
+      : await this.restaurantRepo.getFirstAvailable();
+    const links = await resolveKitchenLinks(this.restaurantRepo, restaurant);
+    this.kitchenScreenPath.set(links.kitchen);
+    this.kitchenAccessLink.set(links.acceso);
+  }
 
   /** Franja de hoy del trabajador en sesión (null si no tiene horario). */
   protected readonly todayShift = computed(() => {
@@ -114,7 +132,11 @@ export class StaffTopbarComponent {
     const links: Array<{ labelKey: string; deviceKey: string; path: string }> = [];
     if (role === 'admin') links.push({ labelKey: 'topbar.area.admin', deviceKey: 'topbar.area.desktop', path: '/admin' });
     if (role === 'admin' || role === 'mesero') links.push({ labelKey: 'topbar.area.waiter', deviceKey: 'topbar.area.tablet', path: '/mesero' });
-    links.push({ labelKey: 'topbar.area.kitchen', deviceKey: 'topbar.area.screen', path: '/cocina' });
+    links.push({
+      labelKey: 'topbar.area.kitchen',
+      deviceKey: 'topbar.area.screen',
+      path: role === 'cocina' ? this.kitchenScreenPath() : this.kitchenAccessLink(),
+    });
     if (role === 'admin' || role === 'cajero') links.push({ labelKey: 'topbar.area.cashier', deviceKey: 'topbar.area.register', path: '/cajero' });
     links.push({ labelKey: 'topbar.area.client', deviceKey: 'topbar.area.mobile_qr', path: '/' });
     return links;

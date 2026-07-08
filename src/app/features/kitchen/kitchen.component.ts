@@ -26,7 +26,12 @@ import {
   signal,
 } from '@angular/core';
 import { TranslatePipe } from '@ngx-translate/core';
+import { Router } from '@angular/router';
 import { RestaurantStore } from '../../core/application/restaurant.store';
+import { AuthService } from '../../core/auth/auth.service';
+import { resolveKitchenLinks } from '../../core/auth/kitchen-auth';
+import { RestaurantContextService } from '../../core/application/restaurant-context.service';
+import { RestaurantRepository } from '../../core/domain/repositories/repositories';
 import { StaffTopbarComponent } from '../../shared/staff-topbar/staff-topbar.component';
 import { BeepService } from '../../shared/beep.service';
 import { elapsedMinutes } from '../../core/domain/entities/entities';
@@ -167,6 +172,10 @@ const LATE_THRESHOLD_MIN = 15;
 export class KitchenComponent implements OnInit {
   protected readonly store = inject(RestaurantStore);
   protected readonly beep = inject(BeepService);
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly restaurantRepo = inject(RestaurantRepository);
+  private readonly context = inject(RestaurantContextService);
   private destroyRef = inject(DestroyRef);
 
   /** Reloj compartido; se actualiza cada 30 s para refrescar los minutos. */
@@ -229,6 +238,10 @@ export class KitchenComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    if (!this.auth.canAccessKitchen()) {
+      void this.redirectToAccess();
+      return;
+    }
     void this.store.init().then(() => this.store.refreshOperationalData());
     const timer = setInterval(() => this.now.set(Date.now()), 30_000);
     this.destroyRef.onDestroy(() => clearInterval(timer));
@@ -237,5 +250,12 @@ export class KitchenComponent implements OnInit {
   /** Color de cabecera por estado (cuando no está retrasada). */
   protected order0(status: string): string {
     return status === 'recibido' ? '#C49A3F' : '#B5764C';
+  }
+
+  private async redirectToAccess(): Promise<void> {
+    const rId = this.context.restaurantId();
+    const restaurant = rId ? await this.restaurantRepo.getById(rId) : await this.restaurantRepo.getFirstAvailable();
+    const links = await resolveKitchenLinks(this.restaurantRepo, restaurant);
+    await this.router.navigateByUrl(links.acceso);
   }
 }

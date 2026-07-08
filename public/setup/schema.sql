@@ -1,7 +1,7 @@
 -- ============================================================================
 -- Restaurante Staff · Esquema completo
 -- Generado por scripts/build-schema.mjs — no editar a mano.
--- Migraciones incluidas: 22 (seed demo antes de multi-tenant).
+-- Migraciones incluidas: 26 (seed demo antes de multi-tenant).
 -- Aplicar en el SQL Editor de tu proyecto Supabase (o con `supabase db push`).
 -- ============================================================================
 
@@ -1492,5 +1492,441 @@ create policy "anon avanza pedidos cocina" on public.orders
     and status in ('preparando', 'listo')
     and exists (select 1 from public.restaurants r where r.id = orders.restaurant_id)
   );
+
+notify pgrst, 'reload schema';
+
+-- ────────────────────────────────────────────────────────────────────────
+-- Migración: 20260708000023_kitchen_pin.sql
+-- ────────────────────────────────────────────────────────────────────────
+-- ============================================================================
+-- Cocina protegida por PIN: cuenta interna por restaurante (rol cocina).
+-- Se elimina el avance anónimo de comandas de la migración kiosk.
+-- ============================================================================
+
+alter table public.restaurant_settings
+  add column if not exists kitchen_pin_set boolean not null default false;
+
+-- ── Email interno de la tablet de cocina (no visible para el personal) ───────
+create or replace function public.kitchen_account_email(p_restaurant_id uuid)
+returns text
+language sql
+immutable
+as $$
+  select 'kitchen+' || p_restaurant_id::text || '@restaurantestaff.internal';
+$$;
+
+-- ── Crea la cuenta cocina del tenant si aún no existe ────────────────────────
+create or replace function public.ensure_kitchen_account(p_restaurant_id uuid)
+returns uuid
+language plpgsql
+security definer
+set search_path = public, extensions, auth
+as $$
+declare
+  v_email   text;
+  v_user_id uuid;
+  v_instance uuid;
+begin
+  if not exists (select 1 from public.restaurants where id = p_restaurant_id) then
+    raise exception 'Restaurante no encontrado' using errcode = 'P0002';
+  end if;
+
+  v_email := public.kitchen_account_email(p_restaurant_id);
+
+  select id into v_user_id from auth.users where email = v_email;
+  if v_user_id is not null then
+    return v_user_id;
+  end if;
+
+  select id into v_instance from auth.instances limit 1;
+  if v_instance is null then
+    v_instance := '00000000-0000-0000-0000-000000000000'::uuid;
+  end if;
+
+  v_user_id := gen_random_uuid();
+
+  insert into auth.users (
+    instance_id,
+    id,
+    aud,
+    role,
+    email,
+    encrypted_password,
+    email_confirmed_at,
+    confirmation_token,
+    recovery_token,
+    email_change_token_new,
+    email_change,
+    raw_app_meta_data,
+    raw_user_meta_data,
+    is_super_admin,
+    created_at,
+    updated_at
+  ) values (
+    v_instance,
+    v_user_id,
+    'authenticated',
+    'authenticated',
+    v_email,
+    extensions.crypt(gen_random_uuid()::text, extensions.gen_salt('bf')),
+    now(),
+    '',
+    '',
+    '',
+    '',
+    jsonb_build_object('provider', 'email', 'providers', jsonb_build_array('email')),
+    jsonb_build_object(
+      'restaurant_id', p_restaurant_id::text,
+      'full_name', 'Tablet cocina',
+      'role', 'cocina'
+    ),
+    false,
+    now(),
+    now()
+  );
+
+  return v_user_id;
+end;
+$$;
+
+-- ── El admin define o rota el PIN de la tablet de cocina (6 dígitos) ─────────
+create or replace function public.admin_set_kitchen_pin(p_pin text)
+returns void
+language plpgsql
+security definer
+set search_path = public, extensions, auth
+as $$
+declare
+  v_caller_id         uuid := auth.uid();
+  v_caller_restaurant uuid;
+  v_caller_role       text;
+  v_user_id           uuid;
+begin
+  if v_caller_id is null then
+    raise exception 'No autenticado' using errcode = '42501';
+  end if;
+
+  if p_pin is null or p_pin !~ '^\d{6}$' then
+    raise exception 'El PIN debe tener exactamente 6 dígitos' using errcode = '22023';
+  end if;
+
+  select restaurant_id, role::text
+    into v_caller_restaurant, v_caller_role
+  from public.profiles
+  where id = v_caller_id;
+
+  if v_caller_role <> 'admin' then
+    raise exception 'Solo un administrador puede configurar el PIN de cocina' using errcode = '42501';
+  end if;
+
+  v_user_id := public.ensure_kitchen_account(v_caller_restaurant);
+
+  update auth.users
+  set
+    encrypted_password = extensions.crypt(p_pin, extensions.gen_salt('bf')),
+    updated_at = now()
+  where id = v_user_id;
+
+  update public.restaurant_settings
+  set kitchen_pin_set = true, updated_at = now()
+  where restaurant_id = v_caller_restaurant;
+end;
+$$;
+
+grant execute on function public.kitchen_account_email(uuid) to anon, authenticated;
+grant execute on function public.ensure_kitchen_account(uuid) to authenticated;
+grant execute on function public.admin_set_kitchen_pin(text) to authenticated;
+
+-- Cuentas cocina para restaurantes ya existentes (PIN lo fija el admin).
+do $$
+declare
+  r record;
+begin
+  for r in select id from public.restaurants loop
+    perform public.ensure_kitchen_account(r.id);
+  end loop;
+end;
+$$;
+
+-- Quitar acceso anónimo al avance de comandas (migración kiosk).
+drop policy if exists "anon avanza pedidos cocina" on public.orders;
+
+notify pgrst, 'reload schema';
+
+-- ────────────────────────────────────────────────────────────────────────
+-- Migración: 20260708000024_kitchen_identity_fix.sql
+-- ────────────────────────────────────────────────────────────────────────
+-- ============================================================================
+-- Fix: cuenta cocina debe tener fila en auth.identities para poder hacer login.
+-- ============================================================================
+
+create or replace function public.ensure_kitchen_account(p_restaurant_id uuid)
+returns uuid
+language plpgsql
+security definer
+set search_path = public, extensions, auth
+as $$
+declare
+  v_email    text;
+  v_user_id  uuid;
+  v_instance uuid;
+begin
+  if not exists (select 1 from public.restaurants where id = p_restaurant_id) then
+    raise exception 'Restaurante no encontrado' using errcode = 'P0002';
+  end if;
+
+  v_email := public.kitchen_account_email(p_restaurant_id);
+
+  select id into v_user_id from auth.users where email = v_email;
+  if v_user_id is not null then
+    -- Reparar cuentas creadas sin identity (login imposible).
+    if not exists (select 1 from auth.identities where user_id = v_user_id and provider = 'email') then
+      insert into auth.identities (
+        id,
+        user_id,
+        identity_data,
+        provider,
+        provider_id,
+        last_sign_in_at,
+        created_at,
+        updated_at
+      ) values (
+        v_user_id,
+        v_user_id,
+        jsonb_build_object('sub', v_user_id::text, 'email', v_email),
+        'email',
+        v_user_id::text,
+        now(),
+        now(),
+        now()
+      );
+    end if;
+    return v_user_id;
+  end if;
+
+  select id into v_instance from auth.instances limit 1;
+  if v_instance is null then
+    v_instance := '00000000-0000-0000-0000-000000000000'::uuid;
+  end if;
+
+  v_user_id := gen_random_uuid();
+
+  insert into auth.users (
+    instance_id,
+    id,
+    aud,
+    role,
+    email,
+    encrypted_password,
+    email_confirmed_at,
+    confirmation_token,
+    recovery_token,
+    email_change_token_new,
+    email_change,
+    raw_app_meta_data,
+    raw_user_meta_data,
+    is_super_admin,
+    created_at,
+    updated_at
+  ) values (
+    v_instance,
+    v_user_id,
+    'authenticated',
+    'authenticated',
+    v_email,
+    extensions.crypt(gen_random_uuid()::text, extensions.gen_salt('bf')),
+    now(),
+    '',
+    '',
+    '',
+    '',
+    jsonb_build_object('provider', 'email', 'providers', jsonb_build_array('email')),
+    jsonb_build_object(
+      'restaurant_id', p_restaurant_id::text,
+      'full_name', 'Tablet cocina',
+      'role', 'cocina'
+    ),
+    false,
+    now(),
+    now()
+  );
+
+  insert into auth.identities (
+    id,
+    user_id,
+    identity_data,
+    provider,
+    provider_id,
+    last_sign_in_at,
+    created_at,
+    updated_at
+  ) values (
+    v_user_id,
+    v_user_id,
+    jsonb_build_object('sub', v_user_id::text, 'email', v_email),
+    'email',
+    v_user_id::text,
+    now(),
+    now(),
+    now()
+  );
+
+  return v_user_id;
+end;
+$$;
+
+-- Reparar cuentas cocina ya existentes sin identity.
+do $$
+declare
+  r record;
+begin
+  for r in
+    select u.id, u.email
+    from auth.users u
+    where u.email like 'kitchen+%@restaurantestaff.internal'
+      and not exists (
+        select 1 from auth.identities i
+        where i.user_id = u.id and i.provider = 'email'
+      )
+  loop
+    insert into auth.identities (
+      id,
+      user_id,
+      identity_data,
+      provider,
+      provider_id,
+      last_sign_in_at,
+      created_at,
+      updated_at
+    ) values (
+      r.id,
+      r.id,
+      jsonb_build_object('sub', r.id::text, 'email', r.email),
+      'email',
+      r.id::text,
+      now(),
+      now(),
+      now()
+    );
+  end loop;
+end;
+$$;
+
+-- Cuenta tenants reales (con admin), no filas huérfanas en restaurants.
+create or replace function public.count_operational_restaurants()
+returns integer
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select count(distinct restaurant_id)::integer
+  from public.profiles
+  where role = 'admin';
+$$;
+
+grant execute on function public.count_operational_restaurants() to anon, authenticated;
+grant execute on function public.ensure_kitchen_account(uuid) to anon, authenticated;
+
+notify pgrst, 'reload schema';
+
+-- ────────────────────────────────────────────────────────────────────────
+-- Migración: 20260708000025_kitchen_url_tenants.sql
+-- ────────────────────────────────────────────────────────────────────────
+-- Cuenta tenants para URLs de cocina: solo restaurantes con PIN configurado.
+-- Si ninguno tiene PIN aún, usa propietarios (is_owner). Siempre mínimo 1.
+create or replace function public.count_kitchen_url_tenants()
+returns integer
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  with pinned as (
+    select count(distinct restaurant_id)::integer as n
+    from public.restaurant_settings
+    where kitchen_pin_set = true
+  ),
+  owners as (
+    select count(distinct restaurant_id)::integer as n
+    from public.profiles
+    where role = 'admin' and is_owner = true
+  )
+  select greatest(
+    coalesce(nullif((select n from pinned), 0), (select n from owners), 1),
+    1
+  );
+$$;
+
+grant execute on function public.count_kitchen_url_tenants() to anon, authenticated;
+
+notify pgrst, 'reload schema';
+
+-- ────────────────────────────────────────────────────────────────────────
+-- Migración: 20260708000026_kitchen_resolve_pin.sql
+-- ────────────────────────────────────────────────────────────────────────
+-- ============================================================================
+-- Cocina: resolver el restaurante correcto y validar PIN en servidor.
+-- ============================================================================
+
+-- Devuelve el restaurante de la tablet (prioriza el que tiene PIN configurado).
+create or replace function public.resolve_kitchen_restaurant(p_slug text default null)
+returns table (id uuid, name text, slug text)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_pinned_count integer;
+begin
+  if p_slug is not null and length(trim(p_slug)) > 0 then
+    return query
+    select r.id, r.name, r.slug
+    from public.restaurants r
+    where r.slug = trim(p_slug)
+    limit 1;
+    return;
+  end if;
+
+  select count(distinct rs.restaurant_id)
+    into v_pinned_count
+  from public.restaurant_settings rs
+  where rs.kitchen_pin_set = true;
+
+  if v_pinned_count = 1 then
+    return query
+    select r.id, r.name, r.slug
+    from public.restaurant_settings rs
+    join public.restaurants r on r.id = rs.restaurant_id
+    where rs.kitchen_pin_set = true
+    limit 1;
+    return;
+  end if;
+
+  return query
+  select r.id, r.name, r.slug
+  from public.restaurants r
+  order by r.created_at asc
+  limit 1;
+end;
+$$;
+
+-- Verifica el PIN contra la cuenta cocina del restaurante (sin exponer el hash).
+create or replace function public.kitchen_pin_is_valid(p_restaurant_id uuid, p_pin text)
+returns boolean
+language sql
+security definer
+set search_path = public, extensions, auth
+as $$
+  select exists (
+    select 1
+    from auth.users u
+    where u.email = public.kitchen_account_email(p_restaurant_id)
+      and u.encrypted_password = extensions.crypt(p_pin, u.encrypted_password)
+  );
+$$;
+
+grant execute on function public.resolve_kitchen_restaurant(text) to anon, authenticated;
+grant execute on function public.kitchen_pin_is_valid(uuid, text) to anon, authenticated;
 
 notify pgrst, 'reload schema';

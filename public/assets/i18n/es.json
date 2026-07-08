@@ -177,7 +177,11 @@
     "tap_for_sound": "Toca para escuchar el aviso",
     "status_received": "Pendiente",
     "status_preparing": "Preparando",
-    "min_label": "min"
+    "min_label": "min",
+    "access_title": "Cocina",
+    "pin_label": "PIN de acceso",
+    "pin_clear": "Borrar",
+    "access_demo_hint": "Modo demo: PIN 123456"
   },
   "waiter": {
     "online": "En línea",
@@ -431,6 +435,8 @@
     "payment_name_required": "Escribe el nombre del método",
     "role_updated": "Rol actualizado",
     "password_updated": "Contraseña actualizada",
+    "kitchen_pin_updated": "PIN de cocina guardado",
+    "kitchen_pin_invalid": "El PIN debe tener exactamente 6 dígitos",
     "call_attended": "Llamada atendida — mesero en camino",
     "admin_name_required": "Escribe el nombre del administrador",
     "category_name_required": "Ponle nombre al producto",

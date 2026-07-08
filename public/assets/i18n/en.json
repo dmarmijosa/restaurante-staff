@@ -148,7 +148,11 @@
     "tap_for_sound": "Tap to hear the alert",
     "status_received": "Pending",
     "status_preparing": "Preparing",
-    "min_label": "min"
+    "min_label": "min",
+    "access_title": "Kitchen",
+    "pin_label": "Access PIN",
+    "pin_clear": "Clear",
+    "access_demo_hint": "Demo mode: PIN 123456"
   },
   "waiter": {
     "online": "Online",
@@ -399,7 +403,9 @@
     "call_attended": "Call attended — waiter on the way",
     "admin_name_required": "Enter the admin's name",
     "category_name_required": "Give the product a name",
-    "currency_updated": "Currency updated"
+    "currency_updated": "Currency updated",
+    "kitchen_pin_updated": "Kitchen PIN saved",
+    "kitchen_pin_invalid": "PIN must be exactly 6 digits"
   },
   "weekday": {
     "0": "Monday",

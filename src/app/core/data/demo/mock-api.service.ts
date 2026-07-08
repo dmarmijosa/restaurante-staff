@@ -64,6 +64,7 @@ export class MockApiService {
   private calls = clone(DEMO_CALLS);
   private staff = clone(DEMO_STAFF);
   private settings = clone(DEMO_SETTINGS);
+  private kitchenPin = '123456';
   private methods = clone(DEMO_PAYMENT_METHODS);
   private schedules = clone(DEMO_SCHEDULES);
   private current: SessionUser | null = null;
@@ -286,6 +287,14 @@ export class MockApiService {
     this.settings = { ...this.settings, ...patch };
     await this.respond(null);
   }
+  async isKitchenPinSet(): Promise<boolean> {
+    return this.respond(this.settings.kitchenPinSet);
+  }
+  async setKitchenPin(pin: string): Promise<void> {
+    this.kitchenPin = pin;
+    this.settings = { ...this.settings, kitchenPinSet: true };
+    await this.respond(null);
+  }
 
   // ── Métodos de pago ──
   getMethods() {
@@ -314,6 +323,20 @@ export class MockApiService {
     if (!stored || stored !== password || !match) throw new Error('Credenciales incorrectas');
     const staff = this.staff.find((s) => s.id === match.staffId)!;
     this.current = { id: staff.id, email: staff.email, fullName: staff.fullName, role: staff.role, restaurantId: DEMO_RESTAURANT_ID };
+    sessionStorage.setItem('demo-session', JSON.stringify(this.current));
+    return clone(this.current);
+  }
+  async signInKitchen(_restaurantId: string, pin: string): Promise<SessionUser> {
+    await new Promise((r) => setTimeout(r, 40));
+    if (pin !== this.kitchenPin) throw new Error('PIN incorrecto');
+    const staff = this.staff.find((s) => s.role === 'cocina')!;
+    this.current = {
+      id: staff.id,
+      email: staff.email,
+      fullName: staff.fullName,
+      role: 'cocina',
+      restaurantId: DEMO_RESTAURANT_ID,
+    };
     sessionStorage.setItem('demo-session', JSON.stringify(this.current));
     return clone(this.current);
   }

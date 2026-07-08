@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 import { roleGuard } from './core/auth/role.guard';
 import { authGuard } from './core/auth/auth.guard';
-import { kitchenGuard } from './core/auth/kitchen.guard';
+import { kitchenGuard, kitchenAccessGuard } from './core/auth/kitchen.guard';
 import { bootstrapGuard } from './core/auth/bootstrap.guard';
 
 /**
@@ -57,6 +57,18 @@ export const routes: Routes = [
     path: 'mesero',
     canActivate: [roleGuard('mesero')],
     loadComponent: () => import('./features/waiter/waiter.component').then((m) => m.WaiterComponent),
+  },
+  {
+    path: 'cocina/acceso',
+    canActivate: [kitchenAccessGuard],
+    loadComponent: () =>
+      import('./features/kitchen/kitchen-access.component').then((m) => m.KitchenAccessComponent),
+  },
+  {
+    path: 'cocina/acceso/:slug',
+    canActivate: [kitchenAccessGuard],
+    loadComponent: () =>
+      import('./features/kitchen/kitchen-access.component').then((m) => m.KitchenAccessComponent),
   },
   {
     path: 'cocina',

@@ -131,53 +131,21 @@ async function signOutUI(page) {
     log(`   admin token: ${adminToken ? 'sí' : 'no'}`);
   }, 'Crear tenant + admin');
 
-  // ─── 1b. Seed del tenant (categoría, productos, mesa) usando el admin ──
-  // El tenant recién creado está vacío. Insertamos lo mínimo para que el
-  // cliente pueda operar y también validamos las policies de admin.
+  // ─── 1b. Verificar el seed automático de create_restaurant() ────────────
+  // Desde la migración 19 la función siembra 4 categorías + 6 productos +
+  // 4 mesas + 3 métodos de pago. El test se limita a comprobar el estado.
   await safe(async () => {
-    // Nombre único por-corrida porque `categories_name_key` es UNIQUE global
-    // (bug pendiente: migración 20260708000015 lo arregla). Con el fix aplicado,
-    // este suffix es inofensivo.
-    const catRes = await sb('/rest/v1/categories', {
-      method: 'POST',
-      token: adminToken,
-      headers: { Prefer: 'return=representation' },
-      body: JSON.stringify({ name: `Principales ${suffix}`, position: 1, restaurant_id: restaurantId }),
-    });
-    const categoryId = Array.isArray(catRes) ? catRes[0].id : catRes.id;
-    log(`   categoría creada id=${categoryId}`);
-
-    await sb('/rest/v1/products', {
-      method: 'POST',
-      token: adminToken,
-      body: JSON.stringify([
-        { name: 'Sopa de tortilla', description: 'Caldo tradicional', price: 7.5, available: true, category_id: categoryId, restaurant_id: restaurantId },
-        { name: 'Tacos de costilla', description: 'Tres piezas', price: 11, available: true, category_id: categoryId, restaurant_id: restaurantId },
-      ]),
-    });
-    log(`   productos creados: Sopa + Tacos`);
-
-    await sb('/rest/v1/tables', {
-      method: 'POST',
-      token: adminToken,
-      body: JSON.stringify({ number: 1, x: 100, y: 100, seats: 4, status: 'libre', restaurant_id: restaurantId }),
-    });
-    log(`   mesa 1 creada`);
-
-    // Métodos de pago. `payment_methods.name` sigue siendo UNIQUE global
-    // (bug pendiente: migración 20260708000018 lo arregla), así que sufijamos
-    // los nombres por-corrida. En una app real serían "Efectivo/Tarjeta/…".
-    await sb('/rest/v1/payment_methods', {
-      method: 'POST',
-      token: adminToken,
-      body: JSON.stringify([
-        { name: `Efectivo ${suffix}`,     active: true, position: 1, restaurant_id: restaurantId },
-        { name: `Tarjeta ${suffix}`,      active: true, position: 2, restaurant_id: restaurantId },
-        { name: `Transferencia ${suffix}`, active: true, position: 3, restaurant_id: restaurantId },
-      ]),
-    });
-    log(`   3 métodos de pago creados (con suffix ${suffix})`);
-  }, 'Seed del tenant (categoría, productos, mesa, métodos)');
+    const [cats, prods, tables, methods] = await Promise.all([
+      sb(`/rest/v1/categories?restaurant_id=eq.${restaurantId}&select=id,name`, { token: adminToken }),
+      sb(`/rest/v1/products?restaurant_id=eq.${restaurantId}&select=id,name,price`, { token: adminToken }),
+      sb(`/rest/v1/tables?restaurant_id=eq.${restaurantId}&select=id,number`, { token: adminToken }),
+      sb(`/rest/v1/payment_methods?restaurant_id=eq.${restaurantId}&select=id,name`, { token: adminToken }),
+    ]);
+    log(`   seed: ${cats?.length ?? 0} categorías · ${prods?.length ?? 0} productos · ${tables?.length ?? 0} mesas · ${methods?.length ?? 0} métodos`);
+    if (!cats?.length || !prods?.length || !tables?.length || !methods?.length) {
+      throw new Error('create_restaurant() no sembró el catálogo mínimo — revisar migración 19');
+    }
+  }, 'Seed automático del tenant');
 
   // ─── 2. Crear staff ─────────────────────────────────────────────────────
   const staff = [

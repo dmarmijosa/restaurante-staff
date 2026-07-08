@@ -35,9 +35,9 @@ Arranca en **modo demo** (sin cuenta, sin configurar nada) en menos de un minuto
 
 ---
 
-## Estado — v0.9 · 2026-07-08
+## Estado — v0.10 · 2026-07-08
 
-**43 unitarias** (Vitest) · **29 E2E** (Playwright, escritorio + móvil) · Build limpio
+**43 unitarias** (Vitest) · **29 E2E de UI** (Playwright, escritorio + móvil) · **1 E2E funcional contra Supabase real** (28 asserts, 0 fallos) · Build limpio
 
 | Área | Estado |
 | ---- | ------ |
@@ -48,10 +48,12 @@ Arranca en **modo demo** (sin cuenta, sin configurar nada) en menos de un minuto
 | Panel admin completo (plano, kanban, menú, personal, ajustes, métricas) | ✅ |
 | Autenticación y roles (admin / mesero / cocina / cajero) | ✅ |
 | Multi-restaurante (multi-tenant, RLS scoped) | ✅ |
+| Tenant nuevo listo para operar de inmediato — `create_restaurant()` siembra 4 categorías, 6 productos, 4 mesas y 3 métodos de pago | ✅ |
 | Moneda configurable (12 símbolos, propagación automática) | ✅ |
 | Internacionalización (6 idiomas, paridad de claves) | ✅ |
 | Wizard de instalación guiada (6 pasos, sin código) | ✅ |
-| Migraciones Supabase (11 SQL + RLS + seed) | ✅ |
+| Migraciones Supabase (19 SQL + RLS + seed) | ✅ |
+| Prueba E2E que recorre el ciclo de vida del pedido (cliente → cocina → mesero → cajero → historial) contra Supabase real | ✅ |
 | CI (GitHub Actions: build + unit + E2E en modo demo) | ✅ |
 
 ## Arranque rápido (modo demo, sin configurar nada)
@@ -135,7 +137,8 @@ Angular 22 (standalone + signals) · Tailwind CSS 4 · Supabase (Postgres, Auth,
 
 ## Changelog
 
-### 2026-07-08
+### 2026-07-08 — v0.10
+- **feat:** `create_restaurant()` con **seed automático** — al crear un tenant nuevo se insertan 4 categorías (Entradas, Principales, Postres, Bebidas), 6 productos de ejemplo, 4 mesas en cuadrícula 2×2 y 3 métodos de pago (Efectivo, Tarjeta, Transferencia). Antes un tenant recién creado quedaba vacío: el cliente veía la home sin menú y el cajero no podía cobrar hasta configurar todo a mano. Migración `19_create_restaurant_seed`
 - **test:** E2E cubre el **ciclo de vida completo del pedido** con acciones reales de cada rol — cocina pulsa "Empezar a preparar" y "Platillo listo" (verifica `recibido → preparando → listo` en la DB), mesero "Atender mesa" (verifica `waiter_calls.attended = true`) y "Marcar Entregado" (`listo → entregado`), cajero cobra con Efectivo (verifica `paid = true` y `payment_method` en la DB), admin final ve historial + resumen con métricas coherentes. 28 capturas, 28 asserts, 0 fallos
 - **fix:** `payment_methods.name` era UNIQUE global (mismo patrón que categorías) — dos tenants no podían tener "Efectivo" a la vez, bloqueando el arranque del rol Cajero al crear un tenant nuevo. Migración `18_fix_payment_methods_unique` cambia a `UNIQUE(restaurant_id, name)`
 - **fix:** root cause del `42501` al llamar al mesero — la migración 12 dropeó `"todos leen llamadas"` sin dejar reemplazo para `anon`. Como el cliente inserta con `.select().single()` en supabase-js, PostgREST hace INSERT + SELECT con `Prefer: return=representation` y el SELECT falla, devolviendo el mismo código de error que un INSERT rechazado. Solución: policy `"anon lee llamadas"` restringida a tenants existentes (migración `17_add_anon_read_waiter_calls`). Verificado con la prueba E2E — la llamada aparece en la card `"Mesa 1 llama · Atender mesa"` del panel del mesero

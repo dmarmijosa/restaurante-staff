@@ -1,25 +1,44 @@
 # Trabajo actual
 
-_Última actualización: 2026-07-08 (iteración 15)_
+_Última actualización: 2026-07-08 (iteración 16)_
 
 ## Estado actual
 
-Plataforma **v0.9** publicada en `main`.
+Plataforma **v0.10** publicada en `main`.
 
-- **11 migraciones SQL** aplicadas (init, RLS, bootstrap admin, Storage, cajero + payments, ready_at, reinicio diario, disable public signup, multi-restaurante, work_schedules, **currency**).
-- **43 pruebas unitarias** (Vitest) y **29 E2E** (Playwright, escritorio + móvil) en verde.
-- **Build limpio** (`ng build` + `tsc --noEmit`).
+- **19 migraciones SQL** — v0.9 traía 11 (init, RLS, bootstrap, Storage, cajero, ready_at, reinicio, disable signup, multi-restaurante, horarios, currency); en v0.10 se añaden 8 fixes multi-tenant descubiertos por la prueba E2E contra Supabase real: RLS+singleton settings+grants (12), triggers signup (13), grant `my_restaurant_id` (14), `UNIQUE(restaurant_id, name)` en categorías + `(restaurant_id, number)` en mesas (15), reapply anon INSERT policies (16), anon SELECT en `waiter_calls` (17), `UNIQUE(restaurant_id, name)` en `payment_methods` (18) y `create_restaurant()` con seed automático (19).
+- **43 pruebas unitarias** (Vitest) en verde.
+- **1 prueba funcional E2E** (`scripts/functional-test.mjs`, Playwright) que cubre el **ciclo de vida completo del pedido** contra Supabase real: 28 capturas, 28 asserts, 0 fallos.
+- **Build limpio** (`ng build`).
 - **Modo demo por defecto** (`.env` vacío → mock en memoria). El usuario decide cuándo conectar su propio Supabase (wizard visual o `.env` clásico).
 
 ### Últimos commits en `main`
 
 | Commit | Descripción |
 |--------|-------------|
-| `33b7102` | feat: moneda configurable + refactors (ChipBtnDirective, OrderCardComponent, waiterName real) |
-| `8fce1ef` | feat: wizard de instalación guiada `/instalacion` (6 pasos, sin código) |
-| `310ba5b` | feat: notificación sonora automática al entrar comanda en cocina |
-| `745bbdd` | feat: PWA/offline para la tablet del mesero |
-| `89aaeac` | feat: mock API demo, login rápido, salir de demo, horarios, responsive e i18n |
+| `41cc887` | test(e2e): ciclo de vida completo del pedido + fix `payment_methods` UNIQUE multi-tenant |
+| `bf24e17` | fix(rls): policy anon SELECT en `waiter_calls` — root cause del `42501` al llamar al mesero |
+| `ef7dc30` | test: flujo cruzado entre roles — cliente/admin/cocina/mesero/cajero ven el mismo pedido |
+| `f51fa9f` | fix(multi-tenant): `UNIQUE(restaurant_id, name)` en categorías + reapply anon RLS + i18n `kitchen.min_label` |
+| `38f2ccc` | test: script funcional E2E contra Supabase real |
+| `297b4eb` | fix(multi-tenant): RLS legacy + singleton settings + grants + `getFirstAvailable` |
+| `006b057` | Merge feat/redesign-responsive → main: rediseño responsivo de todos los roles |
+
+## Hecho en la iteración 16 (rediseño responsivo + prueba E2E real + fixes multi-tenant + seed de tenant)
+
+- ✅ **Rediseño responsivo** en los 5 roles (cliente, admin, mesero, cajero, cocina) — fondos con gradiente, marco tipo tablet, tipografía y jerarquía visual afinadas, chips con `ChipBtnDirective`, iconos SVG en el sidebar del admin.
+- ✅ **Prueba E2E contra Supabase real** (`scripts/functional-test.mjs`): 28 capturas por corrida, valida el **ciclo de vida completo del pedido** con acciones reales de cada rol y verificación en la DB de cada transición (`recibido → preparando → listo → entregado → cobrado`).
+- ✅ **8 migraciones nuevas** (12–19) que arreglan bugs descubiertos por la prueba:
+  - **12**: RLS legacy + `restaurant_settings.id` singleton → `bigserial` + policies multi-tenant limpias.
+  - **13**: reapply de `handle_new_user` y `check_signup_allowed` (multi-tenant).
+  - **14**: `grant execute` a `my_restaurant_id()` para `authenticated`.
+  - **15**: `UNIQUE(restaurant_id, name)` en `categories` y `UNIQUE(restaurant_id, number)` en `tables`.
+  - **16**: reapply de `anon crea llamadas` y `anon crea pedidos qr` con nombres calificados.
+  - **17**: `anon lee llamadas` — root cause del `42501` fantasma al llamar al mesero (INSERT + `Prefer: return=representation` requería SELECT).
+  - **18**: `UNIQUE(restaurant_id, name)` en `payment_methods`.
+  - **19**: `create_restaurant()` con **seed automático** — al crear un tenant se insertan 4 categorías, 6 productos, 4 mesas y 3 métodos de pago.
+- ✅ **i18n**: clave `kitchen.min_label` añadida en los 6 idiomas (la card de la cocina mostraba el literal).
+- ✅ **Repositorio**: nuevo método `RestaurantRepository.getFirstAvailable()` (Supabase + Demo) — resuelve el tenant cuando el cliente entra por `/` sin slug.
 
 ## Hecho en la iteración 15 (endurecer modo demo + puente al wizard)
 
@@ -95,12 +114,13 @@ Plataforma **v0.9** publicada en `main`.
 
 ## Pendiente inmediato
 
-- Ninguno — `main` está actualizado y publicado. Ver [backlog.md](backlog.md) para próximas funcionalidades opcionales.
+- Ninguno — `main` está actualizado y publicado con la iteración 16. Ver [backlog.md](backlog.md) para próximas funcionalidades opcionales.
 
 ## Próximos pasos
 
 1. Opcional: rediseño visual más profundo estilo 21st.dev (la base responsiva ya está).
-2. Backlog abierto — ver [backlog.md](backlog.md).
+2. Automatizar la prueba E2E en CI (Playwright ya está instalado; falta añadir el job).
+3. Backlog abierto — ver [backlog.md](backlog.md).
 
 ## Bloqueadores
 

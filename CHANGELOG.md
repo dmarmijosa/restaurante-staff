@@ -3,6 +3,16 @@
 Todos los cambios relevantes del proyecto se documentan aquí.
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es/ES/1.1.0/).
 
+## [0.13.0] — 2026-07-09
+
+### Añadido
+- Script `scripts/frontend-flow.mjs`: recorrido funcional completo solo por frontend contra Supabase real (bootstrap de tenant o restaurante existente).
+- Comando npm `e2e:flow` para ejecutar el flujo con capturas en `/Playwright`.
+- Modos: tenant nuevo (`/nuevo-restaurante`) o existente (`E2E_EXISTING=1` + credenciales admin).
+- Cobertura: admin (todas las secciones), cliente (menú, carrito, pedido, llamar mesero), cocina (PIN), mesero, cajero y vista móvil.
+
+---
+
 ## [0.12.0] — 2026-07-08
 
 ### Añadido
@@ -98,6 +108,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/ES/1.1.0/).
 - Resumen con métricas, temporizador de cocina, MoneyPipe.
 - Registro de admin, Storage de imágenes, QR por mesa, onboarding con driver.js.
 
+[0.13.0]: https://github.com/Restaurante-Staff-Open-Source/restaurante-staff/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/Restaurante-Staff-Open-Source/restaurante-staff/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/Restaurante-Staff-Open-Source/restaurante-staff/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/Restaurante-Staff-Open-Source/restaurante-staff/compare/v0.9.0...v0.10.0

@@ -5,6 +5,9 @@
  */
 import { expect, test } from '@playwright/test';
 
+/** Moneda por defecto en modo demo (ver DEFAULT_CURRENCY en currency.service.ts). */
+const DEMO_MONEY = (amount: string) => `€${amount}`;
+
 test.describe('Cliente (home pública)', () => {
   test('muestra el menú del restaurante sin pedir login', async ({ page }) => {
     await page.goto('/');
@@ -33,11 +36,11 @@ test.describe('Cliente (home pública)', () => {
     // Esperar a que la página cargue
     await page.locator('[data-testid="add-to-cart-1"]').first().waitFor();
 
-    // Click en producto 1 (Tostadas $6.50)
+    // Click en producto 1 (Tostadas €6.50)
     await page.locator('button[data-testid="add-to-cart-1"]').click();
 
     // Esperar a que aparezca la barra del carrito con el precio
-    await page.locator('[data-testid="cart-bar-button"]').filter({ hasText: '$6.50' }).waitFor();
+    await page.locator('[data-testid="cart-bar-button"]').filter({ hasText: DEMO_MONEY('6.50') }).waitFor();
 
     // Abrir carrito
     await page.locator('[data-testid="cart-bar-button"]').click();

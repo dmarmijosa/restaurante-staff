@@ -7,9 +7,13 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es/ES/1.1.0/).
 
 ### Corregido
 - **Resumen admin:** interpolación i18n (`{{count}}`, `{{paid}}`, `{{pending}}`) en las tarjetas KPI; importes usan `CurrencyService` en lugar de `$` fijo.
+- **E2E Playwright:** specs alineados con moneda € en demo, cocina por PIN (`/cocina/acceso`), alta de mesero con correo obligatorio, `adminExists` en demo y selectores strict mode.
 
 ### Cambiado
 - Moneda por defecto **€** (demo, nuevos tenants y `schema.sql`).
+
+### Tests
+- **Unit:** `auth.service.spec` alineado con `adminExists() === false` en demo.
 
 ---
 

@@ -15,14 +15,18 @@ test.describe('Autenticación por roles', () => {
   test('las rutas de personal exigen sesión', async ({ page }) => {
     await page.goto('/admin');
     await expect(page).toHaveURL(/\/login/);
-    await page.goto('/cocina');
+    await page.goto('/mesero');
     await expect(page).toHaveURL(/\/login/);
+    // Cocina usa PIN en tablet → redirige a acceso, no al login de correo
+    await page.goto('/cocina');
+    await expect(page).toHaveURL(/\/cocina\/acceso/);
   });
 
-  test('el registro inicial se cierra si ya existe un admin', async ({ page }) => {
-    // En demo siempre hay un admin de ejemplo → el bootstrapGuard redirige.
+  test('el registro legacy permanece abierto en demo (sin admin en Supabase)', async ({ page }) => {
+    // En demo no hay bootstrap real en la base → bootstrapGuard no redirige.
     await page.goto('/registro-inicial');
-    await expect(page).toHaveURL(/\/login/);
+    await expect(page).toHaveURL(/\/registro-inicial/);
+    await expect(page.getByRole('heading', { name: 'Crea tu restaurante' })).toBeVisible();
   });
 
   test('rechaza credenciales inválidas', async ({ page }) => {
@@ -40,7 +44,7 @@ test.describe('Autenticación por roles', () => {
   test('mesero va a su tablet y no puede entrar al admin', async ({ page }) => {
     await login(page, 'mesero@demo.dev', 'mesero123');
     await expect(page).toHaveURL(/\/mesero/);
-    await expect(page.getByText('PEDIDOS ACTIVOS')).toBeVisible();
+    await expect(page.getByText('PEDIDOS ACTIVOS', { exact: true })).toBeVisible();
 
     await page.goto('/admin');
     await expect(page).toHaveURL(/\/mesero/);

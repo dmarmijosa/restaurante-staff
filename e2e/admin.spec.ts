@@ -78,9 +78,11 @@ test.describe('Panel de administración', () => {
     await loginAdmin(page);
     await page.getByRole('link', { name: 'Meseros y turnos' }).click();
 
-    // Alta
+    // Alta (correo obligatorio desde v0.11)
     await page.getByRole('button', { name: '+ Dar de alta' }).click();
     await page.getByLabel('Nombre completo').fill('Sofía Cabrera');
+    await page.getByLabel('Correo del empleado').fill('sofia.cabrera@demo.dev');
+    await page.getByLabel('Contraseña inicial').fill('password1');
     await page.getByRole('button', { name: 'Guardar' }).click();
     const row = page.getByTestId('staff-row').filter({ hasText: 'Sofía Cabrera' });
     await expect(row).toBeVisible();
@@ -97,8 +99,8 @@ test.describe('Panel de administración', () => {
     await page.getByRole('button', { name: 'Cerrado por temporada' }).click();
     // La vista previa muestra lo que verá el cliente
     await expect(page.getByText('“Cerrado por temporada — volvemos pronto”')).toBeVisible();
-    // El chip del panel cambia a cerrado (el QR deja de aceptar pedidos)
-    await expect(page.getByText('Cerrado — el menú público no acepta pedidos')).toBeVisible();
+    // El chip del panel cambia a cerrado (desktop + móvil comparten el texto)
+    await expect(page.getByText('Cerrado — el menú público no acepta pedidos').first()).toBeVisible();
   });
 
   test('ajustes: el nombre del restaurante se propaga y la propietaria está protegida', async ({ page }) => {

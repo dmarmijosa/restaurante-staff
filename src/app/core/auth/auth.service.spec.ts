@@ -57,8 +57,8 @@ describe('AuthService', () => {
     expect(auth.role()).toBeNull();
   });
 
-  it('en modo demo ya existe un admin (registro inicial deshabilitado)', async () => {
-    expect(await auth.adminExists()).toBe(true);
+  it('en modo demo no hay bootstrap real pero el registro inicial sigue bloqueado', async () => {
+    expect(await auth.adminExists()).toBe(false);
     await expect(
       auth.signUpFirstAdmin({ fullName: 'X', email: 'x@x.dev', password: 'password1', restaurantId: 'r1' }),
     ).rejects.toThrow();

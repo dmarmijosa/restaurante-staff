@@ -12,10 +12,10 @@ describe('MoneyPipe', () => {
     currencyService = TestBed.inject(CurrencyService);
   });
 
-  it('formatea con símbolo por defecto ($) y dos decimales', () => {
-    expect(pipe.transform(6.5)).toBe('$6.50');
-    expect(pipe.transform(14)).toBe('$14.00');
-    expect(pipe.transform(0)).toBe('$0.00');
+  it('formatea con símbolo por defecto (€) y dos decimales', () => {
+    expect(pipe.transform(6.5)).toBe('€6.50');
+    expect(pipe.transform(14)).toBe('€14.00');
+    expect(pipe.transform(0)).toBe('€0.00');
   });
 
   it('usa el símbolo de moneda configurado por el admin', () => {

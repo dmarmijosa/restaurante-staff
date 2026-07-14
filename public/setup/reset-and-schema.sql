@@ -974,7 +974,7 @@ create policy "admin gestiona horarios" on public.work_schedules
 -- Añade el símbolo de moneda configurable por el admin.
 -- El valor por defecto '$' mantiene compatibilidad con datos existentes.
 alter table public.restaurant_settings
-  add column if not exists currency text not null default '$';
+  add column if not exists currency text not null default '€';
 
 -- ────────────────────────────────────────────────────────────────────────
 -- Migración: 20260708000012_fix_rls_and_settings.sql

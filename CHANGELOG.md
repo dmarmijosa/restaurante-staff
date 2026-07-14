@@ -3,6 +3,16 @@
 Todos los cambios relevantes del proyecto se documentan aquí.
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es/ES/1.1.0/).
 
+## [0.13.2] — 2026-07-14
+
+### Corregido
+- **Resumen admin:** interpolación i18n (`{{count}}`, `{{paid}}`, `{{pending}}`) en las tarjetas KPI; importes usan `CurrencyService` en lugar de `$` fijo.
+
+### Cambiado
+- Moneda por defecto **€** (demo, nuevos tenants y `schema.sql`).
+
+---
+
 ## [0.13.1] — 2026-07-14
 
 ### Corregido

@@ -276,8 +276,8 @@ export class SettingsComponent implements OnInit {
 
   /** Monedas disponibles: símbolo + nombre corto. */
   protected readonly currencies = [
-    { symbol: '$',    name: 'Dólar'    },
     { symbol: '€',    name: 'Euro'     },
+    { symbol: '$',    name: 'Dólar'    },
     { symbol: '£',    name: 'Libra'    },
     { symbol: '¥',    name: 'Yen'      },
     { symbol: 'R$',   name: 'Real'     },

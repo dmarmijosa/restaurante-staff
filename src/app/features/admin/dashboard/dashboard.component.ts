@@ -10,6 +10,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { RestaurantStore } from '../../../core/application/restaurant.store';
 import { AuthService } from '../../../core/auth/auth.service';
 import { isSupabaseConfigured } from '../../../core/data/supabase/supabase-client.service';
+import { CurrencyService } from '../../../shared/currency.service';
 import { MoneyPipe } from '../../../shared/money.pipe';
 import { ChipBtnDirective } from '../../../shared/chip-btn.directive';
 import {
@@ -180,13 +181,15 @@ export class DashboardComponent implements OnInit {
   );
 
   private translate = inject(TranslateService);
+  private currency = inject(CurrencyService);
 
   protected readonly kpis = computed(() => {
     const orders = this.orders();
     const paid = orders.filter((o) => o.paid).length;
     const pending = orders.filter((o) => !o.paid).length;
     const t = (k: string, p?: object) => this.translate.instant(k, p);
-    const money = (n: number) => '$' + n.toFixed(2);
+    const sym = this.currency.symbol();
+    const money = (n: number) => sym + n.toFixed(2);
     const prep = averagePrepMinutes(orders);
     return [
       { label: t('admin.dashboard.revenue'), value: money(totalRevenue(orders)), hint: t('admin.dashboard.revenue_hint', { count: paid }) },

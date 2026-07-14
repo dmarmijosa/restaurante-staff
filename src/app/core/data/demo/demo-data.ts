@@ -118,7 +118,7 @@ export const DEMO_SETTINGS: RestaurantSettings = {
   seasonStart: '2026-03-15',
   seasonEnd: '2026-09-15',
   logoUrl: null,
-  currency: '$',
+  currency: '€',
   kitchenPinSet: true,
 };
 

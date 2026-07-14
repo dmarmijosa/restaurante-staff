@@ -577,7 +577,7 @@ export class SupabaseSettingsRepository extends SettingsRepository {
       seasonStart: data.season_start,
       seasonEnd: data.season_end,
       logoUrl: data.logo_url ?? null,
-      currency: data.currency ?? '$',
+      currency: data.currency ?? '€',
       kitchenPinSet: Boolean(data.kitchen_pin_set),
     };
   }

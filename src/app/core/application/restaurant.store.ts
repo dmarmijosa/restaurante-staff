@@ -38,7 +38,7 @@ import {
   WorkScheduleRepository,
 } from '../domain/repositories/repositories';
 import { ToastService } from '../../shared/toast/toast.service';
-import { CurrencyService } from '../../shared/currency.service';
+import { CurrencyService, DEFAULT_CURRENCY } from '../../shared/currency.service';
 import { compressImage } from '../../shared/image-utils';
 import { RestaurantContextService } from './restaurant-context.service';
 
@@ -74,7 +74,7 @@ export class RestaurantStore {
     seasonStart: null,
     seasonEnd: null,
     logoUrl: null,
-    currency: '$',
+    currency: DEFAULT_CURRENCY,
     kitchenPinSet: false,
   });
   readonly categories = signal<Category[]>([]);
@@ -147,7 +147,7 @@ export class RestaurantStore {
       ]);
     if (settings.status === 'fulfilled') {
       this.settings.set(settings.value);
-      this.currencyService.symbol.set(settings.value.currency ?? '$');
+      this.currencyService.symbol.set(settings.value.currency ?? DEFAULT_CURRENCY);
     }
     if (categories.status === 'fulfilled') this.categories.set(categories.value);
     if (products.status === 'fulfilled') this.products.set(products.value);

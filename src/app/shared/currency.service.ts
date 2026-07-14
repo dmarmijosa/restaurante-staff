@@ -9,8 +9,11 @@
  */
 import { Injectable, signal } from '@angular/core';
 
+/** Símbolo por defecto en demo, ajustes iniciales y nuevos tenants. */
+export const DEFAULT_CURRENCY = '€';
+
 @Injectable({ providedIn: 'root' })
 export class CurrencyService {
-  /** Símbolo de moneda actual (p. ej. '$', '€', '£'). */
-  readonly symbol = signal('$');
+  /** Símbolo de moneda actual (p. ej. '€', '$', '£'). */
+  readonly symbol = signal(DEFAULT_CURRENCY);
 }

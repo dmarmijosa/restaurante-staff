@@ -60,6 +60,7 @@ export function isRuntimeConfigured(): boolean {
 
 /** Guarda las credenciales del usuario (para salir del modo demo). */
 export function saveSupabaseConfig(url: string, anonKey: string): void {
+  localStorage.removeItem(FORCE_DEMO_KEY);
   localStorage.setItem(URL_KEY, url.trim());
   localStorage.setItem(ANON_KEY, anonKey.trim());
 }

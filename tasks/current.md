@@ -1,10 +1,10 @@
 # Trabajo actual
 
-_Última actualización: 2026-07-08 (iteración 17)_
+_Última actualización: 2026-07-14 (iteración 18)_
 
 ## Estado actual
 
-Plataforma **v0.12** publicada en `main`.
+Plataforma **v0.13.1** publicada en `main`.
 
 - **26 migraciones SQL** — v0.11 añadió staff passwords (21) y kiosk cocina (22); v0.12 añade PIN de cocina (23), fix `auth.identities` (24), URLs canónicas (25) y resolución/validación de PIN (26).
 - **43 pruebas unitarias** (Vitest) en verde.
@@ -16,14 +16,15 @@ Plataforma **v0.12** publicada en `main`.
 
 | Commit | Descripción |
 |--------|-------------|
-| `5a63f15` | feat(kitchen): acceso por PIN de 6 dígitos con cuenta interna por restaurante |
-| `658304e` | feat(ops): cocina kiosk, contraseñas de staff y fixes QR/móvil |
-| `bf24e17` | fix(rls): policy anon SELECT en `waiter_calls` — root cause del `42501` al llamar al mesero |
-| `ef7dc30` | test: flujo cruzado entre roles — cliente/admin/cocina/mesero/cajero ven el mismo pedido |
-| `f51fa9f` | fix(multi-tenant): `UNIQUE(restaurant_id, name)` en categorías + reapply anon RLS + i18n `kitchen.min_label` |
-| `38f2ccc` | test: script funcional E2E contra Supabase real |
-| `297b4eb` | fix(multi-tenant): RLS legacy + singleton settings + grants + `getFirstAvailable` |
-| `006b057` | Merge feat/redesign-responsive → main: rediseño responsivo de todos los roles |
+| _(pendiente)_ | fix(wizard): conexión Supabase tras modo demo + docs v0.13.1 |
+| `e86f88e` | docs(presentacion): deck PDF del proyecto |
+| `449fad7` | feat(test): flujo frontend completo con e2e:flow y CHANGELOG v0.13.0 |
+
+## Hecho en la iteración 18 (fix wizard conexión + docs)
+
+- ✅ **`saveSupabaseConfig()`** borra `rs-force-demo` al conectar — el wizard ya no queda atrapado si el usuario probó el modo demo antes.
+- ✅ **Wizard paso 3:** mensaje de error si la conexión no se aplica tras recargar; repoblado de URL/clave desde runtime-config; textos para claves `sb_publishable_…`.
+- ✅ **Documentación** (`CHANGELOG`, `manual.md`, `README`, `docs/decisions`, `docs/architecture`, `tasks/current`) alineada con el flujo real del wizard y reinicio de `npm start` tras editar `.env`.
 
 ## Hecho en la iteración 16 (rediseño responsivo + prueba E2E real + fixes multi-tenant + seed de tenant)
 

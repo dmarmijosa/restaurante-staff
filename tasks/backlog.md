@@ -21,6 +21,7 @@
 - [x] ~~Mock API única para el modo demo (todos los roles)~~ — hecho (`mock-api.service.ts`, backend en memoria con latencia; repos demo como adaptadores)
 - [x] ~~Login demo con accesos rápidos (sin credenciales en texto)~~ — hecho (botones por rol, incluido cajero)
 - [x] ~~Salir del modo demo con credenciales Supabase en runtime~~ — hecho (`runtime-config.ts` + diálogo; localStorage + recarga)
+- [x] ~~Wizard `/instalacion`: conexión bloqueada tras «Probar modo demo»~~ — hecho (v0.13.1: `saveSupabaseConfig` limpia `rs-force-demo`; mensaje de error y repoblado del formulario)
 - [x] ~~Módulo Horario de trabajo~~ — hecho (`/admin/horarios`, tabla `work_schedules`, visible al trabajador en la topbar)
 - [x] ~~Panel 100% responsivo (drawer móvil)~~ — hecho (sidebar deslizante, sin scroll horizontal, grids adaptativos)
 - [x] ~~i18n~~ — hecho (6 idiomas: es/en/ca/pt/fr/it; 334 claves; `@ngx-translate/core` + HttpLoader; detector automático del idioma del navegador; selector en el topbar; dashboard e historial incluidos)

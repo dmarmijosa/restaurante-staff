@@ -3,6 +3,17 @@
 Todos los cambios relevantes del proyecto se documentan aquí.
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es/ES/1.1.0/).
 
+## [0.13.1] — 2026-07-14
+
+### Corregido
+- **Wizard `/instalacion`:** conectar Supabase ya no queda bloqueado si antes se activó «Probar modo demo» (`rs-force-demo`); `saveSupabaseConfig()` limpia esa bandera al guardar credenciales.
+- **Wizard paso 3:** mensaje de error cuando la conexión no se aplica tras recargar; el formulario repuebla URL/clave desde `localStorage` o `.env`; textos actualizados para claves `sb_publishable_…` además de JWT `eyJ…`.
+
+### Documentación
+- `manual.md`, `README.md`, `tasks/current.md`, `docs/decisions.md` y `docs/architecture.md` alineados con el flujo del wizard y la prioridad runtime-config (localStorage → `.env`).
+
+---
+
 ## [0.13.0] — 2026-07-09
 
 ### Añadido

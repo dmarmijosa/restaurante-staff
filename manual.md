@@ -4,7 +4,7 @@ Guía pensada para una **persona no técnica** que quiere poner en marcha su pro
 restaurante con esta plataforma libre. Está escrita paso a paso. Si te atascas en
 algún punto, cada sección indica qué hacer.
 
-> Este manual se irá ampliando conforme el proyecto crece. Última actualización: 2026-07-08 (v0.12).
+> Este manual se irá ampliando conforme el proyecto crece. Última actualización: 2026-07-14 (v0.13.1).
 
 ---
 
@@ -82,7 +82,7 @@ Así el primer administrador entra al panel de inmediato, sin revisar el buzón.
 ### 3.1. Cargar la estructura (tablas)
 
 **Opción rápida (recomendada):** descarga `schema.sql` desde el wizard `/instalacion`
-(paso 4) o desde `public/setup/schema.sql` del repositorio (19 migraciones + seed unificados).
+(paso 4) o desde `public/setup/schema.sql` del repositorio (26 migraciones + seed unificados).
 Pégalo entero en el **SQL Editor** de Supabase y pulsa **Run**. Debes ver
 `Success. No rows returned.` (o similar).
 
@@ -91,7 +91,7 @@ Pégalo entero en el **SQL Editor** de Supabase y pulsa **Run**. Debes ver
 de Auth y vuelve a aplicar el esquema completo.
 
 **Opción manual (avanzada):** aplica los archivos de `supabase/migrations/` **en orden
-alfabético** (19 archivos) y al final `supabase/seed.sql` si quieres datos de ejemplo
+alfabético** (26 archivos) y al final `supabase/seed.sql` si quieres datos de ejemplo
 de la demo «Casa Nogal». El wizard y `schema.sql` ya incluyen todo esto en un solo paso.
 
 Con esto tu base ya tiene las tablas, la seguridad (RLS), multi-restaurante, moneda,
@@ -118,8 +118,9 @@ Dos formas. El wizard sirve para **probar rápido**; el `.env` + build es para *
 
 1. Arranca la app en modo demo (`npm install` y luego `npm start`).
 2. Abre <http://localhost:4200/instalacion>.
-3. En el paso 3 pega la **Project URL** y la clave **anon/publishable**. La app las guarda en
-   el navegador (`localStorage`) y se recarga sola contra tu Supabase.
+3. En el paso 3 pega la **Project URL** y la clave **anon/publishable** (`eyJ…` o `sb_publishable_…`).
+   La app las guarda en el navegador (`localStorage`), **recarga la página** (el formulario quedará vacío — es normal)
+   y debe avanzar al paso de **descargar/ejecutar `schema.sql`**.
 
 **Limitaciones del wizard:**
 
@@ -145,7 +146,8 @@ En la carpeta del proyecto hay un archivo `.env.example`:
    ```
 
 3. Arranca en desarrollo: `npm start` (el script `scripts/set-env.mjs` genera
-   `src/environments/env.generated.ts`, gitignorado).
+   `src/environments/env.generated.ts`, gitignorado). **Si editas `.env` con el servidor ya en marcha,
+   detén y vuelve a ejecutar `npm start`** para que el cambio se aplique.
 4. Para publicar: `npm run build` — las claves del `.env` quedan embebidas en `dist/`
    en el momento del build. Sube esa carpeta a tu hosting (Netlify, Vercel, servidor propio…).
 
@@ -220,6 +222,7 @@ falla un rato.
 - **"No aparece la pantalla de registro"**: ya existe un administrador. Usa **Iniciar sesión** o `/nuevo-restaurante` para otro tenant. Si olvidaste la contraseña, restablécela desde Supabase → Authentication → Users.
 - **"No veo los botones de demo en /login"**: la app detecta credenciales (`.env` o wizard en el navegador). Pulsa **«Probar modo demo (sin Supabase)»** o vacía `.env`, reinicia `npm start` y borra `rs-supabase-url` / `rs-supabase-anon-key` del almacenamiento local.
 - **"Conecté Supabase en el wizard pero al cerrar el navegador ya no funciona"**: el wizard es temporal en ese navegador; para fijarlo usa §4.b (`.env` + `npm run build`).
+- **"Pulsé Conectar y continuar, se vació el formulario y no avancé"**: la recarga es normal; deberías ver el paso de `schema.sql`. Si vuelves al paso de pegar claves: (1) si antes usaste **«Probar modo demo»** en `/login`, vuelve a conectar — desde v0.13.1 el wizard desactiva ese modo al guardar; (2) reinicia `npm start` si acabas de cambiar `.env`; (3) comprueba en DevTools → Application → Local Storage que existan `rs-supabase-url` y `rs-supabase-anon-key` y que `rs-force-demo` no sea `1`.
 - **"El menú sale vacío"**: revisa que cargaste `schema.sql` (§3.1). Los tenants nuevos reciben catálogo mínimo automáticamente vía `create_restaurant()`.
 - **"No puedo cobrar / no hay métodos de pago"**: ve a **Métodos de pago** en el panel; los tenants nuevos ya traen Efectivo, Tarjeta y Transferencia por defecto.
 - **"Error al ejecutar schema.sql: column restaurant_id does not exist"**: descarga de nuevo `public/setup/schema.sql` (regenerado con `node scripts/build-schema.mjs`) o usa `reset-and-schema.sql` en una base limpia.
@@ -249,6 +252,10 @@ Este es un proyecto **open source** (licencia MIT). Puedes abrir una incidencia 
 el repositorio de GitHub del proyecto describiendo tu problema.
 
 ---
+
+## Novedades de v0.13.1
+
+- **Wizard `/instalacion`:** corregido el bloqueo al conectar tras haber probado el modo demo; mensaje claro si la conexión no se aplica tras recargar; soporte documentado de claves `sb_publishable_…`.
 
 ## Novedades de v0.12
 

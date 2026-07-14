@@ -87,6 +87,7 @@ src/app/
 ├── features/
 │   ├── client/                         # Home pública (menú QR)
 │   ├── auth/                           # Login del personal (accesos rápidos demo)
+│   ├── setup/                          # Wizard `/instalacion` (6 pasos, progreso en localStorage)
 │   ├── admin/                          # Layout responsivo + resumen/plano/pedidos/historial/menú/categorías/meseros/horarios/pagos/temporada/ajustes + diálogo "salir de demo"
 │   ├── waiter/                         # Tablet del mesero
 │   ├── cashier/                        # Caja del cajero (cobro por método de pago)
@@ -105,6 +106,7 @@ docs/ · tasks/                          # Documentación viva
 - **Aplicación → Dominio**: el store depende de los contratos abstractos; nunca importa Supabase.
 - **Datos → Dominio**: cada repositorio implementa un contrato y mapea snake_case ⇄ camelCase.
 - **Autorización**: `roleGuard(rol)` protege `/admin`, `/mesero`, `/cocina`; la autoridad real vive en las **políticas RLS** del servidor.
+- **Instalación / modo demo**: sin credenciales → repos demo; wizard o `.env` → repos Supabase tras recarga. Ver ADR-8 en [decisions.md](./decisions.md).
 - **Rutas por rol**:
 
 ```mermaid

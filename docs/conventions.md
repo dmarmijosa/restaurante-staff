@@ -45,6 +45,7 @@ Se aplican los principios de la skill **ui-ux-pro-max** sin cambiar la identidad
 
 - **JSDoc en cada servicio, repositorio y método no trivial explicando el *porqué*** (la decisión), no el *qué* (que ya lo dice el código).
 - `docs/` se actualiza cuando cambia la arquitectura; `tasks/current.md` y `tasks/backlog.md` al terminar cada tarea importante.
+- Tras cambiar `.env`, ejecutar `npm start` de nuevo (o `npm run set-env`) para regenerar `env.generated.ts`.
 
 ## Pruebas
 

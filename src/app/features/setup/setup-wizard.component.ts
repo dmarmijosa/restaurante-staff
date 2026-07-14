@@ -25,6 +25,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import {
+  getSupabaseConfig,
   isSupabaseConfigured,
   saveSupabaseConfig,
 } from '../../core/data/supabase/runtime-config';
@@ -306,7 +307,7 @@ const TOTAL_STEPS = 6;
             <div class="mb-5 rounded-xl border-[1.5px] border-dashed border-borde-punteado p-3.5 text-[12px] leading-relaxed text-tinta-media">
               <strong class="text-tinta">¿Dónde están?</strong> En tu proyecto de Supabase →
               <em>Project Settings → API</em>. La URL termina en <code class="rounded bg-panal px-1 py-px font-mono">.supabase.co</code>
-              y la clave empieza con <code class="rounded bg-panal px-1 py-px font-mono">eyJ</code>.
+              y la clave empieza con <code class="rounded bg-panal px-1 py-px font-mono">eyJ</code> o <code class="rounded bg-panal px-1 py-px font-mono">sb_publishable_</code>.
             </div>
 
             <div class="flex gap-3">
@@ -641,7 +642,7 @@ export class SetupWizardComponent implements OnInit {
     { n: 2, text: 'En el menú lateral izquierdo, haz clic en <strong>Project Settings</strong> (el ícono de engranaje)' },
     { n: 3, text: 'Ve a la pestaña <strong>API</strong>' },
     { n: 4, text: 'Copia la <strong>Project URL</strong> (empieza con <code class="rounded bg-panal px-1 font-mono text-[11px]">https://</code>)' },
-    { n: 5, text: 'Copia la clave <strong>anon public</strong> (empieza con <code class="rounded bg-panal px-1 font-mono text-[11px]">eyJ</code>)' },
+    { n: 5, text: 'Copia la clave <strong>anon / publishable</strong> (empieza con <code class="rounded bg-panal px-1 font-mono text-[11px]">eyJ</code> o <code class="rounded bg-panal px-1 font-mono text-[11px]">sb_publishable_</code>)' },
   ];
 
   protected readonly sqlSteps = [
@@ -699,7 +700,14 @@ export class SetupWizardComponent implements OnInit {
     if (saved >= 4 && !configured) {
       saved = 3;
       this.saveStep(3);
+      this.connectError.set(
+        'La conexión no se aplicó tras recargar. Si activaste «Probar modo demo», vuelve a pegar las claves y pulsa Conectar. Reinicia también npm start si cambiaste el .env.',
+      );
     }
+
+    const { url, anonKey } = getSupabaseConfig();
+    if (url) this.supabaseUrl = url;
+    if (anonKey) this.supabaseKey = anonKey;
 
     if (saved > 1) {
       this.step.set(saved);

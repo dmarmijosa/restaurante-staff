@@ -24,6 +24,8 @@ Un pedido conserva lo que el cliente pidió aunque el producto cambie de precio 
 ## ADR-8 · Variables de entorno vía `scripts/set-env.mjs`
 Angular compila las variables en el bundle; el script genera `env.generated.ts` (gitignorado) desde `.env` o del entorno del CI. Ninguna clave se versiona. `RS_FORCE_DEMO=1` fuerza el modo demo (lo usan Playwright y el preview para no tocar la base real).
 
+**Runtime (wizard / diálogo admin):** `runtime-config.ts` guarda URL y clave en `localStorage` (`rs-supabase-url`, `rs-supabase-anon-key`) con prioridad sobre `.env`. La bandera `rs-force-demo` (activada desde «Probar modo demo» en `/login`) ignora cualquier credencial hasta que se borre; `saveSupabaseConfig()` la elimina al conectar desde el wizard o el diálogo «Salir del modo demo».
+
 ## ADR-9 · Registro inicial del admin, garantizado "una sola vez" en la base
 El primer administrador se crea con un formulario público (`/registro-inicial`), pero el "una sola vez" no depende del front: el trigger `handle_new_user` marca **admin + propietario** solo al primer perfil (los siguientes son `mesero`), y `admin_exists()` (RPC pública que solo devuelve un booleano) cierra la ruta vía `bootstrapGuard` en cuanto existe un admin. Recomendado: desactivar el registro público en Supabase Auth tras el bootstrap.
 

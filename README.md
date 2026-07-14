@@ -35,7 +35,7 @@ Arranca en **modo demo** (sin cuenta, sin configurar nada) en menos de un minuto
 
 ---
 
-## Estado — v0.12 · 2026-07-08
+## Estado — v0.13 · 2026-07-14
 
 **43 unitarias** (Vitest) · **29 E2E de UI** (Playwright, escritorio + móvil) · **1 E2E funcional contra Supabase real** (28 asserts, 0 fallos) · Build limpio
 
@@ -87,7 +87,7 @@ Sin credenciales de Supabase la app usa **datos de ejemplo en memoria** (los del
    - Crear proyecto en Supabase
    - **Desactivar «Confirm email»** en Authentication → Providers → Email
    - Pegar URL + clave publishable (solo en **este navegador**, no modifica `.env`)
-   - Descargar y ejecutar `schema.sql` en el SQL Editor (19 migraciones unificadas)
+   - Descargar y ejecutar `schema.sql` en el SQL Editor (26 migraciones unificadas)
    - Crear restaurante + cuenta en `/nuevo-restaurante`
 3. **Limitación:** las claves del wizard son temporales (almacenamiento local del navegador). Si cierras el navegador, borras datos del sitio o usas otro dispositivo, debes volver a conectar.
 4. **Instalación completa y permanente:** sigue [manual.md](manual.md) (§3–§5): `schema.sql`, confirmación de correo, `.env` y `npm run build`.
@@ -106,7 +106,7 @@ Sin credenciales de Supabase la app usa **datos de ejemplo en memoria** (los del
    # SUPABASE_ANON_KEY=<tu clave publishable/anon>
    ```
 
-5. `npm start` (desarrollo) o `npm run build` (producción). `scripts/set-env.mjs` genera `env.generated.ts` (gitignorado) antes de compilar.
+5. `npm start` (desarrollo) o `npm run build` (producción). `scripts/set-env.mjs` genera `env.generated.ts` (gitignorado) antes de compilar. Tras editar `.env`, **reinicia** el servidor de desarrollo.
 6. **Registro:** `/nuevo-restaurante` crea el tenant + admin propietario. Desactiva el registro público en Supabase tras el bootstrap (ver manual §5.1).
 7. El QR de cada mesa apunta a `https://tu-dominio/r/<slug>/mesa/<numero>` (generable desde el plano del salón).
 
@@ -145,6 +145,9 @@ Angular 22 (standalone + signals) · Tailwind CSS 4 · Supabase (Postgres, Auth,
 ## Changelog
 
 Historial completo en **[CHANGELOG.md](CHANGELOG.md)**.
+
+### 2026-07-14 — v0.13.1
+- **fix(wizard):** conectar en `/instalacion` ya no falla silenciosamente si `rs-force-demo` estaba activo; mensaje de error y repoblado del formulario; claves `sb_publishable_…` documentadas
 
 ### 2026-07-08 — v0.12
 - **feat(cocina):** acceso protegido por **PIN de 6 dígitos** (`/cocina/acceso`); cuenta interna por restaurante; admin configura PIN en Ajustes

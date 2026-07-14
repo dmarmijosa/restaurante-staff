@@ -99,8 +99,10 @@ test.describe('Panel de administración', () => {
     await page.getByRole('button', { name: 'Cerrado por temporada' }).click();
     // La vista previa muestra lo que verá el cliente
     await expect(page.getByText('“Cerrado por temporada — volvemos pronto”')).toBeVisible();
-    // El chip del panel cambia a cerrado (desktop + móvil comparten el texto)
-    await expect(page.getByText('Cerrado — el menú público no acepta pedidos').first()).toBeVisible();
+    // Chip de estado visible (en desktop el de móvil está en DOM pero oculto con lg:hidden)
+    await expect(
+      page.getByRole('link', { name: 'Cerrado — el menú público no acepta pedidos' }).filter({ visible: true }),
+    ).toBeVisible();
   });
 
   test('ajustes: el nombre del restaurante se propaga y la propietaria está protegida', async ({ page }) => {
